@@ -1082,94 +1082,104 @@
         }
 
         /* ============================================ */
-        /* MOBILE HABIT CARD REDESIGN - FINAL */
+        /* MOBILE HABIT CARD REDESIGN - STRONGER */
         /* ============================================ */
 
         @media (max-width: 768px) {
-            /* Reset any existing habit card styles */
+            /* FORCE block layout on mobile */
             .habit-card {
                 display: block !important;
-                padding: 12px;
-                position: relative;
+                flex-direction: column !important;
+                padding: 12px !important;
+                position: relative !important;
             }
 
-            /* Top Row: Streak | Name | Check In Button */
             .habit-card .habit-info,
+            .habit-card .habit-progress,
+            .habit-card .week-section,
             .habit-card .streak-section,
             .habit-card .habit-action {
-                display: inline-block;
-                vertical-align: middle;
+                display: block !important;
+                flex: none !important;
+                width: auto !important;
             }
 
-            /* Streak on far left - SMALL */
+            /* TOP ROW: Streak + Name + Button */
+            
+            /* Streak - far left, inline */
             .habit-card .streak-section {
-                width: 40px;
-                margin-right: 8px;
+                display: inline-block !important;
+                vertical-align: top !important;
+                width: 40px !important;
+                margin-right: 8px !important;
+                margin-bottom: 0 !important;
             }
 
             .habit-card .streak-badge {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 2px !important;
             }
 
             .habit-card .streak-circle {
-                width: 32px;
-                height: 32px;
-                font-size: 15px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 15px !important;
             }
 
             .habit-card .streak-subtitle {
-                font-size: 7px;
+                font-size: 7px !important;
             }
 
-            /* Name - BIG */
+            /* Name - center, inline, BIG */
             .habit-card .habit-info {
-                width: calc(100% - 180px);
-                vertical-align: middle;
+                display: inline-block !important;
+                vertical-align: top !important;
+                width: calc(100% - 170px) !important;
+                margin-bottom: 0 !important;
             }
 
             .habit-card .habit-name {
                 font-size: 18px !important;
-                font-weight: 700;
-                line-height: 1.3;
-                margin: 0;
+                font-weight: 700 !important;
+                line-height: 1.3 !important;
+                margin: 0 !important;
+                white-space: normal !important;
             }
 
             .habit-card .habit-tags {
-                margin-top: 4px;
+                margin-top: 4px !important;
             }
 
             .habit-card .habit-tag {
-                font-size: 8px;
-                padding: 2px 6px;
+                font-size: 8px !important;
+                padding: 2px 6px !important;
             }
 
             .habit-card .btn-edit-habit {
-                font-size: 12px;
-                padding: 3px 6px;
-                margin-left: 6px;
+                font-size: 12px !important;
+                padding: 3px 6px !important;
             }
 
-            /* Check In button on far right - BIG */
+            /* Button - far right, inline, BIG */
             .habit-card .habit-action {
-                float: right;
-                margin-top: -32px;
+                display: inline-block !important;
+                vertical-align: top !important;
+                float: right !important;
+                width: auto !important;
+                margin-top: -35px !important;
             }
 
             .habit-card .btn-checkin {
                 padding: 10px 16px !important;
                 font-size: 13px !important;
-                font-weight: 700;
-                white-space: nowrap;
+                font-weight: 700 !important;
+                white-space: nowrap !important;
                 background: linear-gradient(135deg, #00D9FF 0%, #0099CC 100%) !important;
                 color: #0B1437 !important;
                 border: none !important;
-                border-radius: 10px;
+                border-radius: 10px !important;
             }
 
             .habit-card .btn-checkin.done {
@@ -1177,104 +1187,78 @@
                 color: rgba(255, 255, 255, 0.6) !important;
             }
 
-            /* Bottom Row: Dots + Days + Percentage */
+            /* BOTTOM ROW: Week dots + percentage */
+            
             .habit-card .habit-progress {
-                display: block;
-                margin-top: 10px;
-                padding-left: 48px; /* Align with name */
-                clear: both;
+                display: block !important;
+                margin-top: 10px !important;
+                padding-left: 48px !important;
+                clear: both !important;
+                flex-direction: row !important;
+                gap: 0 !important;
             }
 
             .habit-card .week-section {
-                display: inline-block;
+                display: block !important;
+                width: 100% !important;
+                flex: none !important;
             }
 
-            /* Remove "THIS WEEK" label */
+            /* Hide "THIS WEEK" label */
             .habit-card .week-section > div:first-child {
-                display: none;
+                display: none !important;
             }
 
-            /* Week tracker - SMALL dots in one line */
+            /* Week tracker inline with small dots */
             .habit-card .week-tracker {
-                display: inline-flex;
-                gap: 3px;
-                vertical-align: middle;
-                position: relative;
+                display: inline-flex !important;
+                gap: 3px !important;
+                vertical-align: middle !important;
+                flex-wrap: nowrap !important;
             }
 
             .habit-card .day-dot {
-                display: inline-flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
+                display: inline-flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 2px !important;
             }
 
             .habit-card .day-circle {
-                width: 14px;
-                height: 14px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            }
-
-            .habit-card .day-circle.completed {
-                background: var(--electric-blue);
-                border-color: var(--electric-blue);
-                box-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
-            }
-
-            .habit-card .day-circle.missed {
-                background: rgba(239, 68, 68, 0.3);
-                border-color: rgba(239, 68, 68, 0.5);
+                width: 14px !important;
+                height: 14px !important;
+                min-width: 14px !important;
+                border-radius: 50% !important;
             }
 
             .habit-card .day-label {
-                font-size: 7px;
-                color: rgba(255, 255, 255, 0.5);
+                font-size: 7px !important;
             }
 
-            /* Connecting line for completed dots */
             .habit-card .week-tracker.has-line::before {
-                top: 7px;
-                height: 2px;
+                top: 7px !important;
+                height: 2px !important;
             }
 
-            /* Percentage next to dots */
-            .habit-card .week-section::after {
-                content: attr(data-percent);
-                display: inline-block;
-                margin-left: 12px;
-                font-size: 16px;
-                font-weight: 700;
-                color: var(--electric-blue);
-                vertical-align: middle;
+            /* Show percentage after dots using data attribute */
+            .habit-card .week-section[data-percent]::after {
+                content: attr(data-percent) !important;
+                display: inline-block !important;
+                margin-left: 12px !important;
+                font-size: 16px !important;
+                font-weight: 700 !important;
+                color: #00D9FF !important;
+                vertical-align: middle !important;
             }
 
-            /* Other cards and elements */
+            /* Other mobile fixes */
             .card {
                 padding: 10px;
-                margin-bottom: 12px;
                 overflow: hidden;
             }
 
             .card-title {
                 font-size: 14px;
-                word-break: break-word;
-            }
-
-            .card-badge {
-                font-size: 10px;
-                padding: 3px 6px;
-            }
-
-            .position-banner {
-                font-size: 10px;
-                padding: 6px 8px;
-                margin: 6px 0;
-            }
-
-            .leaderboard-table {
-                font-size: 9px;
             }
 
             .btn-view-details {
@@ -1284,16 +1268,12 @@
                 border: 2px solid #00D9FF;
                 color: #00D9FF;
             }
-
-            .empty-state {
-                padding: 30px 12px;
-            }
         }
 
         /* Extra small screens */
         @media (max-width: 380px) {
             .habit-card .habit-info {
-                width: calc(100% - 160px);
+                width: calc(100% - 150px) !important;
             }
 
             .habit-card .habit-name {
@@ -1306,12 +1286,16 @@
             }
 
             .habit-card .day-circle {
-                width: 12px;
-                height: 12px;
+                width: 12px !important;
+                height: 12px !important;
             }
 
             .habit-card .day-label {
-                font-size: 6px;
+                font-size: 6px !important;
+            }
+
+            .habit-card .week-section[data-percent]::after {
+                font-size: 14px !important;
             }
         }
     </style>
@@ -3037,135 +3021,10 @@ switchTab = function(tab) {
 // ============================================================================
 // PART 4: DASHBOARD ENHANCEMENTS
 // ============================================================================
-// Adding: Today's Status, Personalized Insights, Enhanced Circle Cards
+// Adding: Today's Status, Personalized Insights in Dashboard
 
-// ==================== UPDATE RENDER CLUBS WITH TODAY'S STATUS & INSIGHTS ====================
-
-// Override the renderClubs function to include Today's Status and Insights
-const originalRenderClubs = renderClubs;
-renderClubs = function() {
-    const container = document.getElementById('clubsList');
-
-    if (cachedCircles.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No StreakClubs yet</h3>
-                <p>Create your first accountability circle</p>
-                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = cachedCircles.map(circle => {
-        // Get rankings
-        const rankings = getCircleRankings(circle.id);
-        
-        // Your position
-        const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
-        const yourData = rankings.find(r => r.userId === currentUser.id);
-        const leader = rankings[0];
-        const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
-        
-        // Position banner
-        let positionBanner = '';
-        if (yourRank === 1) {
-            positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
-        } else if (yourRank <= 3) {
-            positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${Math.round(gap)}% behind 1st place</div>`;
-        } else {
-            positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
-        }
-
-        // Top 3 leaderboard
-        const top3 = rankings.slice(0, 3);
-        const leaderboardHTML = `
-            <table class="leaderboard-table" style="margin: 16px 0;">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">Rank</th>
-                        <th>Name</th>
-                        <th style="width: 100px;">Consistency</th>
-                        <th style="width: 90px;">Streak</th>
-                        <th style="width: 120px;">Last Check-in</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${top3.map((r, idx) => {
-                        const isYou = r.userId === currentUser.id;
-                        const lastCheckin = getLastCheckin(r.userId, circle.id);
-                        return `
-                            <tr class="${isYou ? 'current-user' : ''}">
-                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
-                                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
-                                <td><span class="table-consistency">${r.consistency}%</span></td>
-                                <td><span class="table-streak">🔥 ${r.streak}w</span></td>
-                                <td><span class="table-last-checkin">${lastCheckin}</span></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
-
-        // TODAY'S STATUS
-        const todayStatus = getTodayStatus(circle.id);
-        const todayStatusHTML = `
-            <div class="today-status-section">
-                <div class="status-header">TODAY'S STATUS</div>
-                <div class="status-items">
-                    <div class="status-item ${todayStatus.userCheckedIn ? 'status-good' : 'status-bad'}">
-                        ${todayStatus.userCheckedIn ? '✅ You checked in today • Great job!' : '❌ You haven\'t checked in today'}
-                    </div>
-                    <div class="status-item status-neutral">
-                        ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${circle.members.length} members checked in today
-                    </div>
-                    ${todayStatus.atRisk.length > 0 ? `
-                        <div class="status-item status-warning">
-                            ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
-                        </div>
-                    ` : ''}
-                    ${!todayStatus.userCheckedIn ? `
-                        <button class="btn-check-in-cta" onclick="event.stopPropagation(); switchTab('habits')">
-                            CHECK IN NOW →
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-
-        // PERSONALIZED INSIGHTS
-        const insights = getPersonalizedInsights(circle.id, yourRank, yourData, rankings);
-        const insightsHTML = insights.length > 0 ? `
-            <div class="insights-box">
-                ${insights.map(insight => `
-                    <div class="insight-item">
-                        <span class="insight-icon">${insight.icon}</span>
-                        <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
-                    </div>
-                `).join('')}
-            </div>
-        ` : '';
-
-        return `
-            <div class="card" style="cursor: pointer;" onclick="openCircleDashboard('${circle.id}')">
-                <div class="card-header">
-                    <h3 class="card-title">${circle.name}</h3>
-                    <span class="card-badge">${circle.members.length} members</span>
-                </div>
-                ${positionBanner}
-                ${leaderboardHTML}
-                ${todayStatusHTML}
-                ${insightsHTML}
-                <div style="text-align: center; padding: 16px 0 8px;">
-                    <button class="btn-view-details" onclick="event.stopPropagation(); openCircleDashboard('${circle.id}')">
-                        View Full Details →
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-};
+// Note: renderClubs is handled by Part 5 (without Today's Status on cards)
+// We only add Today's Status and Insights to the DASHBOARD
 
 // ==================== TODAY'S STATUS HELPER ====================
 
@@ -3302,72 +3161,73 @@ function getPersonalizedInsights(circleId, yourRank, yourData, rankings) {
 
 // ==================== UPDATE DASHBOARD WITH TODAY'S STATUS ====================
 
-// Override renderDashboardLeaderboard to add Today's Status and Insights
-const originalRenderDashboardLeaderboard = renderDashboardLeaderboard;
-renderDashboardLeaderboard = function() {
-    // Call original to populate table
-    originalRenderDashboardLeaderboard.call(this);
+// This is already defined in Part 2, so we wrap it
+(function() {
+    const part2RenderDashboardLeaderboard = renderDashboardLeaderboard;
+    renderDashboardLeaderboard = function() {
+        // Call original to populate table
+        part2RenderDashboardLeaderboard.call(this);
 
-    const rankings = getCircleRankings(currentDashboardCircle.id);
-    const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
-    const yourData = rankings.find(r => r.userId === currentUser.id);
+        const rankings = getCircleRankings(currentDashboardCircle.id);
+        const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+        const yourData = rankings.find(r => r.userId === currentUser.id);
 
-    // Get Today's Status
-    const todayStatus = getTodayStatus(currentDashboardCircle.id);
-    const todayStatusHTML = `
-        <div class="today-status-section" style="margin-top: 24px;">
-            <div class="status-header">TODAY'S STATUS</div>
-            <div class="status-items">
-                <div class="status-item ${todayStatus.userCheckedIn ? 'status-good' : 'status-bad'}">
-                    ${todayStatus.userCheckedIn ? '✅ You checked in today • Great job!' : '❌ You haven\'t checked in today'}
-                </div>
-                <div class="status-item status-neutral">
-                    ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
-                </div>
-                ${todayStatus.atRisk.length > 0 ? `
-                    <div class="status-item status-warning">
-                        ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+        // Get Today's Status
+        const todayStatus = getTodayStatus(currentDashboardCircle.id);
+        const todayStatusHTML = `
+            <div class="today-status-section" style="margin-top: 24px;">
+                <div class="status-header">TODAY'S STATUS</div>
+                <div class="status-items">
+                    <div class="status-item status-neutral">
+                        ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
                     </div>
-                ` : ''}
-                ${!todayStatus.userCheckedIn ? `
-                    <button class="btn-check-in-cta" onclick="closeCircleDashboard(); switchTab('habits')">
-                        CHECK IN NOW →
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `;
-
-    // Get Personalized Insights
-    const insights = getPersonalizedInsights(currentDashboardCircle.id, yourRank, yourData, rankings);
-    const insightsHTML = insights.length > 0 ? `
-        <div class="insights-box" style="margin-top: 20px;">
-            ${insights.map(insight => `
-                <div class="insight-item">
-                    <span class="insight-icon">${insight.icon}</span>
-                    <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
+                    ${todayStatus.atRisk.length > 0 ? `
+                        <div class="status-item status-warning">
+                            ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                        </div>
+                    ` : ''}
+                    ${!todayStatus.userCheckedIn ? `
+                        <div class="status-item status-bad">
+                            ⚠️ You haven't checked in today
+                        </div>
+                        <button class="btn-check-in-cta" onclick="closeCircleDashboard(); switchTab('habits')">
+                            CHECK IN NOW →
+                        </button>
+                    ` : ''}
                 </div>
-            `).join('')}
-        </div>
-    ` : '';
+            </div>
+        `;
 
-    // Append to dashboard
-    const leaderboardTab = document.getElementById('dashboardLeaderboardTab');
-    const existingTable = leaderboardTab.querySelector('.leaderboard-table');
-    
-    // Remove old status/insights if they exist
-    const oldStatus = leaderboardTab.querySelector('.today-status-section');
-    const oldInsights = leaderboardTab.querySelector('.insights-box');
-    if (oldStatus) oldStatus.remove();
-    if (oldInsights) oldInsights.remove();
-    
-    // Add new ones
-    existingTable.insertAdjacentHTML('afterend', todayStatusHTML + insightsHTML);
-};
+        // Get Personalized Insights
+        const insights = getPersonalizedInsights(currentDashboardCircle.id, yourRank, yourData, rankings);
+        const insightsHTML = insights.length > 0 ? `
+            <div class="insights-box" style="margin-top: 20px;">
+                ${insights.map(insight => `
+                    <div class="insight-item">
+                        <span class="insight-icon">${insight.icon}</span>
+                        <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+
+        // Append to dashboard
+        const leaderboardTab = document.getElementById('dashboardLeaderboardTab');
+        const existingTable = leaderboardTab.querySelector('.leaderboard-table');
+        
+        // Remove old status/insights if they exist
+        const oldStatus = leaderboardTab.querySelector('.today-status-section');
+        const oldInsights = leaderboardTab.querySelector('.insights-box');
+        if (oldStatus) oldStatus.remove();
+        if (oldInsights) oldInsights.remove();
+        
+        // Add new ones
+        existingTable.insertAdjacentHTML('afterend', todayStatusHTML + insightsHTML);
+    };
+})();
 
 // ============================================================================
 // END OF PART 4
-// All original design features now complete!
 // ============================================================================
 // ============================================================================
 // PART 5: UI POLISH FIXES
@@ -3705,98 +3565,86 @@ renderDashboardLeaderboard = function() {
 // ============================================================================
 
 // FIX 1: Hide/show top buttons based on content
-const originalRenderClubs = renderClubs;
-renderClubs = function() {
-    const container = document.getElementById('clubsList');
-    const topButton = document.querySelector('.header .btn-add');
+// Note: renderClubs is already overridden in Part 5, we just need to add button visibility
 
-    if (cachedCircles.length === 0) {
-        // Hide top button when empty
-        if (topButton) topButton.style.display = 'none';
+// Wrap Part 5's renderClubs to add button visibility
+(function() {
+    const part5RenderClubs = renderClubs;
+    renderClubs = function() {
+        const topButton = document.querySelector('.header .btn-add');
         
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No StreakClubs yet</h3>
-                <p>Create your first accountability club</p>
-                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
-            </div>
-        `;
-        return;
-    }
-
-    // Show top button when clubs exist
-    if (topButton) topButton.style.display = 'block';
-    
-    // Call original function
-    originalRenderClubs.call(this);
-};
-
-const originalRenderHabits = renderHabits;
-renderHabits = function() {
-    const container = document.getElementById('habitsList');
-    const topButton = document.querySelector('.header .btn-add');
-    const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
-
-    if (userHabits.length === 0) {
-        // Hide top button when empty
-        if (topButton) topButton.style.display = 'none';
+        if (cachedCircles.length === 0) {
+            if (topButton) topButton.style.display = 'none';
+        } else {
+            if (topButton) topButton.style.display = 'block';
+        }
         
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No habits yet</h3>
-                <p>Create your first habit to start tracking</p>
-                <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
-            </div>
-        `;
-        return;
-    }
+        // Call Part 5's version
+        part5RenderClubs.call(this);
+    };
+})();
 
-    // Show top button when habits exist
-    if (topButton) topButton.style.display = 'block';
-    
-    // Call original function
-    originalRenderHabits.call(this);
-};
+// Same for renderHabits
+(function() {
+    const part3RenderHabits = renderHabits;
+    renderHabits = function() {
+        const topButton = document.querySelector('.header .btn-add');
+        const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+        
+        if (userHabits.length === 0) {
+            if (topButton) topButton.style.display = 'none';
+        } else {
+            if (topButton) topButton.style.display = 'block';
+        }
+        
+        // Call Part 3's version
+        part3RenderHabits.call(this);
+    };
+})();
 
 // Also handle tab switching to show/hide button appropriately
-const originalSwitchTab = switchTab;
-switchTab = function(tab) {
-    originalSwitchTab.call(this, tab);
-    
-    // Update button visibility after tab switch
-    setTimeout(() => {
-        const topButton = document.querySelector('.header .btn-add');
-        if (!topButton) return;
+(function() {
+    const part2SwitchTab = switchTab;
+    switchTab = function(tab) {
+        part2SwitchTab.call(this, tab);
         
-        if (tab === 'clubs') {
-            topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
-        } else if (tab === 'habits') {
-            const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
-            topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
-        } else if (tab === 'feed') {
-            topButton.style.display = 'none'; // Feed tab never has add button
-        }
-    }, 50);
-};
-// Update renderHabits to add data-percent attribute for mobile
-const originalRenderHabitsForMobile = renderHabits;
-renderHabits = function() {
-    // Call original function
-    originalRenderHabitsForMobile.call(this);
-    
-    // After rendering, add data-percent attributes for mobile CSS
-    setTimeout(() => {
-        const habitCards = document.querySelectorAll('.habit-card');
-        habitCards.forEach(card => {
-            const weekSection = card.querySelector('.week-section');
-            if (weekSection) {
-                // Find the percentage display
-                const percentText = weekSection.textContent.match(/(\d+)%/);
-                if (percentText && percentText[1]) {
-                    weekSection.setAttribute('data-percent', percentText[1] + '%');
-                }
+        // Update button visibility after tab switch
+        setTimeout(() => {
+            const topButton = document.querySelector('.header .btn-add');
+            if (!topButton) return;
+            
+            if (tab === 'clubs') {
+                topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
+            } else if (tab === 'habits') {
+                const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+                topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
+            } else if (tab === 'feed') {
+                topButton.style.display = 'none'; // Feed tab never has add button
             }
-        });
-    }, 50);
-};
+        }, 50);
+    };
+})();
+// Update renderHabits to add data-percent attribute for mobile
+(function() {
+    const prevRenderHabits = renderHabits;
+    renderHabits = function() {
+        // Call previous version
+        prevRenderHabits.call(this);
+        
+        // After rendering, add data-percent attributes for mobile CSS
+        setTimeout(() => {
+            const habitCards = document.querySelectorAll('.habit-card');
+            habitCards.forEach(card => {
+                const weekSection = card.querySelector('.week-section');
+                if (weekSection) {
+                    // Find the percentage display
+                    const percentText = weekSection.textContent.match(/(\d+)%/);
+                    if (percentText && percentText[1]) {
+                        weekSection.setAttribute('data-percent', percentText[1] + '%');
+                    }
+                }
+            });
+        }, 50);
+    };
+})();
 </script></body></html>
