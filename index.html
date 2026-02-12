@@ -3705,98 +3705,86 @@ renderDashboardLeaderboard = function() {
 // ============================================================================
 
 // FIX 1: Hide/show top buttons based on content
-const originalRenderClubs = renderClubs;
-renderClubs = function() {
-    const container = document.getElementById('clubsList');
-    const topButton = document.querySelector('.header .btn-add');
+// Note: renderClubs is already overridden in Part 5, we just need to add button visibility
 
-    if (cachedCircles.length === 0) {
-        // Hide top button when empty
-        if (topButton) topButton.style.display = 'none';
+// Wrap Part 5's renderClubs to add button visibility
+(function() {
+    const part5RenderClubs = renderClubs;
+    renderClubs = function() {
+        const topButton = document.querySelector('.header .btn-add');
         
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No StreakClubs yet</h3>
-                <p>Create your first accountability club</p>
-                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
-            </div>
-        `;
-        return;
-    }
-
-    // Show top button when clubs exist
-    if (topButton) topButton.style.display = 'block';
-    
-    // Call original function
-    originalRenderClubs.call(this);
-};
-
-const originalRenderHabits = renderHabits;
-renderHabits = function() {
-    const container = document.getElementById('habitsList');
-    const topButton = document.querySelector('.header .btn-add');
-    const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
-
-    if (userHabits.length === 0) {
-        // Hide top button when empty
-        if (topButton) topButton.style.display = 'none';
+        if (cachedCircles.length === 0) {
+            if (topButton) topButton.style.display = 'none';
+        } else {
+            if (topButton) topButton.style.display = 'block';
+        }
         
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No habits yet</h3>
-                <p>Create your first habit to start tracking</p>
-                <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
-            </div>
-        `;
-        return;
-    }
+        // Call Part 5's version
+        part5RenderClubs.call(this);
+    };
+})();
 
-    // Show top button when habits exist
-    if (topButton) topButton.style.display = 'block';
-    
-    // Call original function
-    originalRenderHabits.call(this);
-};
+// Same for renderHabits
+(function() {
+    const part3RenderHabits = renderHabits;
+    renderHabits = function() {
+        const topButton = document.querySelector('.header .btn-add');
+        const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+        
+        if (userHabits.length === 0) {
+            if (topButton) topButton.style.display = 'none';
+        } else {
+            if (topButton) topButton.style.display = 'block';
+        }
+        
+        // Call Part 3's version
+        part3RenderHabits.call(this);
+    };
+})();
 
 // Also handle tab switching to show/hide button appropriately
-const originalSwitchTab = switchTab;
-switchTab = function(tab) {
-    originalSwitchTab.call(this, tab);
-    
-    // Update button visibility after tab switch
-    setTimeout(() => {
-        const topButton = document.querySelector('.header .btn-add');
-        if (!topButton) return;
+(function() {
+    const part2SwitchTab = switchTab;
+    switchTab = function(tab) {
+        part2SwitchTab.call(this, tab);
         
-        if (tab === 'clubs') {
-            topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
-        } else if (tab === 'habits') {
-            const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
-            topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
-        } else if (tab === 'feed') {
-            topButton.style.display = 'none'; // Feed tab never has add button
-        }
-    }, 50);
-};
-// Update renderHabits to add data-percent attribute for mobile
-const originalRenderHabitsForMobile = renderHabits;
-renderHabits = function() {
-    // Call original function
-    originalRenderHabitsForMobile.call(this);
-    
-    // After rendering, add data-percent attributes for mobile CSS
-    setTimeout(() => {
-        const habitCards = document.querySelectorAll('.habit-card');
-        habitCards.forEach(card => {
-            const weekSection = card.querySelector('.week-section');
-            if (weekSection) {
-                // Find the percentage display
-                const percentText = weekSection.textContent.match(/(\d+)%/);
-                if (percentText && percentText[1]) {
-                    weekSection.setAttribute('data-percent', percentText[1] + '%');
-                }
+        // Update button visibility after tab switch
+        setTimeout(() => {
+            const topButton = document.querySelector('.header .btn-add');
+            if (!topButton) return;
+            
+            if (tab === 'clubs') {
+                topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
+            } else if (tab === 'habits') {
+                const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+                topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
+            } else if (tab === 'feed') {
+                topButton.style.display = 'none'; // Feed tab never has add button
             }
-        });
-    }, 50);
-};
+        }, 50);
+    };
+})();
+// Update renderHabits to add data-percent attribute for mobile
+(function() {
+    const prevRenderHabits = renderHabits;
+    renderHabits = function() {
+        // Call previous version
+        prevRenderHabits.call(this);
+        
+        // After rendering, add data-percent attributes for mobile CSS
+        setTimeout(() => {
+            const habitCards = document.querySelectorAll('.habit-card');
+            habitCards.forEach(card => {
+                const weekSection = card.querySelector('.week-section');
+                if (weekSection) {
+                    // Find the percentage display
+                    const percentText = weekSection.textContent.match(/(\d+)%/);
+                    if (percentText && percentText[1]) {
+                        weekSection.setAttribute('data-percent', percentText[1] + '%');
+                    }
+                }
+            });
+        }, 50);
+    };
+})();
 </script></body></html>
