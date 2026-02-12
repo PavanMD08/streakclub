@@ -1082,104 +1082,94 @@
         }
 
         /* ============================================ */
-        /* MOBILE HABIT CARD REDESIGN - STRONGER */
+        /* MOBILE HABIT CARD REDESIGN - FINAL */
         /* ============================================ */
 
         @media (max-width: 768px) {
-            /* FORCE block layout on mobile */
+            /* Reset any existing habit card styles */
             .habit-card {
                 display: block !important;
-                flex-direction: column !important;
-                padding: 12px !important;
-                position: relative !important;
+                padding: 12px;
+                position: relative;
             }
 
+            /* Top Row: Streak | Name | Check In Button */
             .habit-card .habit-info,
-            .habit-card .habit-progress,
-            .habit-card .week-section,
             .habit-card .streak-section,
             .habit-card .habit-action {
-                display: block !important;
-                flex: none !important;
-                width: auto !important;
+                display: inline-block;
+                vertical-align: middle;
             }
 
-            /* TOP ROW: Streak + Name + Button */
-            
-            /* Streak - far left, inline */
+            /* Streak on far left - SMALL */
             .habit-card .streak-section {
-                display: inline-block !important;
-                vertical-align: top !important;
-                width: 40px !important;
-                margin-right: 8px !important;
-                margin-bottom: 0 !important;
+                width: 40px;
+                margin-right: 8px;
             }
 
             .habit-card .streak-badge {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 2px !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
             }
 
             .habit-card .streak-circle {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 15px !important;
+                width: 32px;
+                height: 32px;
+                font-size: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .habit-card .streak-subtitle {
-                font-size: 7px !important;
+                font-size: 7px;
             }
 
-            /* Name - center, inline, BIG */
+            /* Name - BIG */
             .habit-card .habit-info {
-                display: inline-block !important;
-                vertical-align: top !important;
-                width: calc(100% - 170px) !important;
-                margin-bottom: 0 !important;
+                width: calc(100% - 180px);
+                vertical-align: middle;
             }
 
             .habit-card .habit-name {
                 font-size: 18px !important;
-                font-weight: 700 !important;
-                line-height: 1.3 !important;
-                margin: 0 !important;
-                white-space: normal !important;
+                font-weight: 700;
+                line-height: 1.3;
+                margin: 0;
             }
 
             .habit-card .habit-tags {
-                margin-top: 4px !important;
+                margin-top: 4px;
             }
 
             .habit-card .habit-tag {
-                font-size: 8px !important;
-                padding: 2px 6px !important;
+                font-size: 8px;
+                padding: 2px 6px;
             }
 
             .habit-card .btn-edit-habit {
-                font-size: 12px !important;
-                padding: 3px 6px !important;
+                font-size: 12px;
+                padding: 3px 6px;
+                margin-left: 6px;
             }
 
-            /* Button - far right, inline, BIG */
+            /* Check In button on far right - BIG */
             .habit-card .habit-action {
-                display: inline-block !important;
-                vertical-align: top !important;
-                float: right !important;
-                width: auto !important;
-                margin-top: -35px !important;
+                float: right;
+                margin-top: -32px;
             }
 
             .habit-card .btn-checkin {
                 padding: 10px 16px !important;
                 font-size: 13px !important;
-                font-weight: 700 !important;
-                white-space: nowrap !important;
+                font-weight: 700;
+                white-space: nowrap;
                 background: linear-gradient(135deg, #00D9FF 0%, #0099CC 100%) !important;
                 color: #0B1437 !important;
                 border: none !important;
-                border-radius: 10px !important;
+                border-radius: 10px;
             }
 
             .habit-card .btn-checkin.done {
@@ -1187,78 +1177,104 @@
                 color: rgba(255, 255, 255, 0.6) !important;
             }
 
-            /* BOTTOM ROW: Week dots + percentage */
-            
+            /* Bottom Row: Dots + Days + Percentage */
             .habit-card .habit-progress {
-                display: block !important;
-                margin-top: 10px !important;
-                padding-left: 48px !important;
-                clear: both !important;
-                flex-direction: row !important;
-                gap: 0 !important;
+                display: block;
+                margin-top: 10px;
+                padding-left: 48px; /* Align with name */
+                clear: both;
             }
 
             .habit-card .week-section {
-                display: block !important;
-                width: 100% !important;
-                flex: none !important;
+                display: inline-block;
             }
 
-            /* Hide "THIS WEEK" label */
+            /* Remove "THIS WEEK" label */
             .habit-card .week-section > div:first-child {
-                display: none !important;
+                display: none;
             }
 
-            /* Week tracker inline with small dots */
+            /* Week tracker - SMALL dots in one line */
             .habit-card .week-tracker {
-                display: inline-flex !important;
-                gap: 3px !important;
-                vertical-align: middle !important;
-                flex-wrap: nowrap !important;
+                display: inline-flex;
+                gap: 3px;
+                vertical-align: middle;
+                position: relative;
             }
 
             .habit-card .day-dot {
-                display: inline-flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 2px !important;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
             }
 
             .habit-card .day-circle {
-                width: 14px !important;
-                height: 14px !important;
-                min-width: 14px !important;
-                border-radius: 50% !important;
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .habit-card .day-circle.completed {
+                background: var(--electric-blue);
+                border-color: var(--electric-blue);
+                box-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+            }
+
+            .habit-card .day-circle.missed {
+                background: rgba(239, 68, 68, 0.3);
+                border-color: rgba(239, 68, 68, 0.5);
             }
 
             .habit-card .day-label {
-                font-size: 7px !important;
+                font-size: 7px;
+                color: rgba(255, 255, 255, 0.5);
             }
 
+            /* Connecting line for completed dots */
             .habit-card .week-tracker.has-line::before {
-                top: 7px !important;
-                height: 2px !important;
+                top: 7px;
+                height: 2px;
             }
 
-            /* Show percentage after dots using data attribute */
-            .habit-card .week-section[data-percent]::after {
-                content: attr(data-percent) !important;
-                display: inline-block !important;
-                margin-left: 12px !important;
-                font-size: 16px !important;
-                font-weight: 700 !important;
-                color: #00D9FF !important;
-                vertical-align: middle !important;
+            /* Percentage next to dots */
+            .habit-card .week-section::after {
+                content: attr(data-percent);
+                display: inline-block;
+                margin-left: 12px;
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--electric-blue);
+                vertical-align: middle;
             }
 
-            /* Other mobile fixes */
+            /* Other cards and elements */
             .card {
                 padding: 10px;
+                margin-bottom: 12px;
                 overflow: hidden;
             }
 
             .card-title {
                 font-size: 14px;
+                word-break: break-word;
+            }
+
+            .card-badge {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+
+            .position-banner {
+                font-size: 10px;
+                padding: 6px 8px;
+                margin: 6px 0;
+            }
+
+            .leaderboard-table {
+                font-size: 9px;
             }
 
             .btn-view-details {
@@ -1268,12 +1284,16 @@
                 border: 2px solid #00D9FF;
                 color: #00D9FF;
             }
+
+            .empty-state {
+                padding: 30px 12px;
+            }
         }
 
         /* Extra small screens */
         @media (max-width: 380px) {
             .habit-card .habit-info {
-                width: calc(100% - 150px) !important;
+                width: calc(100% - 160px);
             }
 
             .habit-card .habit-name {
@@ -1286,16 +1306,12 @@
             }
 
             .habit-card .day-circle {
-                width: 12px !important;
-                height: 12px !important;
+                width: 12px;
+                height: 12px;
             }
 
             .habit-card .day-label {
-                font-size: 6px !important;
-            }
-
-            .habit-card .week-section[data-percent]::after {
-                font-size: 14px !important;
+                font-size: 6px;
             }
         }
     </style>
@@ -3689,86 +3705,98 @@ renderDashboardLeaderboard = function() {
 // ============================================================================
 
 // FIX 1: Hide/show top buttons based on content
-// Note: renderClubs is already overridden in Part 5, we just need to add button visibility
+const originalRenderClubs = renderClubs;
+renderClubs = function() {
+    const container = document.getElementById('clubsList');
+    const topButton = document.querySelector('.header .btn-add');
 
-// Wrap Part 5's renderClubs to add button visibility
-(function() {
-    const part5RenderClubs = renderClubs;
-    renderClubs = function() {
-        const topButton = document.querySelector('.header .btn-add');
+    if (cachedCircles.length === 0) {
+        // Hide top button when empty
+        if (topButton) topButton.style.display = 'none';
         
-        if (cachedCircles.length === 0) {
-            if (topButton) topButton.style.display = 'none';
-        } else {
-            if (topButton) topButton.style.display = 'block';
-        }
-        
-        // Call Part 5's version
-        part5RenderClubs.call(this);
-    };
-})();
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No StreakClubs yet</h3>
+                <p>Create your first accountability club</p>
+                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
+            </div>
+        `;
+        return;
+    }
 
-// Same for renderHabits
-(function() {
-    const part3RenderHabits = renderHabits;
-    renderHabits = function() {
-        const topButton = document.querySelector('.header .btn-add');
-        const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+    // Show top button when clubs exist
+    if (topButton) topButton.style.display = 'block';
+    
+    // Call original function
+    originalRenderClubs.call(this);
+};
+
+const originalRenderHabits = renderHabits;
+renderHabits = function() {
+    const container = document.getElementById('habitsList');
+    const topButton = document.querySelector('.header .btn-add');
+    const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+
+    if (userHabits.length === 0) {
+        // Hide top button when empty
+        if (topButton) topButton.style.display = 'none';
         
-        if (userHabits.length === 0) {
-            if (topButton) topButton.style.display = 'none';
-        } else {
-            if (topButton) topButton.style.display = 'block';
-        }
-        
-        // Call Part 3's version
-        part3RenderHabits.call(this);
-    };
-})();
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No habits yet</h3>
+                <p>Create your first habit to start tracking</p>
+                <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
+            </div>
+        `;
+        return;
+    }
+
+    // Show top button when habits exist
+    if (topButton) topButton.style.display = 'block';
+    
+    // Call original function
+    originalRenderHabits.call(this);
+};
 
 // Also handle tab switching to show/hide button appropriately
-(function() {
-    const part2SwitchTab = switchTab;
-    switchTab = function(tab) {
-        part2SwitchTab.call(this, tab);
+const originalSwitchTab = switchTab;
+switchTab = function(tab) {
+    originalSwitchTab.call(this, tab);
+    
+    // Update button visibility after tab switch
+    setTimeout(() => {
+        const topButton = document.querySelector('.header .btn-add');
+        if (!topButton) return;
         
-        // Update button visibility after tab switch
-        setTimeout(() => {
-            const topButton = document.querySelector('.header .btn-add');
-            if (!topButton) return;
-            
-            if (tab === 'clubs') {
-                topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
-            } else if (tab === 'habits') {
-                const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
-                topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
-            } else if (tab === 'feed') {
-                topButton.style.display = 'none'; // Feed tab never has add button
-            }
-        }, 50);
-    };
-})();
+        if (tab === 'clubs') {
+            topButton.style.display = cachedCircles.length > 0 ? 'block' : 'none';
+        } else if (tab === 'habits') {
+            const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+            topButton.style.display = userHabits.length > 0 ? 'block' : 'none';
+        } else if (tab === 'feed') {
+            topButton.style.display = 'none'; // Feed tab never has add button
+        }
+    }, 50);
+};
 // Update renderHabits to add data-percent attribute for mobile
-(function() {
-    const prevRenderHabits = renderHabits;
-    renderHabits = function() {
-        // Call previous version
-        prevRenderHabits.call(this);
-        
-        // After rendering, add data-percent attributes for mobile CSS
-        setTimeout(() => {
-            const habitCards = document.querySelectorAll('.habit-card');
-            habitCards.forEach(card => {
-                const weekSection = card.querySelector('.week-section');
-                if (weekSection) {
-                    // Find the percentage display
-                    const percentText = weekSection.textContent.match(/(\d+)%/);
-                    if (percentText && percentText[1]) {
-                        weekSection.setAttribute('data-percent', percentText[1] + '%');
-                    }
+const originalRenderHabitsForMobile = renderHabits;
+renderHabits = function() {
+    // Call original function
+    originalRenderHabitsForMobile.call(this);
+    
+    // After rendering, add data-percent attributes for mobile CSS
+    setTimeout(() => {
+        const habitCards = document.querySelectorAll('.habit-card');
+        habitCards.forEach(card => {
+            const weekSection = card.querySelector('.week-section');
+            if (weekSection) {
+                // Find the percentage display
+                const percentText = weekSection.textContent.match(/(\d+)%/);
+                if (percentText && percentText[1]) {
+                    weekSection.setAttribute('data-percent', percentText[1] + '%');
                 }
-            });
-        }, 50);
-    };
-})();
+            }
+        });
+    }, 50);
+};
 </script></body></html>
