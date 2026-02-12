@@ -1082,198 +1082,198 @@
         }
 
         /* ============================================ */
-        /* MOBILE RESPONSIVE FIXES */
+        /* MOBILE RESPONSIVE FIXES - HORIZONTAL LAYOUT */
         /* ============================================ */
 
         /* Base adjustments for mobile */
         @media (max-width: 768px) {
             body {
-                padding: 12px;
+                padding: 8px;
             }
 
             .container {
-                padding: 16px;
+                padding: 12px;
             }
 
             /* Header */
             .header {
-                flex-direction: column;
-                gap: 12px;
-                padding: 16px 12px;
+                padding: 12px 8px;
+                gap: 8px;
             }
 
             .header h2 {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .btn-add {
-                width: 100%;
-                padding: 12px 20px;
-                font-size: 13px;
+                padding: 10px 16px;
+                font-size: 12px;
             }
 
             /* Tabs */
             .tabs {
-                gap: 8px;
-                padding: 0 12px;
+                gap: 6px;
+                padding: 0 8px;
             }
 
             .tab {
-                padding: 10px 16px;
-                font-size: 12px;
-                letter-spacing: 0.3px;
+                padding: 8px 12px;
+                font-size: 11px;
             }
 
             /* Cards */
             .card {
-                padding: 16px;
-                margin-bottom: 16px;
+                padding: 12px;
+                margin-bottom: 12px;
             }
 
             .card-header {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row;
                 gap: 8px;
+                margin-bottom: 8px;
             }
 
             .card-title {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .card-badge {
-                align-self: flex-start;
+                font-size: 11px;
+                padding: 3px 8px;
             }
 
             /* Position Banners */
             .position-banner {
-                font-size: 12px;
-                padding: 8px 12px;
+                font-size: 11px;
+                padding: 6px 10px;
+                margin: 8px 0;
             }
 
             /* Leaderboard Tables */
             .leaderboard-table {
-                font-size: 12px;
+                font-size: 10px;
             }
 
             .leaderboard-table th,
             .leaderboard-table td {
-                padding: 8px 6px;
+                padding: 6px 4px;
             }
 
             .table-rank {
-                font-size: 12px;
-                width: 24px;
-                height: 24px;
+                font-size: 11px;
+                width: 22px;
+                height: 22px;
             }
 
             .table-name {
-                font-size: 12px;
-            }
-
-            .table-consistency {
-                font-size: 13px;
-            }
-
-            .table-streak {
                 font-size: 11px;
             }
 
-            .table-last-checkin {
+            .table-consistency {
+                font-size: 12px;
+            }
+
+            .table-streak {
                 font-size: 10px;
             }
 
-            /* Hide Last Check-in column on very small screens */
-            .leaderboard-table th:nth-child(5),
-            .leaderboard-table td:nth-child(5) {
-                display: none;
+            .table-last-checkin {
+                font-size: 9px;
             }
 
-            /* Habit Cards - Stack vertically on mobile */
+            /* Habit Cards - KEEP HORIZONTAL, just scale down */
             .habit-card {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 16px;
-                padding: 16px;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 8px;
             }
 
             .habit-info {
-                flex: 1 1 100%;
-                width: 100%;
+                flex: 0 0 25%;
+                min-width: 0;
             }
 
             .habit-name {
-                font-size: 16px;
-                white-space: normal;
+                font-size: 13px;
             }
 
             .btn-edit-habit {
-                font-size: 16px;
-                padding: 6px 10px;
+                font-size: 12px;
+                padding: 3px 6px;
+            }
+
+            .habit-tags {
+                margin-top: 4px;
+            }
+
+            .habit-tag {
+                font-size: 8px;
+                padding: 2px 6px;
             }
 
             .habit-progress {
-                flex-direction: column;
-                gap: 16px;
-                width: 100%;
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 8px;
             }
 
             .week-section {
-                width: 100%;
+                flex: 1;
+                min-width: 0;
             }
 
-            /* Week Tracker - Smaller dots on mobile */
-            .day-circle {
-                width: 36px;
-                height: 36px;
-            }
-
-            .day-label {
-                font-size: 9px;
-            }
-
+            /* Week Tracker - Smaller but still horizontal */
             .week-label {
-                font-size: 9px;
+                font-size: 7px;
+                margin-bottom: 3px;
             }
 
             .week-tracker {
-                gap: 4px;
-                justify-content: space-between;
+                gap: 3px;
+            }
+
+            .day-circle {
+                width: 28px;
+                height: 28px;
+            }
+
+            .day-label {
+                font-size: 7px;
+                margin-top: 3px;
             }
 
             .week-tracker.has-line::before {
-                top: 18px;
-            }
-
-            /* Adjust connecting line for smaller dots */
-            .week-tracker.has-line::before {
+                top: 14px;
                 height: 2px;
             }
 
             /* Streak Section */
             .streak-section {
-                width: 100%;
-                min-width: auto;
+                min-width: 60px;
+                flex-shrink: 0;
             }
 
             .streak-circle {
-                width: 60px;
-                height: 60px;
-                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
             }
 
             .streak-subtitle {
-                font-size: 11px;
+                font-size: 8px;
             }
 
             /* Habit Action Buttons */
             .habit-action {
-                width: 100%;
+                flex-shrink: 0;
             }
 
             .btn-checkin {
-                width: 100%;
-                padding: 12px 20px;
-                font-size: 13px;
+                padding: 8px 12px;
+                font-size: 11px;
+                white-space: nowrap;
             }
 
             /* Modals */
@@ -1282,19 +1282,19 @@
             }
 
             .modal-content {
-                padding: 24px 20px;
+                padding: 20px 16px;
                 max-width: 100%;
             }
 
             .modal-header h3 {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .form-group input,
             .form-group textarea,
             .form-group select {
                 font-size: 16px; /* Prevents zoom on iOS */
-                padding: 12px 14px;
+                padding: 10px 12px;
             }
 
             /* Tag Selector */
@@ -1303,229 +1303,192 @@
             }
 
             .tag-option {
-                padding: 8px 12px;
-                font-size: 11px;
+                padding: 6px 10px;
+                font-size: 10px;
             }
 
             /* Buttons */
             .btn-primary {
-                width: 100%;
-                padding: 12px 20px;
-                font-size: 14px;
+                padding: 10px 16px;
+                font-size: 13px;
             }
 
             .btn-secondary {
-                width: 100%;
-                padding: 12px 20px;
-                font-size: 14px;
+                padding: 10px 16px;
+                font-size: 13px;
             }
 
             /* Dashboard Modal */
             .dashboard-tabs {
-                gap: 8px;
+                gap: 6px;
             }
 
             .dashboard-tab {
-                padding: 10px 16px;
-                font-size: 12px;
+                padding: 8px 12px;
+                font-size: 11px;
             }
 
             .dashboard-leaderboard-table {
-                font-size: 12px;
+                font-size: 10px;
             }
 
             /* Today's Status */
             .today-status-section {
-                padding: 12px;
+                padding: 10px;
             }
 
             .status-header {
-                font-size: 10px;
-                margin-bottom: 8px;
+                font-size: 9px;
+                margin-bottom: 6px;
             }
 
             .status-item {
-                font-size: 12px;
-                padding: 10px 12px;
+                font-size: 11px;
+                padding: 8px 10px;
             }
 
             .btn-check-in-cta {
-                padding: 12px 20px;
-                font-size: 13px;
+                padding: 10px 16px;
+                font-size: 12px;
             }
 
             /* Insights */
             .insights-box {
-                padding: 12px;
-                gap: 8px;
+                padding: 10px;
+                gap: 6px;
             }
 
             .insight-item {
-                font-size: 12px;
-                padding: 10px 12px;
+                font-size: 11px;
+                padding: 8px 10px;
             }
 
             .insight-icon {
-                font-size: 16px;
+                font-size: 14px;
             }
 
             /* Feed Items */
             .feed-item {
-                padding: 12px;
-                margin-bottom: 12px;
+                padding: 10px;
+                margin-bottom: 10px;
             }
 
             .feed-header {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .feed-message {
-                font-size: 13px;
+                font-size: 12px;
             }
 
             .feed-badge {
-                padding: 4px 8px;
-                font-size: 10px;
+                padding: 3px 6px;
+                font-size: 9px;
             }
 
             /* Dashboard Feed Items */
             .dashboard-feed-item {
-                padding: 12px;
-                margin-bottom: 10px;
+                padding: 10px;
+                margin-bottom: 8px;
             }
 
             .feed-item-header {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .feed-item-user {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .feed-item-action {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             /* Auth Screen */
             .auth-box {
-                padding: 32px 24px;
-                max-width: 100%;
+                padding: 24px 20px;
             }
 
             .auth-box h1 {
-                font-size: 28px;
+                font-size: 26px;
             }
 
             .auth-box > p {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             /* Empty State */
             .empty-state {
-                padding: 40px 16px;
+                padding: 30px 12px;
             }
 
             .empty-state h3 {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .empty-state p {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             /* View Details Button */
             .btn-view-details {
-                padding: 10px 20px;
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 11px;
             }
         }
 
-        /* Extra small screens (< 400px) */
-        @media (max-width: 400px) {
-            .header h2 {
-                font-size: 20px;
-            }
-
-            .card-title {
-                font-size: 16px;
+        /* Extra small screens (< 380px) - Scale down even more */
+        @media (max-width: 380px) {
+            .habit-info {
+                flex: 0 0 22%;
             }
 
             .habit-name {
-                font-size: 15px;
+                font-size: 12px;
             }
 
             .day-circle {
-                width: 32px;
-                height: 32px;
+                width: 24px;
+                height: 24px;
             }
 
             .day-label {
-                font-size: 8px;
+                font-size: 6px;
             }
 
             .week-label {
-                font-size: 8px;
+                font-size: 6px;
+            }
+
+            .week-tracker {
+                gap: 2px;
+            }
+
+            .week-tracker.has-line::before {
+                top: 12px;
             }
 
             .streak-circle {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
             }
 
-            /* Stack leaderboard columns more aggressively */
-            .leaderboard-table th:nth-child(4),
-            .leaderboard-table td:nth-child(4) {
-                display: none;
+            .streak-subtitle {
+                font-size: 7px;
             }
 
-            .modal-content {
-                padding: 20px 16px;
-            }
-        }
-
-        /* Landscape orientation on mobile */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .habit-card {
-                flex-direction: row;
+            .btn-checkin {
+                padding: 6px 10px;
+                font-size: 10px;
             }
 
-            .habit-info {
-                flex: 0 0 30%;
-            }
-
-            .habit-progress {
-                flex-direction: row;
-            }
-
-            .week-section {
-                width: auto;
-            }
-
-            .day-circle {
-                width: 32px;
-                height: 32px;
-            }
-        }
-
-        /* Tablet (768px - 1024px) */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            .container {
-                max-width: 100%;
-                padding: 24px;
-            }
-
-            .habit-card {
-                gap: 16px;
-            }
-
-            .day-circle {
-                width: 40px;
-                height: 40px;
+            .card-title {
+                font-size: 14px;
             }
 
             .leaderboard-table {
-                font-size: 13px;
+                font-size: 9px;
             }
         }
 
@@ -1535,14 +1498,8 @@
             .btn-secondary,
             .btn-checkin,
             .tab,
-            .tag-option,
             .btn-edit-habit {
-                min-height: 44px; /* iOS recommended touch target */
-                min-width: 44px;
-            }
-
-            .habit-card {
-                cursor: default; /* Remove pointer cursor on touch devices */
+                min-height: 36px; /* Slightly smaller for horizontal layout */
             }
         }
 
@@ -1557,17 +1514,18 @@
         /* Safe area for notched phones (iPhone X, etc) */
         @supports (padding: max(0px)) {
             body {
-                padding-left: max(12px, env(safe-area-inset-left));
-                padding-right: max(12px, env(safe-area-inset-right));
-                padding-bottom: max(12px, env(safe-area-inset-bottom));
+                padding-left: max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
             }
 
             .header {
-                padding-left: max(16px, env(safe-area-inset-left));
-                padding-right: max(16px, env(safe-area-inset-right));
-                padding-top: max(16px, env(safe-area-inset-top));
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-top: max(12px, env(safe-area-inset-top));
             }
         }
+
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
@@ -1934,6 +1892,8 @@ async function signup() {
     showLoading();
 
     try {
+        console.log('Attempting signup for:', email);
+        
         // Step 1: Create auth user
         const { data: authData, error: authError } = await sb.auth.signUp({
             email: email,
@@ -1943,13 +1903,32 @@ async function signup() {
             }
         });
 
-        if (authError) throw authError;
+        console.log('Auth signup result:', { authData, authError });
+
+        if (authError) {
+            console.error('Auth error:', authError);
+            throw authError;
+        }
 
         if (!authData || !authData.user) {
             throw new Error('Signup failed - no user data returned');
         }
 
-        // Step 2: Create profile
+        // Check if this is a NEW user or existing user
+        // Supabase may return success even if user exists (for security)
+        const isNewUser = authData.user.identities && authData.user.identities.length > 0;
+        
+        if (!isNewUser) {
+            // User already exists
+            console.log('User already exists in auth');
+            showToast('⚠️ This email is already registered. Try logging in instead!');
+            hideLoading();
+            return;
+        }
+
+        console.log('New user created, creating profile...');
+
+        // Step 2: Create profile (only for new users)
         const { error: profileError } = await sb
             .from('profiles')
             .insert([{
@@ -1957,7 +1936,24 @@ async function signup() {
                 name: name
             }]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            
+            // If profile creation fails, the auth user was still created
+            // This is a critical error - user is in limbo
+            if (profileError.code === '23505') {
+                // Profile already exists, this shouldn't happen for new user
+                // But let's handle it gracefully
+                showToast('⚠️ Account already exists. Please try logging in.');
+            } else {
+                showToast('❌ Account created but profile setup failed. Please contact support.');
+            }
+            
+            hideLoading();
+            return;
+        }
+
+        console.log('Profile created successfully');
 
         // Success!
         currentUser = {
@@ -1975,16 +1971,19 @@ async function signup() {
 
     } catch (error) {
         console.error('Signup error:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            status: error.status
+        });
         
         // Handle specific errors with friendly messages
-        if (error.code === '23505' || error.message?.includes('duplicate key')) {
-            showToast('⚠️ This email is already registered. Try logging in instead!');
+        if (error.message?.includes('User already registered')) {
+            showToast('⚠️ This email is already registered. Try logging in!');
         } else if (error.message?.includes('email')) {
             showToast('⚠️ Invalid email address');
         } else if (error.message?.includes('password')) {
             showToast('⚠️ Password is too weak. Use at least 6 characters.');
-        } else if (error.message?.includes('User already registered')) {
-            showToast('⚠️ This email is already registered. Try logging in!');
         } else {
             showToast('❌ Signup failed: ' + (error.message || 'Unknown error'));
         }
@@ -2011,17 +2010,26 @@ async function login() {
     showLoading();
 
     try {
+        console.log('Attempting login for:', email);
+        
         // Step 1: Sign in with Supabase Auth
         const { data: authData, error: authError } = await sb.auth.signInWithPassword({
             email: email,
             password: password
         });
 
-        if (authError) throw authError;
+        console.log('Login result:', { authData, authError });
+
+        if (authError) {
+            console.error('Login auth error:', authError);
+            throw authError;
+        }
 
         if (!authData || !authData.user) {
             throw new Error('Login failed - no user data returned');
         }
+
+        console.log('Auth successful, fetching profile...');
 
         // Step 2: Get user profile
         const { data: profile, error: profileError } = await sb
@@ -2030,7 +2038,30 @@ async function login() {
             .eq('id', authData.user.id)
             .single();
 
-        if (profileError) throw profileError;
+        console.log('Profile fetch result:', { profile, profileError });
+
+        if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            
+            // User exists in auth but not in profiles table
+            // This can happen if signup was interrupted
+            if (profileError.code === 'PGRST116') {
+                showToast('⚠️ Account incomplete. Please contact support or sign up again.');
+            } else {
+                throw profileError;
+            }
+            
+            hideLoading();
+            return;
+        }
+
+        if (!profile) {
+            showToast('⚠️ Profile not found. Please contact support.');
+            hideLoading();
+            return;
+        }
+
+        console.log('Login successful for user:', profile.name);
 
         // Success!
         currentUser = {
@@ -2048,14 +2079,19 @@ async function login() {
 
     } catch (error) {
         console.error('Login error:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            status: error.status
+        });
         
         // Handle specific errors
-        if (error.message?.includes('Invalid login credentials')) {
+        if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid email or password')) {
             showToast('❌ Invalid email or password. Please try again.');
         } else if (error.message?.includes('Email not confirmed')) {
             showToast('⚠️ Please confirm your email address.');
-        } else if (error.message?.includes('password')) {
-            showToast('❌ Incorrect password. Please try again.');
+        } else if (error.status === 400) {
+            showToast('❌ Invalid email or password. Please try again.');
         } else {
             showToast('❌ Login failed: ' + (error.message || 'Unknown error'));
         }
