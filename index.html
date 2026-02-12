@@ -1082,221 +1082,172 @@
         }
 
         /* ============================================ */
-        /* MOBILE HABIT CARD REDESIGN - STRONGER */
+        /* MOBILE HABIT CARD - ALWAYS ON (FOR TESTING) */
         /* ============================================ */
 
-        @media (max-width: 768px) {
-            /* FORCE block layout on mobile */
-            .habit-card {
-                display: block !important;
-                flex-direction: column !important;
-                padding: 12px !important;
-                position: relative !important;
-            }
-
-            .habit-card .habit-info,
-            .habit-card .habit-progress,
-            .habit-card .week-section,
-            .habit-card .streak-section,
-            .habit-card .habit-action {
-                display: block !important;
-                flex: none !important;
-                width: auto !important;
-            }
-
-            /* TOP ROW: Streak + Name + Button */
-            
-            /* Streak - far left, inline */
-            .habit-card .streak-section {
-                display: inline-block !important;
-                vertical-align: top !important;
-                width: 40px !important;
-                margin-right: 8px !important;
-                margin-bottom: 0 !important;
-            }
-
-            .habit-card .streak-badge {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 2px !important;
-            }
-
-            .habit-card .streak-circle {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 15px !important;
-            }
-
-            .habit-card .streak-subtitle {
-                font-size: 7px !important;
-            }
-
-            /* Name - center, inline, BIG */
-            .habit-card .habit-info {
-                display: inline-block !important;
-                vertical-align: top !important;
-                width: calc(100% - 170px) !important;
-                margin-bottom: 0 !important;
-            }
-
-            .habit-card .habit-name {
-                font-size: 18px !important;
-                font-weight: 700 !important;
-                line-height: 1.3 !important;
-                margin: 0 !important;
-                white-space: normal !important;
-            }
-
-            .habit-card .habit-tags {
-                margin-top: 4px !important;
-            }
-
-            .habit-card .habit-tag {
-                font-size: 8px !important;
-                padding: 2px 6px !important;
-            }
-
-            .habit-card .btn-edit-habit {
-                font-size: 12px !important;
-                padding: 3px 6px !important;
-            }
-
-            /* Button - far right, inline, BIG */
-            .habit-card .habit-action {
-                display: inline-block !important;
-                vertical-align: top !important;
-                float: right !important;
-                width: auto !important;
-                margin-top: -35px !important;
-            }
-
-            .habit-card .btn-checkin {
-                padding: 10px 16px !important;
-                font-size: 13px !important;
-                font-weight: 700 !important;
-                white-space: nowrap !important;
-                background: linear-gradient(135deg, #00D9FF 0%, #0099CC 100%) !important;
-                color: #0B1437 !important;
-                border: none !important;
-                border-radius: 10px !important;
-            }
-
-            .habit-card .btn-checkin.done {
-                background: rgba(76, 175, 80, 0.3) !important;
-                color: rgba(255, 255, 255, 0.6) !important;
-            }
-
-            /* BOTTOM ROW: Week dots + percentage */
-            
-            .habit-card .habit-progress {
-                display: block !important;
-                margin-top: 10px !important;
-                padding-left: 48px !important;
-                clear: both !important;
-                flex-direction: row !important;
-                gap: 0 !important;
-            }
-
-            .habit-card .week-section {
-                display: block !important;
-                width: 100% !important;
-                flex: none !important;
-            }
-
-            /* Hide "THIS WEEK" label */
-            .habit-card .week-section > div:first-child {
-                display: none !important;
-            }
-
-            /* Week tracker inline with small dots */
-            .habit-card .week-tracker {
-                display: inline-flex !important;
-                gap: 3px !important;
-                vertical-align: middle !important;
-                flex-wrap: nowrap !important;
-            }
-
-            .habit-card .day-dot {
-                display: inline-flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 2px !important;
-            }
-
-            .habit-card .day-circle {
-                width: 14px !important;
-                height: 14px !important;
-                min-width: 14px !important;
-                border-radius: 50% !important;
-            }
-
-            .habit-card .day-label {
-                font-size: 7px !important;
-            }
-
-            .habit-card .week-tracker.has-line::before {
-                top: 7px !important;
-                height: 2px !important;
-            }
-
-            /* Show percentage after dots using data attribute */
-            .habit-card .week-section[data-percent]::after {
-                content: attr(data-percent) !important;
-                display: inline-block !important;
-                margin-left: 12px !important;
-                font-size: 16px !important;
-                font-weight: 700 !important;
-                color: #00D9FF !important;
-                vertical-align: middle !important;
-            }
-
-            /* Other mobile fixes */
-            .card {
-                padding: 10px;
-                overflow: hidden;
-            }
-
-            .card-title {
-                font-size: 14px;
-            }
-
-            .btn-view-details {
-                padding: 8px 12px;
-                font-size: 10px;
-                background: rgba(0, 217, 255, 0.1);
-                border: 2px solid #00D9FF;
-                color: #00D9FF;
-            }
+        /* FORCE mobile layout on ALL screens for now */
+        .habit-card {
+            display: block !important;
+            flex-direction: column !important;
+            padding: 12px !important;
+            position: relative !important;
         }
 
-        /* Extra small screens */
-        @media (max-width: 380px) {
-            .habit-card .habit-info {
-                width: calc(100% - 150px) !important;
-            }
+        .habit-card .habit-info,
+        .habit-card .habit-progress,
+        .habit-card .week-section,
+        .habit-card .streak-section,
+        .habit-card .habit-action {
+            display: block !important;
+            flex: none !important;
+            width: auto !important;
+        }
 
-            .habit-card .habit-name {
-                font-size: 16px !important;
-            }
+        /* TOP ROW: Streak + Name + Button */
+        
+        /* Streak - far left, inline */
+        .habit-card .streak-section {
+            display: inline-block !important;
+            vertical-align: top !important;
+            width: 40px !important;
+            margin-right: 8px !important;
+            margin-bottom: 0 !important;
+        }
 
-            .habit-card .btn-checkin {
-                padding: 8px 12px !important;
-                font-size: 11px !important;
-            }
+        .habit-card .streak-badge {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 2px !important;
+        }
 
-            .habit-card .day-circle {
-                width: 12px !important;
-                height: 12px !important;
-            }
+        .habit-card .streak-circle {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 15px !important;
+        }
 
-            .habit-card .day-label {
-                font-size: 6px !important;
-            }
+        .habit-card .streak-subtitle {
+            font-size: 7px !important;
+        }
 
-            .habit-card .week-section[data-percent]::after {
-                font-size: 14px !important;
-            }
+        /* Name - center, inline, BIG */
+        .habit-card .habit-info {
+            display: inline-block !important;
+            vertical-align: top !important;
+            width: calc(100% - 170px) !important;
+            margin-bottom: 0 !important;
+        }
+
+        .habit-card .habit-name {
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            line-height: 1.3 !important;
+            margin: 0 !important;
+            white-space: normal !important;
+        }
+
+        .habit-card .habit-tags {
+            margin-top: 4px !important;
+        }
+
+        .habit-card .habit-tag {
+            font-size: 8px !important;
+            padding: 2px 6px !important;
+        }
+
+        .habit-card .btn-edit-habit {
+            font-size: 12px !important;
+            padding: 3px 6px !important;
+        }
+
+        /* Button - far right, inline, BIG */
+        .habit-card .habit-action {
+            display: inline-block !important;
+            vertical-align: top !important;
+            float: right !important;
+            width: auto !important;
+            margin-top: -35px !important;
+        }
+
+        .habit-card .btn-checkin {
+            padding: 10px 16px !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+            background: linear-gradient(135deg, #00D9FF 0%, #0099CC 100%) !important;
+            color: #0B1437 !important;
+            border: none !important;
+            border-radius: 10px !important;
+        }
+
+        .habit-card .btn-checkin.done {
+            background: rgba(76, 175, 80, 0.3) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* BOTTOM ROW: Week dots + percentage */
+        
+        .habit-card .habit-progress {
+            display: block !important;
+            margin-top: 10px !important;
+            padding-left: 48px !important;
+            clear: both !important;
+            flex-direction: row !important;
+            gap: 0 !important;
+        }
+
+        .habit-card .week-section {
+            display: block !important;
+            width: 100% !important;
+            flex: none !important;
+        }
+
+        /* Hide "THIS WEEK" label */
+        .habit-card .week-section > div:first-child {
+            display: none !important;
+        }
+
+        /* Week tracker inline with small dots */
+        .habit-card .week-tracker {
+            display: inline-flex !important;
+            gap: 3px !important;
+            vertical-align: middle !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .habit-card .day-dot {
+            display: inline-flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 2px !important;
+        }
+
+        .habit-card .day-circle {
+            width: 14px !important;
+            height: 14px !important;
+            min-width: 14px !important;
+            border-radius: 50% !important;
+        }
+
+        .habit-card .day-label {
+            font-size: 7px !important;
+        }
+
+        .habit-card .week-tracker.has-line::before {
+            top: 7px !important;
+            height: 2px !important;
+        }
+
+        /* Show percentage after dots using data attribute */
+        .habit-card .week-section[data-percent]::after {
+            content: attr(data-percent) !important;
+            display: inline-block !important;
+            margin-left: 12px !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: #00D9FF !important;
+            vertical-align: middle !important;
         }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
