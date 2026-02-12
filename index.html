@@ -3,17 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>StreakClub - Stay Consistent Together</title>
-    
-    <!-- PWA Meta Tags - ADD THESE LINES -->
-    <meta name="theme-color" content="#0B1437">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="StreakClub">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <meta name="description" content="Build Habits Together">
-    <!-- Continue with rest of head... -->
     <!-- Version 3.0 - 3 Tab Design -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -1392,15 +1383,20 @@ function hideLoading() {
 }
 
 function showToast(message, type = 'error') {
+    // Remove any existing toasts first
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type} active`;
     toast.textContent = message;
+    toast.style.zIndex = '99999'; // Ensure it's on top of everything
     document.body.appendChild(toast);
     
     setTimeout(() => {
         toast.classList.remove('active');
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 4000); // Show for 4 seconds (longer for auth messages)
 }
 
 function showSuccess(message) {
@@ -1421,18 +1417,24 @@ async function signup() {
 
     // Validation
     if (!name || !email || !password) {
-        showToast('Please fill in all fields');
+        showToast('⚠️ Please fill in all fields');
         return;
     }
 
     if (password.length < 6) {
-        showToast('Password must be at least 6 characters');
+        showToast('⚠️ Password must be at least 6 characters');
+        return;
+    }
+
+    // Email validation
+    if (!email.includes('@') || !email.includes('.')) {
+        showToast('⚠️ Please enter a valid email address');
         return;
     }
 
     // Check if Supabase is initialized
     if (!sb) {
-        showToast('Supabase not initialized. Check your credentials in the code.');
+        showToast('❌ Database connection failed. Please refresh the page.');
         console.error('Supabase client (sb) is null. Check SUPABASE_URL and SUPABASE_ANON_KEY');
         return;
     }
@@ -1451,6 +1453,10 @@ async function signup() {
 
         if (authError) throw authError;
 
+        if (!authData || !authData.user) {
+            throw new Error('Signup failed - no user data returned');
+        }
+
         // Step 2: Create profile
         const { error: profileError } = await sb
             .from('profiles')
@@ -1468,19 +1474,27 @@ async function signup() {
             email: email
         };
 
-        showSuccess('Account created successfully!');
-        await showMainApp();
+        showSuccess('✅ Account created successfully!');
+        
+        // Small delay so user sees the success message
+        setTimeout(() => {
+            showMainApp();
+        }, 1000);
 
     } catch (error) {
         console.error('Signup error:', error);
         
         // Handle specific errors with friendly messages
         if (error.code === '23505' || error.message?.includes('duplicate key')) {
-            showToast('This email is already registered. Try logging in instead!');
+            showToast('⚠️ This email is already registered. Try logging in instead!');
         } else if (error.message?.includes('email')) {
-            showToast('Invalid email address');
+            showToast('⚠️ Invalid email address');
+        } else if (error.message?.includes('password')) {
+            showToast('⚠️ Password is too weak. Use at least 6 characters.');
+        } else if (error.message?.includes('User already registered')) {
+            showToast('⚠️ This email is already registered. Try logging in!');
         } else {
-            showToast(error.message || 'Signup failed');
+            showToast('❌ Signup failed: ' + (error.message || 'Unknown error'));
         }
     } finally {
         hideLoading();
@@ -1492,7 +1506,13 @@ async function login() {
     const password = document.getElementById('loginPassword').value;
 
     if (!email || !password) {
-        showToast('Please fill in all fields');
+        showToast('⚠️ Please fill in all fields');
+        return;
+    }
+
+    // Check if Supabase is initialized
+    if (!sb) {
+        showToast('❌ Database connection failed. Please refresh the page.');
         return;
     }
 
@@ -1506,6 +1526,10 @@ async function login() {
         });
 
         if (authError) throw authError;
+
+        if (!authData || !authData.user) {
+            throw new Error('Login failed - no user data returned');
+        }
 
         // Step 2: Get user profile
         const { data: profile, error: profileError } = await sb
@@ -1523,12 +1547,26 @@ async function login() {
             email: authData.user.email
         };
 
-        showSuccess('Welcome back!');
-        await showMainApp();
+        showSuccess('✅ Welcome back, ' + profile.name + '!');
+        
+        // Small delay so user sees the success message
+        setTimeout(() => {
+            showMainApp();
+        }, 1000);
 
     } catch (error) {
         console.error('Login error:', error);
-        showToast(error.message || 'Login failed');
+        
+        // Handle specific errors
+        if (error.message?.includes('Invalid login credentials')) {
+            showToast('❌ Invalid email or password. Please try again.');
+        } else if (error.message?.includes('Email not confirmed')) {
+            showToast('⚠️ Please confirm your email address.');
+        } else if (error.message?.includes('password')) {
+            showToast('❌ Incorrect password. Please try again.');
+        } else {
+            showToast('❌ Login failed: ' + (error.message || 'Unknown error'));
+        }
     } finally {
         hideLoading();
     }
