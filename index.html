@@ -1759,32 +1759,25 @@
         </div>
     </div>
 
-    <script>
 // ============================================================================
-// PART 1: SUPABASE SETUP & AUTHENTICATION
+// AUTHENTICATION - COMPLETELY REWRITTEN
 // ============================================================================
 
 // ==================== CONFIGURATION ====================
-// ✅ YOUR SUPABASE CREDENTIALS (CONFIGURED!)
-
 const SUPABASE_URL = 'https://ledfedbgdkuhsrdotxtk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZGZlZGJnZGt1aHNyZG90eHRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODAxMjUsImV4cCI6MjA4NjM1NjEyNX0.xX8EIMJ9PBFO3g4G3XQW2_tfTZgpFYp-Xc3xi7eRkOo';
 
-// Initialize Supabase client IMMEDIATELY
+// Initialize Supabase client
 let sb = null;
 
-// Check if Supabase library loaded
 if (typeof supabase === 'undefined') {
     console.error('❌ Supabase library not loaded! Make sure you are running through a web server.');
 } else if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-    console.error('❌ Supabase credentials not set! Replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual values.');
-    console.log('Get them from: https://supabase.com → Your Project → Settings → API');
+    console.error('❌ Supabase credentials not set!');
 } else {
     try {
         sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase initialized successfully!');
-        console.log('URL:', SUPABASE_URL);
-        console.log('Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
+        console.log('✅ Supabase initialized');
     } catch (error) {
         console.error('❌ Error initializing Supabase:', error);
     }
@@ -1796,7 +1789,7 @@ let currentCircle = null;
 let currentDashboardCircle = null;
 let editingHabitId = null;
 
-// Data cache for performance
+// Data cache
 let cachedCircles = [];
 let cachedHabits = [];
 let cachedCheckins = [];
@@ -1822,16 +1815,14 @@ function hideLoading() {
 }
 
 function showToast(message, type = 'error') {
-    // Remove any existing toasts first
+    // Remove existing toasts
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(t => t.remove());
     
     const toast = document.createElement('div');
     toast.className = `toast ${type} active`;
     toast.textContent = message;
-    toast.style.zIndex = '99999'; // Ensure it's on top of everything
-    
-    // Position it at top center (above auth card) instead of bottom right
+    toast.style.zIndex = '99999';
     toast.style.position = 'fixed';
     toast.style.top = '20px';
     toast.style.left = '50%';
@@ -1846,14 +1837,14 @@ function showToast(message, type = 'error') {
     setTimeout(() => {
         toast.classList.remove('active');
         setTimeout(() => toast.remove(), 300);
-    }, 4000); // Show for 4 seconds (longer for auth messages)
+    }, 4000);
 }
 
 function showSuccess(message) {
     showToast(message, 'success');
 }
 
-// ==================== AUTHENTICATION ====================
+// ==================== SIMPLE AUTHENTICATION ====================
 
 function toggleAuth() {
     document.getElementById('loginForm').classList.toggle('hidden');
@@ -1862,130 +1853,91 @@ function toggleAuth() {
 
 async function signup() {
     const name = document.getElementById('signupName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
+    const email = document.getElementById('signupEmail').value.trim().toLowerCase();
     const password = document.getElementById('signupPassword').value;
 
-    // Validation
-    if (!name || !email || !password) {
-        showToast('⚠️ Please fill in all fields');
+    // Basic validation
+    if (!name) {
+        showToast('⚠️ Please enter your name');
         return;
     }
 
-    if (password.length < 6) {
+    if (!email) {
+        showToast('⚠️ Please enter your email');
+        return;
+    }
+
+    if (!password || password.length < 6) {
         showToast('⚠️ Password must be at least 6 characters');
         return;
     }
 
-    // Email validation
-    if (!email.includes('@') || !email.includes('.')) {
-        showToast('⚠️ Please enter a valid email address');
-        return;
-    }
-
-    // Check if Supabase is initialized
     if (!sb) {
-        showToast('❌ Database connection failed. Please refresh the page.');
-        console.error('Supabase client (sb) is null. Check SUPABASE_URL and SUPABASE_ANON_KEY');
+        showToast('❌ Not connected to database');
         return;
     }
 
     showLoading();
 
     try {
-        console.log('Attempting signup for:', email);
-        
-        // Step 1: Create auth user
-        const { data: authData, error: authError } = await sb.auth.signUp({
+        // Sign up with Supabase
+        const { data, error } = await sb.auth.signUp({
             email: email,
             password: password,
             options: {
-                data: { name: name }
+                data: { name: name },
+                emailRedirectTo: window.location.origin
             }
         });
 
-        console.log('Auth signup result:', { authData, authError });
+        if (error) throw error;
 
-        if (authError) {
-            console.error('Auth error:', authError);
-            throw authError;
+        if (!data?.user) {
+            throw new Error('No user data returned');
         }
 
-        if (!authData || !authData.user) {
-            throw new Error('Signup failed - no user data returned');
-        }
-
-        // Check if this is a NEW user or existing user
-        // Supabase may return success even if user exists (for security)
-        const isNewUser = authData.user.identities && authData.user.identities.length > 0;
-        
-        if (!isNewUser) {
-            // User already exists
-            console.log('User already exists in auth');
-            showToast('⚠️ This email is already registered. Try logging in instead!');
-            hideLoading();
-            return;
-        }
-
-        console.log('New user created, creating profile...');
-
-        // Step 2: Create profile (only for new users)
+        // Create profile
         const { error: profileError } = await sb
             .from('profiles')
-            .insert([{
-                id: authData.user.id,
+            .upsert([{
+                id: data.user.id,
                 name: name
-            }]);
+            }], { 
+                onConflict: 'id',
+                ignoreDuplicates: false 
+            });
 
         if (profileError) {
-            console.error('Profile creation error:', profileError);
-            
-            // If profile creation fails, the auth user was still created
-            // This is a critical error - user is in limbo
-            if (profileError.code === '23505') {
-                // Profile already exists, this shouldn't happen for new user
-                // But let's handle it gracefully
-                showToast('⚠️ Account already exists. Please try logging in.');
-            } else {
-                showToast('❌ Account created but profile setup failed. Please contact support.');
-            }
-            
-            hideLoading();
-            return;
+            console.error('Profile error:', profileError);
+            // Continue anyway - profile might already exist
         }
 
-        console.log('Profile created successfully');
-
-        // Success!
+        // Set current user
         currentUser = {
-            id: authData.user.id,
+            id: data.user.id,
             name: name,
             email: email
         };
 
-        showSuccess('✅ Account created successfully!');
+        showSuccess('✅ Account created!');
         
-        // Small delay so user sees the success message
         setTimeout(() => {
             showMainApp();
-        }, 1000);
+        }, 800);
 
     } catch (error) {
         console.error('Signup error:', error);
-        console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            status: error.status
-        });
         
-        // Handle specific errors with friendly messages
-        if (error.message?.includes('User already registered')) {
-            showToast('⚠️ This email is already registered. Try logging in!');
-        } else if (error.message?.includes('email')) {
-            showToast('⚠️ Invalid email address');
-        } else if (error.message?.includes('password')) {
-            showToast('⚠️ Password is too weak. Use at least 6 characters.');
+        // User-friendly error messages
+        if (error.message?.includes('already registered') || 
+            error.message?.includes('already been registered')) {
+            showToast('⚠️ Email already registered. Try logging in!');
+        } else if (error.message?.includes('Invalid email')) {
+            showToast('⚠️ Please enter a valid email address');
+        } else if (error.message?.includes('Password')) {
+            showToast('⚠️ Password must be at least 6 characters');
         } else {
-            showToast('❌ Signup failed: ' + (error.message || 'Unknown error'));
+            showToast('❌ Signup failed. Please try again.');
         }
     } finally {
         hideLoading();
@@ -1993,107 +1945,85 @@ async function signup() {
 }
 
 async function login() {
-    const email = document.getElementById('loginEmail').value.trim();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
 
     if (!email || !password) {
-        showToast('⚠️ Please fill in all fields');
+        showToast('⚠️ Please enter email and password');
         return;
     }
 
-    // Check if Supabase is initialized
     if (!sb) {
-        showToast('❌ Database connection failed. Please refresh the page.');
+        showToast('❌ Not connected to database');
         return;
     }
 
     showLoading();
 
     try {
-        console.log('Attempting login for:', email);
-        
-        // Step 1: Sign in with Supabase Auth
-        const { data: authData, error: authError } = await sb.auth.signInWithPassword({
+        // Sign in
+        const { data, error } = await sb.auth.signInWithPassword({
             email: email,
             password: password
         });
 
-        console.log('Login result:', { authData, authError });
+        if (error) throw error;
 
-        if (authError) {
-            console.error('Login auth error:', authError);
-            throw authError;
+        if (!data?.user) {
+            throw new Error('No user data returned');
         }
 
-        if (!authData || !authData.user) {
-            throw new Error('Login failed - no user data returned');
-        }
-
-        console.log('Auth successful, fetching profile...');
-
-        // Step 2: Get user profile
+        // Get profile
         const { data: profile, error: profileError } = await sb
             .from('profiles')
             .select('*')
-            .eq('id', authData.user.id)
+            .eq('id', data.user.id)
             .single();
 
-        console.log('Profile fetch result:', { profile, profileError });
-
-        if (profileError) {
-            console.error('Profile fetch error:', profileError);
+        if (profileError || !profile) {
+            // Profile doesn't exist - create it
+            const userName = data.user.user_metadata?.name || 'User';
             
-            // User exists in auth but not in profiles table
-            // This can happen if signup was interrupted
-            if (profileError.code === 'PGRST116') {
-                showToast('⚠️ Account incomplete. Please contact support or sign up again.');
-            } else {
-                throw profileError;
+            const { error: createError } = await sb
+                .from('profiles')
+                .upsert([{
+                    id: data.user.id,
+                    name: userName
+                }]);
+
+            if (createError) {
+                console.error('Profile creation error:', createError);
             }
-            
-            hideLoading();
-            return;
+
+            currentUser = {
+                id: data.user.id,
+                name: userName,
+                email: data.user.email
+            };
+        } else {
+            currentUser = {
+                id: data.user.id,
+                name: profile.name,
+                email: data.user.email
+            };
         }
 
-        if (!profile) {
-            showToast('⚠️ Profile not found. Please contact support.');
-            hideLoading();
-            return;
-        }
-
-        console.log('Login successful for user:', profile.name);
-
-        // Success!
-        currentUser = {
-            id: authData.user.id,
-            name: profile.name,
-            email: authData.user.email
-        };
-
-        showSuccess('✅ Welcome back, ' + profile.name + '!');
+        showSuccess('✅ Welcome back!');
         
-        // Small delay so user sees the success message
         setTimeout(() => {
             showMainApp();
-        }, 1000);
+        }, 800);
 
     } catch (error) {
         console.error('Login error:', error);
-        console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            status: error.status
-        });
         
-        // Handle specific errors
-        if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid email or password')) {
-            showToast('❌ Invalid email or password. Please try again.');
+        if (error.message?.includes('Invalid login credentials') || 
+            error.message?.includes('Invalid')) {
+            showToast('❌ Invalid email or password');
         } else if (error.message?.includes('Email not confirmed')) {
-            showToast('⚠️ Please confirm your email address.');
-        } else if (error.status === 400) {
-            showToast('❌ Invalid email or password. Please try again.');
+            showToast('⚠️ Please check your email to confirm your account');
         } else {
-            showToast('❌ Login failed: ' + (error.message || 'Unknown error'));
+            showToast('❌ Login failed. Please try again.');
         }
     } finally {
         hideLoading();
@@ -2106,20 +2036,18 @@ async function logout() {
     try {
         await sb.auth.signOut();
         
-        // Clear state
         currentUser = null;
         cachedCircles = [];
         cachedHabits = [];
         cachedCheckins = [];
         cachedProfiles = {};
         
-        // Show auth screen
         document.getElementById('authScreen').classList.remove('hidden');
         document.getElementById('mainApp').classList.add('hidden');
 
     } catch (error) {
         console.error('Logout error:', error);
-        showToast('Logout failed');
+        showToast('❌ Logout failed');
     } finally {
         hideLoading();
     }
@@ -2130,10 +2058,7 @@ async function showMainApp() {
     document.getElementById('mainApp').classList.remove('hidden');
     document.getElementById('userName').textContent = currentUser.name;
     
-    // Load user data
     await loadAllData();
-    
-    // Show clubs tab by default
     switchTab('clubs');
 }
 
@@ -2143,40 +2068,36 @@ async function loadAllData() {
     showLoading();
     
     try {
-        // Load in parallel for speed
         await Promise.all([
             loadCirclesAndMembers(),
             loadHabits(),
             loadCheckins()
         ]);
         
-        console.log('✅ All data loaded successfully');
+        console.log('✅ Data loaded');
         
     } catch (error) {
         console.error('Error loading data:', error);
-        showToast('Error loading data: ' + error.message);
+        showToast('⚠️ Some data failed to load');
     } finally {
         hideLoading();
     }
 }
 
 async function loadCirclesAndMembers() {
-    // Step 1: Get circles user is a member of
     const { data: memberships, error: memberError } = await sb
         .from('circle_members')
         .select('circle_id')
         .eq('user_id', currentUser.id);
 
     if (memberError) throw memberError;
-
-    if (memberships.length === 0) {
+    if (!memberships || memberships.length === 0) {
         cachedCircles = [];
         return;
     }
 
     const circleIds = memberships.map(m => m.circle_id);
 
-    // Step 2: Get circle details
     const { data: circlesData, error: circlesError } = await sb
         .from('circles')
         .select('*')
@@ -2184,7 +2105,6 @@ async function loadCirclesAndMembers() {
 
     if (circlesError) throw circlesError;
 
-    // Step 3: Get ALL members for these circles
     const { data: allMembers, error: allMembersError } = await sb
         .from('circle_members')
         .select('*')
@@ -2192,7 +2112,6 @@ async function loadCirclesAndMembers() {
 
     if (allMembersError) throw allMembersError;
 
-    // Step 4: Get profiles for all members
     const allMemberIds = [...new Set(allMembers.map(m => m.user_id))];
     
     const { data: profiles, error: profilesError } = await sb
@@ -2202,24 +2121,19 @@ async function loadCirclesAndMembers() {
 
     if (profilesError) throw profilesError;
 
-    // Cache profiles
     profiles.forEach(p => {
         cachedProfiles[p.id] = { id: p.id, name: p.name, email: '' };
     });
 
-    // Attach members to circles
     cachedCircles = circlesData.map(circle => ({
         ...circle,
         members: allMembers
             .filter(m => m.circle_id === circle.id)
             .map(m => m.user_id)
     }));
-
-    console.log(`✅ Loaded ${cachedCircles.length} circles`);
 }
 
 async function loadHabits() {
-    // Get user's habits with circle tags
     const { data: habitsData, error: habitsError } = await sb
         .from('habits')
         .select(`
@@ -2232,7 +2146,6 @@ async function loadHabits() {
 
     if (habitsError) throw habitsError;
 
-    // Transform data
     cachedHabits = habitsData.map(h => ({
         id: h.id,
         userId: h.user_id,
@@ -2242,8 +2155,6 @@ async function loadHabits() {
         circleTags: h.habit_circle_tags.map(t => t.circle_id),
         createdAt: h.created_at
     }));
-
-    console.log(`✅ Loaded ${cachedHabits.length} habits`);
 }
 
 async function loadCheckins() {
@@ -2254,7 +2165,6 @@ async function loadCheckins() {
 
     const habitIds = cachedHabits.map(h => h.id);
 
-    // Get check-ins for user's habits
     const { data: checkinsData, error: checkinsError } = await sb
         .from('checkins')
         .select('*')
@@ -2262,82 +2172,34 @@ async function loadCheckins() {
 
     if (checkinsError) throw checkinsError;
 
-    // Transform data
     cachedCheckins = checkinsData.map(c => ({
         id: c.id,
         userId: c.user_id,
         habitId: c.habit_id,
         date: c.checked_in_at
     }));
-
-    console.log(`✅ Loaded ${cachedCheckins.length} check-ins`);
 }
 
-// ==================== AUTO-LOGIN ON PAGE LOAD ====================
+// ==================== AUTO-LOGIN ====================
 
 async function initializeApp() {
-    // Check if Supabase loaded
-    if (typeof supabase === 'undefined') {
-        showToast('❌ Supabase library failed to load. Please run this through a web server (see console for instructions)', 'error');
-        console.error(`
-========================================
-SUPABASE LIBRARY NOT LOADED
-========================================
-
-This happens when opening HTML as a local file.
-
-SOLUTION: Run a local web server
-
-Option 1 - Python:
-  python3 -m http.server 8000
-  Then open: http://localhost:8000/streakclub_part1.html
-
-Option 2 - Node.js:
-  npx serve
-  
-Option 3 - VS Code:
-  Install "Live Server" extension
-  Right-click file → Open with Live Server
-
-========================================
-        `);
-        return;
-    }
-
-    // Check if credentials are set
-    if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
-        showToast('⚠️ Please add your Supabase credentials to the code', 'error');
-        console.error(`
-========================================
-SUPABASE NOT CONFIGURED
-========================================
-
-You need to replace these lines (around line 10):
-
-const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
-
-With your actual Supabase credentials from:
-https://supabase.com → Your Project → Settings → API
-
-========================================
-        `);
+    if (!sb) {
+        console.error('Supabase not initialized');
+        document.getElementById('authScreen').classList.remove('hidden');
         return;
     }
 
     try {
-        // Check if user is already logged in
         const { data: { session } } = await sb.auth.getSession();
         
-        if (session) {
-            // User is logged in, load their profile
-            const { data: profile, error } = await sb
+        if (session?.user) {
+            const { data: profile } = await sb
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .single();
 
-            if (!error && profile) {
+            if (profile) {
                 currentUser = {
                     id: session.user.id,
                     name: profile.name,
@@ -2347,23 +2209,15 @@ https://supabase.com → Your Project → Settings → API
                 return;
             }
         }
-        
-        // Not logged in, show auth screen
-        document.getElementById('authScreen').classList.remove('hidden');
     } catch (error) {
-        console.error('Initialization error:', error);
-        showToast('Error initializing app: ' + error.message);
-        document.getElementById('authScreen').classList.remove('hidden');
+        console.error('Init error:', error);
     }
+    
+    document.getElementById('authScreen').classList.remove('hidden');
 }
 
-// Initialize app when page loads
+// Initialize on page load
 initializeApp();
-
-// ============================================================================
-// END OF PART 1
-// Next: Part 2 will handle Circles, Part 3 will handle Habits, etc.
-// ============================================================================
 // ============================================================================
 // PART 2: CIRCLES & NAVIGATION
 // ============================================================================
