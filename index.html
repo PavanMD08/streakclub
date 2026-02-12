@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>StreakClub - Stay Consistent Together</title>
+    <!-- Version 3.0 - 3 Tab Design -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy: #0B1437;
+            --navy-light: #1A2855;
+            --electric-blue: #00D9FF;
+            --electric-blue-dark: #00B8D4;
+            --electric-glow: rgba(0, 217, 255, 0.3);
+            --glass-white: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #EF4444;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 8px 32px var(--electric-glow);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--navy);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(26, 40, 85, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--electric-blue);
+        }
+
+        .user-menu {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            background: rgba(26, 40, 85, 0.6);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 0;
+        }
+
+        .tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab.active {
+            color: var(--electric-blue);
+            border-bottom-color: var(--electric-blue);
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        /* Main Content */
+        main {
+            padding: 32px 0 80px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--electric-blue) 0%, var(--electric-blue-dark) 100%);
+            color: var(--navy);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-glow);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px var(--electric-glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--electric-blue);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            border-color: rgba(0, 217, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-badge {
+            background: rgba(0, 217, 255, 0.15);
+            color: var(--electric-blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Leaderboard */
+        .leaderboard-mini {
+            margin: 16px 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .rank {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--text-tertiary);
+            width: 30px;
+            text-align: center;
+        }
+
+        .rank.top {
+            color: var(--electric-blue);
+        }
+
+        .member-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .consistency-badge {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Insights Box */
+        .insights-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+        }
+
+        .insight-icon {
+            font-size: 20px;
+        }
+
+        .insight-win {
+            color: var(--success);
+        }
+
+        .insight-nudge {
+            color: var(--warning);
+        }
+
+        /* Feed Items */
+        .feed-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .feed-item {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .feed-item:hover {
+            border-color: rgba(0, 217, 255, 0.3);
+        }
+
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .feed-user {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .feed-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .feed-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .feed-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .feed-badge.streak {
+            background: rgba(255, 152, 0, 0.15);
+            color: var(--warning);
+        }
+
+        .feed-badge.checkin {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+        }
+
+        /* Habits (from original design) */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 900;
+        }
+
+        .btn-add {
+            background: var(--electric-blue);
+            color: var(--navy);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Habit Card */
+        .habit-card {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        .habit-card:hover {
+            border-color: var(--electric-blue);
+            transform: translateX(4px);
+        }
+
+        .habit-info {
+            flex: 0 0 30%;
+            min-width: 0;
+        }
+
+        .habit-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .habit-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .habit-tag {
+            background: rgba(0, 217, 255, 0.15);
+            color: var(--electric-blue);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .habit-progress {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .week-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .week-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+        }
+
+        .week-tracker {
+            display: flex;
+            gap: 5px;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .week-tracker.has-line::before {
+            content: '';
+            position: absolute;
+            top: 22.5px;
+            left: var(--line-left, 22.5px);
+            width: var(--line-width, 0px);
+            height: 3px;
+            background: linear-gradient(90deg, var(--electric-blue) 0%, var(--electric-blue-dark) 100%);
+            z-index: 0;
+            box-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+        }
+
+        .day-dot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .day-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+
+        .day-circle.completed {
+            background: var(--electric-blue);
+            box-shadow: 0 0 12px var(--electric-glow);
+        }
+
+        .day-circle.missed {
+            background: #EF4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .day-label {
+            font-size: 8px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            line-height: 1;
+        }
+
+        .day-circle.completed + .day-label {
+            color: var(--electric-blue);
+            text-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+        }
+
+        .streak-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 120px;
+            align-items: center;
+        }
+
+        .streak-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .streak-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 217, 255, 0.15);
+            border: 2px solid var(--electric-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--electric-blue);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+
+        .streak-circle.empty {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-tertiary);
+            box-shadow: none;
+        }
+
+        .streak-subtitle {
+            font-size: 9px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            text-align: center;
+            max-width: 100px;
+        }
+
+        .btn-checkin {
+            background: linear-gradient(135deg, var(--electric-blue) 0%, var(--electric-blue-dark) 100%);
+            color: var(--navy);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow-glow);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .btn-checkin:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-checkin.done {
+            background: rgba(76, 175, 80, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            color: var(--text-tertiary);
+            margin-bottom: 24px;
+        }
+
+        /* Auth */
+        .auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-box {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 460px;
+            width: 100%;
+        }
+
+        .auth-box h1 {
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .auth-box h1 span {
+            color: var(--electric-blue);
+        }
+
+        .auth-box > p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-toggle a {
+            color: var(--electric-blue);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(26, 40, 85, 0.95);
+            backdrop-filter: blur(40px);
+            padding: 48px;
+            border-radius: 24px;
+            max-width: 540px;
+            width: 100%;
+            border: 1px solid var(--glass-border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .btn-close:hover {
+            color: var(--text-primary);
+        }
+
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .tag-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tag-option:hover {
+            border-color: var(--electric-blue);
+        }
+
+        .tag-option.selected {
+            background: rgba(0, 217, 255, 0.15);
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        /* Dashboard */
+        .dashboard-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .dashboard-tab.active {
+            color: var(--electric-blue);
+            border-bottom-color: var(--electric-blue);
+        }
+
+        .dashboard-tab-content {
+            display: none;
+        }
+
+        .dashboard-tab-content.active {
+            display: block;
+        }
+
+        /* Leaderboard Table */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table thead {
+            background: rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .leaderboard-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .leaderboard-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .leaderboard-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .leaderboard-table tbody tr.current-user {
+            background: rgba(0, 217, 255, 0.08);
+            border: 1px solid var(--electric-blue);
+        }
+
+        .leaderboard-table td {
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        .table-rank {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--text-tertiary);
+        }
+
+        .table-rank.top {
+            color: var(--electric-blue);
+        }
+
+        .table-name {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .table-consistency {
+            background: rgba(0, 217, 255, 0.15);
+            color: var(--electric-blue);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-block;
+            text-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+        }
+
+        .table-streak {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .table-last-checkin {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        /* Dashboard Feed */
+        .dashboard-feed-item {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        .dashboard-feed-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .feed-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .feed-item-user {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .feed-item-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .feed-item-action {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .feed-item-action strong {
+            color: var(--electric-blue);
+        }
+
+        /* Position Banner */
+        .position-banner {
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            border: 2px solid;
+        }
+
+        .position-banner.first-place {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+        .position-banner.top-three {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        .position-banner.needs-improvement {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        /* Today's Status Section */
+        .today-status-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        .status-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+        }
+
+        .status-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-item {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .status-item.status-good {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .status-item.status-bad {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .status-item.status-warning {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .status-item.status-neutral {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .btn-check-in-cta {
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.95);
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            z-index: 10000;
+            max-width: 90%;
+            text-align: center;
+            animation: slideInFromTop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.success {
+            background: rgba(76, 175, 80, 0.95);
+        }
+
+        .toast.active {
+            display: block;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                transform: translate(-50%, -100px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        /* Edit Habit Button */
+        .btn-edit-habit {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-edit-habit:hover {
+            background: rgba(0, 217, 255, 0.15);
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+    </style>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-box">
+            <h1>Streak<span>Club</span></h1>
+            <p>Stay consistent together</p>
+            
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" style="width: 100%;" onclick="login()">Log In</button>
+                <div class="auth-toggle">
+                    Don't have an account? <a onclick="toggleAuth()">Sign Up</a>
+                </div>
+            </div>
+
+            <div id="signupForm" class="hidden">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" style="width: 100%;" onclick="signup()">Sign Up</button>
+                <div class="auth-toggle">
+                    Already have an account? <a onclick="toggleAuth()">Log In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">Streak<span>Club</span></div>
+                    <div class="user-menu">
+                        <span class="user-name" id="userName"></span>
+                        <button class="btn-logout" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="tabs-nav">
+            <div class="container">
+                <div class="tabs-container">
+                    <button class="tab active" onclick="switchTab('clubs')">My StreakClubs</button>
+                    <button class="tab" onclick="switchTab('feed')">Feed</button>
+                    <button class="tab" onclick="switchTab('habits')">My Habits</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="container">
+            <!-- My StreakClubs Tab -->
+            <div id="clubsTab" class="tab-content active">
+                <div style="display: flex; justify-content: flex-end; margin: 24px 0;">
+                    <button class="btn-primary" onclick="openCreateCircleModal()">+ Create StreakClub</button>
+                </div>
+                <div id="clubsList"></div>
+            </div>
+
+            <!-- Feed Tab -->
+            <div id="feedTab" class="tab-content">
+                <div class="feed-container">
+                    <h2 class="section-title" style="margin: 24px 0;">Activity Feed</h2>
+                    <div id="feedList"></div>
+                </div>
+            </div>
+
+            <!-- My Habits Tab -->
+            <div id="habitsTab" class="tab-content">
+                <div class="section-header" style="margin: 24px 0;">
+                    <h2 class="section-title">My Habits</h2>
+                    <button class="btn-add" onclick="openAddHabitModal()">+ Add Habit</button>
+                </div>
+                <div id="habitsList"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="createCircleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create StreakClub</h3>
+                <button class="btn-close" onclick="closeCreateCircleModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Club Name</label>
+                <input type="text" id="circleName" placeholder="e.g., Fitness Warriors">
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createCircle()">Create StreakClub</button>
+        </div>
+    </div>
+
+    <div id="inviteLinkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Invite Friends</h3>
+                <button class="btn-close" onclick="closeInviteLinkModal()">&times;</button>
+            </div>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Share this link:</p>
+            <div class="form-group">
+                <input type="text" id="inviteLink" readonly style="background: rgba(255, 255, 255, 0.05);">
+            </div>
+            <button class="btn-secondary" onclick="copyInviteLink()" style="width: 100%;">Copy Link</button>
+        </div>
+    </div>
+
+    <div id="addHabitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Habit</h3>
+                <button class="btn-close" onclick="closeAddHabitModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="habitName" placeholder="e.g., Run 5km, Read 20 pages">
+            </div>
+            <div class="form-group">
+                <label>Frequency (times per week)</label>
+                <input type="number" id="habitFrequency" min="1" max="7" value="3">
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="habitPrivate" style="width: auto;">
+                    <span>Keep this habit private (don't share with any circles)</span>
+                </label>
+            </div>
+            <div class="form-group" id="circleTagGroup">
+                <label>Tag StreakClubs (optional - updates all tagged circles when you check in)</label>
+                <div id="circleTagSelector" class="tag-selector"></div>
+                <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">
+                    Select circles to share this habit with. One check-in updates all tagged circles.
+                </p>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="addHabit()">Add Habit</button>
+        </div>
+    </div>
+
+    <!-- Edit Habit Modal -->
+    <div id="editHabitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Habit</h3>
+                <button class="btn-close" onclick="closeEditHabitModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="editHabitName" placeholder="e.g., Run 5km, Read 20 pages">
+            </div>
+            <div class="form-group">
+                <label>Frequency (times per week)</label>
+                <input type="number" id="editHabitFrequency" min="1" max="7" value="3">
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="editHabitPrivate" style="width: auto;">
+                    <span>Keep this habit private</span>
+                </label>
+            </div>
+            <div class="form-group" id="editCircleTagGroup">
+                <label>Tag StreakClubs</label>
+                <div id="editCircleTagSelector" class="tag-selector"></div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-secondary" onclick="deleteHabit()" style="flex: 1; background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger);">Delete</button>
+                <button class="btn-primary" onclick="saveEditHabit()" style="flex: 1;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Circle Dashboard Modal -->
+    <div id="circleDashboardModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="dashboardCircleName" style="margin-bottom: 4px;"></h3>
+                    <p id="dashboardMemberCount" style="font-size: 14px; color: var(--text-secondary); margin: 0;"></p>
+                </div>
+                <button class="btn-close" onclick="closeCircleDashboard()">&times;</button>
+            </div>
+
+            <!-- Dashboard Tabs -->
+            <div style="display: flex; gap: 0; border-bottom: 2px solid var(--glass-border); margin-bottom: 24px;">
+                <button class="dashboard-tab active" onclick="switchDashboardTab('leaderboard')">Leaderboard</button>
+                <button class="dashboard-tab" onclick="switchDashboardTab('feed')">Feed</button>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div style="flex: 1; overflow-y: auto;">
+                <!-- Leaderboard Tab -->
+                <div id="dashboardLeaderboardTab" class="dashboard-tab-content active">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Name</th>
+                                <th style="width: 120px;">Consistency</th>
+                                <th style="width: 100px;">Streak</th>
+                                <th style="width: 140px;">Last Check-in</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardLeaderboardBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Feed Tab -->
+                <div id="dashboardFeedTab" class="dashboard-tab-content">
+                    <div id="dashboardFeedList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// ============================================================================
+// PART 1: SUPABASE SETUP & AUTHENTICATION
+// ============================================================================
+
+// ==================== CONFIGURATION ====================
+// ✅ YOUR SUPABASE CREDENTIALS (CONFIGURED!)
+
+const SUPABASE_URL = 'https://ledfedbgdkuhsrdotxtk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZGZlZGJnZGt1aHNyZG90eHRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODAxMjUsImV4cCI6MjA4NjM1NjEyNX0.xX8EIMJ9PBFO3g4G3XQW2_tfTZgpFYp-Xc3xi7eRkOo';
+
+// Initialize Supabase client IMMEDIATELY
+let sb = null;
+
+// Check if Supabase library loaded
+if (typeof supabase === 'undefined') {
+    console.error('❌ Supabase library not loaded! Make sure you are running through a web server.');
+} else if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+    console.error('❌ Supabase credentials not set! Replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual values.');
+    console.log('Get them from: https://supabase.com → Your Project → Settings → API');
+} else {
+    try {
+        sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase initialized successfully!');
+        console.log('URL:', SUPABASE_URL);
+        console.log('Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
+    } catch (error) {
+        console.error('❌ Error initializing Supabase:', error);
+    }
+}
+
+// ==================== GLOBAL STATE ====================
+let currentUser = null;
+let currentCircle = null;
+let currentDashboardCircle = null;
+let editingHabitId = null;
+
+// Data cache for performance
+let cachedCircles = [];
+let cachedHabits = [];
+let cachedCheckins = [];
+let cachedProfiles = {};
+
+// ==================== UTILITY FUNCTIONS ====================
+
+function showLoading() {
+    let overlay = document.getElementById('loadingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = '<div class="spinner"></div>';
+        document.body.appendChild(overlay);
+    }
+    overlay.classList.add('active');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function showToast(message, type = 'error') {
+    // Remove any existing toasts first
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type} active`;
+    toast.textContent = message;
+    toast.style.zIndex = '99999'; // Ensure it's on top of everything
+    
+    // Position it at top center (above auth card) instead of bottom right
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.bottom = 'auto';
+    toast.style.right = 'auto';
+    toast.style.maxWidth = '90%';
+    toast.style.width = 'auto';
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000); // Show for 4 seconds (longer for auth messages)
+}
+
+function showSuccess(message) {
+    showToast(message, 'success');
+}
+
+// ==================== AUTHENTICATION ====================
+
+function toggleAuth() {
+    document.getElementById('loginForm').classList.toggle('hidden');
+    document.getElementById('signupForm').classList.toggle('hidden');
+}
+
+async function signup() {
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+
+    // Validation
+    if (!name || !email || !password) {
+        showToast('⚠️ Please fill in all fields');
+        return;
+    }
+
+    if (password.length < 6) {
+        showToast('⚠️ Password must be at least 6 characters');
+        return;
+    }
+
+    // Email validation
+    if (!email.includes('@') || !email.includes('.')) {
+        showToast('⚠️ Please enter a valid email address');
+        return;
+    }
+
+    // Check if Supabase is initialized
+    if (!sb) {
+        showToast('❌ Database connection failed. Please refresh the page.');
+        console.error('Supabase client (sb) is null. Check SUPABASE_URL and SUPABASE_ANON_KEY');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Step 1: Create auth user
+        const { data: authData, error: authError } = await sb.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: { name: name }
+            }
+        });
+
+        if (authError) throw authError;
+
+        if (!authData || !authData.user) {
+            throw new Error('Signup failed - no user data returned');
+        }
+
+        // Step 2: Create profile
+        const { error: profileError } = await sb
+            .from('profiles')
+            .insert([{
+                id: authData.user.id,
+                name: name
+            }]);
+
+        if (profileError) throw profileError;
+
+        // Success!
+        currentUser = {
+            id: authData.user.id,
+            name: name,
+            email: email
+        };
+
+        showSuccess('✅ Account created successfully!');
+        
+        // Small delay so user sees the success message
+        setTimeout(() => {
+            showMainApp();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        
+        // Handle specific errors with friendly messages
+        if (error.code === '23505' || error.message?.includes('duplicate key')) {
+            showToast('⚠️ This email is already registered. Try logging in instead!');
+        } else if (error.message?.includes('email')) {
+            showToast('⚠️ Invalid email address');
+        } else if (error.message?.includes('password')) {
+            showToast('⚠️ Password is too weak. Use at least 6 characters.');
+        } else if (error.message?.includes('User already registered')) {
+            showToast('⚠️ This email is already registered. Try logging in!');
+        } else {
+            showToast('❌ Signup failed: ' + (error.message || 'Unknown error'));
+        }
+    } finally {
+        hideLoading();
+    }
+}
+
+async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        showToast('⚠️ Please fill in all fields');
+        return;
+    }
+
+    // Check if Supabase is initialized
+    if (!sb) {
+        showToast('❌ Database connection failed. Please refresh the page.');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Step 1: Sign in with Supabase Auth
+        const { data: authData, error: authError } = await sb.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (authError) throw authError;
+
+        if (!authData || !authData.user) {
+            throw new Error('Login failed - no user data returned');
+        }
+
+        // Step 2: Get user profile
+        const { data: profile, error: profileError } = await sb
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (profileError) throw profileError;
+
+        // Success!
+        currentUser = {
+            id: authData.user.id,
+            name: profile.name,
+            email: authData.user.email
+        };
+
+        showSuccess('✅ Welcome back, ' + profile.name + '!');
+        
+        // Small delay so user sees the success message
+        setTimeout(() => {
+            showMainApp();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        // Handle specific errors
+        if (error.message?.includes('Invalid login credentials')) {
+            showToast('❌ Invalid email or password. Please try again.');
+        } else if (error.message?.includes('Email not confirmed')) {
+            showToast('⚠️ Please confirm your email address.');
+        } else if (error.message?.includes('password')) {
+            showToast('❌ Incorrect password. Please try again.');
+        } else {
+            showToast('❌ Login failed: ' + (error.message || 'Unknown error'));
+        }
+    } finally {
+        hideLoading();
+    }
+}
+
+async function logout() {
+    showLoading();
+
+    try {
+        await sb.auth.signOut();
+        
+        // Clear state
+        currentUser = null;
+        cachedCircles = [];
+        cachedHabits = [];
+        cachedCheckins = [];
+        cachedProfiles = {};
+        
+        // Show auth screen
+        document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+
+    } catch (error) {
+        console.error('Logout error:', error);
+        showToast('Logout failed');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function showMainApp() {
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userName').textContent = currentUser.name;
+    
+    // Load user data
+    await loadAllData();
+    
+    // Show clubs tab by default
+    switchTab('clubs');
+}
+
+// ==================== DATA LOADING ====================
+
+async function loadAllData() {
+    showLoading();
+    
+    try {
+        // Load in parallel for speed
+        await Promise.all([
+            loadCirclesAndMembers(),
+            loadHabits(),
+            loadCheckins()
+        ]);
+        
+        console.log('✅ All data loaded successfully');
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showToast('Error loading data: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+async function loadCirclesAndMembers() {
+    // Step 1: Get circles user is a member of
+    const { data: memberships, error: memberError } = await sb
+        .from('circle_members')
+        .select('circle_id')
+        .eq('user_id', currentUser.id);
+
+    if (memberError) throw memberError;
+
+    if (memberships.length === 0) {
+        cachedCircles = [];
+        return;
+    }
+
+    const circleIds = memberships.map(m => m.circle_id);
+
+    // Step 2: Get circle details
+    const { data: circlesData, error: circlesError } = await sb
+        .from('circles')
+        .select('*')
+        .in('id', circleIds);
+
+    if (circlesError) throw circlesError;
+
+    // Step 3: Get ALL members for these circles
+    const { data: allMembers, error: allMembersError } = await sb
+        .from('circle_members')
+        .select('*')
+        .in('circle_id', circleIds);
+
+    if (allMembersError) throw allMembersError;
+
+    // Step 4: Get profiles for all members
+    const allMemberIds = [...new Set(allMembers.map(m => m.user_id))];
+    
+    const { data: profiles, error: profilesError } = await sb
+        .from('profiles')
+        .select('*')
+        .in('id', allMemberIds);
+
+    if (profilesError) throw profilesError;
+
+    // Cache profiles
+    profiles.forEach(p => {
+        cachedProfiles[p.id] = { id: p.id, name: p.name, email: '' };
+    });
+
+    // Attach members to circles
+    cachedCircles = circlesData.map(circle => ({
+        ...circle,
+        members: allMembers
+            .filter(m => m.circle_id === circle.id)
+            .map(m => m.user_id)
+    }));
+
+    console.log(`✅ Loaded ${cachedCircles.length} circles`);
+}
+
+async function loadHabits() {
+    // Get user's habits with circle tags
+    const { data: habitsData, error: habitsError } = await sb
+        .from('habits')
+        .select(`
+            *,
+            habit_circle_tags (
+                circle_id
+            )
+        `)
+        .eq('user_id', currentUser.id);
+
+    if (habitsError) throw habitsError;
+
+    // Transform data
+    cachedHabits = habitsData.map(h => ({
+        id: h.id,
+        userId: h.user_id,
+        name: h.name,
+        frequency: h.frequency,
+        isPrivate: h.is_private,
+        circleTags: h.habit_circle_tags.map(t => t.circle_id),
+        createdAt: h.created_at
+    }));
+
+    console.log(`✅ Loaded ${cachedHabits.length} habits`);
+}
+
+async function loadCheckins() {
+    if (cachedHabits.length === 0) {
+        cachedCheckins = [];
+        return;
+    }
+
+    const habitIds = cachedHabits.map(h => h.id);
+
+    // Get check-ins for user's habits
+    const { data: checkinsData, error: checkinsError } = await sb
+        .from('checkins')
+        .select('*')
+        .in('habit_id', habitIds);
+
+    if (checkinsError) throw checkinsError;
+
+    // Transform data
+    cachedCheckins = checkinsData.map(c => ({
+        id: c.id,
+        userId: c.user_id,
+        habitId: c.habit_id,
+        date: c.checked_in_at
+    }));
+
+    console.log(`✅ Loaded ${cachedCheckins.length} check-ins`);
+}
+
+// ==================== AUTO-LOGIN ON PAGE LOAD ====================
+
+async function initializeApp() {
+    // Check if Supabase loaded
+    if (typeof supabase === 'undefined') {
+        showToast('❌ Supabase library failed to load. Please run this through a web server (see console for instructions)', 'error');
+        console.error(`
+========================================
+SUPABASE LIBRARY NOT LOADED
+========================================
+
+This happens when opening HTML as a local file.
+
+SOLUTION: Run a local web server
+
+Option 1 - Python:
+  python3 -m http.server 8000
+  Then open: http://localhost:8000/streakclub_part1.html
+
+Option 2 - Node.js:
+  npx serve
+  
+Option 3 - VS Code:
+  Install "Live Server" extension
+  Right-click file → Open with Live Server
+
+========================================
+        `);
+        return;
+    }
+
+    // Check if credentials are set
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+        showToast('⚠️ Please add your Supabase credentials to the code', 'error');
+        console.error(`
+========================================
+SUPABASE NOT CONFIGURED
+========================================
+
+You need to replace these lines (around line 10):
+
+const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+With your actual Supabase credentials from:
+https://supabase.com → Your Project → Settings → API
+
+========================================
+        `);
+        return;
+    }
+
+    try {
+        // Check if user is already logged in
+        const { data: { session } } = await sb.auth.getSession();
+        
+        if (session) {
+            // User is logged in, load their profile
+            const { data: profile, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (!error && profile) {
+                currentUser = {
+                    id: session.user.id,
+                    name: profile.name,
+                    email: session.user.email
+                };
+                await showMainApp();
+                return;
+            }
+        }
+        
+        // Not logged in, show auth screen
+        document.getElementById('authScreen').classList.remove('hidden');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showToast('Error initializing app: ' + error.message);
+        document.getElementById('authScreen').classList.remove('hidden');
+    }
+}
+
+// Initialize app when page loads
+initializeApp();
+
+// ============================================================================
+// END OF PART 1
+// Next: Part 2 will handle Circles, Part 3 will handle Habits, etc.
+// ============================================================================
+// ============================================================================
+// PART 2: CIRCLES & NAVIGATION
+// ============================================================================
+
+// ==================== TAB SWITCHING ====================
+
+function switchTab(tab) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    // Add active class to clicked tab
+    event?.target?.classList.add('active');
+    
+    // Show corresponding content
+    if (tab === 'clubs') {
+        document.getElementById('clubsTab').classList.add('active');
+        // If no event (called programmatically), activate first tab button
+        if (!event) {
+            document.querySelectorAll('.tab')[0].classList.add('active');
+        }
+        renderClubs();
+    } else if (tab === 'feed') {
+        document.getElementById('feedTab').classList.add('active');
+        if (!event) {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+        }
+        renderFeed();
+    } else if (tab === 'habits') {
+        document.getElementById('habitsTab').classList.add('active');
+        if (!event) {
+            document.querySelectorAll('.tab')[2].classList.add('active');
+        }
+        renderHabits();
+    }
+}
+
+// ==================== RENDER CIRCLES ====================
+
+function renderClubs() {
+    const container = document.getElementById('clubsList');
+
+    if (cachedCircles.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No StreakClubs yet</h3>
+                <p>Create your first accountability circle</p>
+                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = cachedCircles.map(circle => {
+        // Get rankings
+        const rankings = getCircleRankings(circle.id);
+        
+        // Your position
+        const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+        const yourData = rankings.find(r => r.userId === currentUser.id);
+        const leader = rankings[0];
+        const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
+        
+        // Position banner
+        let positionBanner = '';
+        if (yourRank === 1) {
+            positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
+        } else if (yourRank <= 3) {
+            positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${gap}% behind 1st place</div>`;
+        } else {
+            positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
+        }
+
+        // Top 3 leaderboard
+        const top3 = rankings.slice(0, 3);
+        const leaderboardHTML = `
+            <table class="leaderboard-table" style="margin: 16px 0;">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Name</th>
+                        <th style="width: 100px;">Consistency</th>
+                        <th style="width: 90px;">Streak</th>
+                        <th style="width: 120px;">Last Check-in</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${top3.map((r, idx) => {
+                        const isYou = r.userId === currentUser.id;
+                        const lastCheckin = getLastCheckin(r.userId, circle.id);
+                        return `
+                            <tr class="${isYou ? 'current-user' : ''}">
+                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                                <td><span class="table-consistency">${r.consistency}%</span></td>
+                                <td><span class="table-streak">🔥 ${r.streak}w</span></td>
+                                <td><span class="table-last-checkin">${lastCheckin}</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        return `
+            <div class="card" style="cursor: pointer;" onclick="openCircleDashboard('${circle.id}')">
+                <div class="card-header">
+                    <h3 class="card-title">${circle.name}</h3>
+                    <span class="card-badge">${circle.members.length} members</span>
+                </div>
+                ${positionBanner}
+                ${leaderboardHTML}
+                <div style="text-align: center; padding: 16px 0 8px;">
+                    <button class="btn-view-details" onclick="event.stopPropagation(); openCircleDashboard('${circle.id}')">
+                        View Full Details →
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== CIRCLE RANKINGS ====================
+
+function getCircleRankings(circleId) {
+    const circle = cachedCircles.find(c => c.id === circleId);
+    if (!circle || !circle.members) return [];
+
+    return circle.members.map(userId => {
+        const profile = cachedProfiles[userId];
+        const consistency = calculateUserConsistency(userId, circleId);
+        const streak = calculateUserStreak(userId, circleId);
+        
+        return {
+            userId,
+            name: profile?.name || 'User',
+            consistency,
+            streak
+        };
+    }).sort((a, b) => b.consistency - a.consistency);
+}
+
+function calculateUserConsistency(userId, circleId) {
+    // Get user's habits tagged to this circle
+    const userHabits = cachedHabits.filter(h => 
+        h.userId === userId && 
+        (h.circleTags?.includes(circleId) || !h.isPrivate)
+    );
+
+    if (userHabits.length === 0) return 0;
+
+    // Last 7 days
+    const last7Days = [];
+    for (let i = 0; i < 7; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        last7Days.push(date.toDateString());
+    }
+
+    let totalExpected = 0;
+    let totalCompleted = 0;
+
+    userHabits.forEach(habit => {
+        totalExpected += habit.frequency;
+        
+        const completed = cachedCheckins.filter(c =>
+            c.habitId === habit.id &&
+            last7Days.includes(new Date(c.date).toDateString())
+        ).length;
+        
+        totalCompleted += Math.min(completed, habit.frequency);
+    });
+
+    return totalExpected === 0 ? 0 : Math.round((totalCompleted / totalExpected) * 100);
+}
+
+function calculateUserStreak(userId, circleId) {
+    const userHabits = cachedHabits.filter(h => 
+        h.userId === userId && 
+        (h.circleTags?.includes(circleId) || !h.isPrivate)
+    );
+
+    if (userHabits.length === 0) return 0;
+
+    // Average streak across habits
+    const totalStreak = userHabits.reduce((sum, h) => sum + getHabitStreak(h.id), 0);
+    return Math.round(totalStreak / userHabits.length);
+}
+
+function getHabitStreak(habitId) {
+    const habit = cachedHabits.find(h => h.id === habitId);
+    if (!habit) return 0;
+
+    let streakWeeks = 0;
+    let currentWeekStart = getWeekStart(new Date());
+
+    while (streakWeeks < 52) {
+        const weekDates = getWeekDatesForStart(currentWeekStart);
+        
+        const weekCheckins = cachedCheckins.filter(c =>
+            c.habitId === habitId &&
+            weekDates.includes(new Date(c.date).toDateString())
+        );
+
+        if (weekCheckins.length >= habit.frequency) {
+            streakWeeks++;
+        } else {
+            const isCurrentWeek = currentWeekStart.getTime() === getWeekStart(new Date()).getTime();
+            if (!isCurrentWeek) break;
+        }
+
+        currentWeekStart = new Date(currentWeekStart);
+        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    }
+
+    return streakWeeks;
+}
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day;
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function getWeekDatesForStart(weekStart) {
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + i);
+        dates.push(date.toDateString());
+    }
+    return dates;
+}
+
+function getLastCheckin(userId, circleId) {
+    const userHabits = cachedHabits.filter(h => 
+        h.userId === userId && 
+        (h.circleTags?.includes(circleId) || !h.isPrivate)
+    );
+
+    if (userHabits.length === 0) return 'Never';
+
+    let lastDate = null;
+    userHabits.forEach(habit => {
+        const habitCheckins = cachedCheckins.filter(c => c.habitId === habit.id);
+        if (habitCheckins.length > 0) {
+            const latest = habitCheckins.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+            if (!lastDate || new Date(latest.date) > new Date(lastDate)) {
+                lastDate = latest.date;
+            }
+        }
+    });
+
+    return lastDate ? getTimeAgo(new Date(lastDate)) : 'Never';
+}
+
+function getTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+    return Math.floor(seconds / 86400) + 'd ago';
+}
+
+// ==================== CREATE CIRCLE ====================
+
+function openCreateCircleModal() {
+    document.getElementById('createCircleModal').classList.add('active');
+}
+
+function closeCreateCircleModal() {
+    document.getElementById('createCircleModal').classList.remove('active');
+    document.getElementById('circleName').value = '';
+}
+
+async function createCircle() {
+    const name = document.getElementById('circleName').value.trim();
+
+    if (!name) {
+        showToast('Please enter a club name');
+        return;
+    }
+
+    console.log('Creating circle with name:', name);
+    console.log('Current user:', currentUser);
+
+    showLoading();
+
+    try {
+        // Generate invite code
+        const inviteCode = 'SC' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        console.log('Generated invite code:', inviteCode);
+
+        // Create circle
+        console.log('Attempting to insert circle...');
+        const { data: circle, error: circleError } = await sb
+            .from('circles')
+            .insert([{
+                name: name,
+                admin_id: currentUser.id,
+                invite_code: inviteCode
+            }])
+            .select()
+            .single();
+
+        console.log('Insert result:', { circle, circleError });
+
+        if (circleError) {
+            console.error('Circle insert error:', circleError);
+            throw circleError;
+        }
+
+        console.log('Circle created successfully:', circle);
+
+        // Add creator as member
+        console.log('Adding user as member...');
+        const { error: memberError } = await sb
+            .from('circle_members')
+            .insert([{
+                circle_id: circle.id,
+                user_id: currentUser.id
+            }]);
+
+        if (memberError) {
+            console.error('Member insert error:', memberError);
+            throw memberError;
+        }
+
+        console.log('Member added successfully');
+
+        // Add to cache
+        circle.members = [currentUser.id];
+        cachedCircles.push(circle);
+
+        showSuccess('StreakClub created!');
+        closeCreateCircleModal();
+
+        // Show invite link
+        const inviteLink = `${window.location.origin}${window.location.pathname}?join=${inviteCode}`;
+        document.getElementById('inviteLink').value = inviteLink;
+        document.getElementById('inviteLinkModal').classList.add('active');
+
+        renderClubs();
+
+    } catch (error) {
+        console.error('Create circle error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+        });
+        showToast('Failed to create circle: ' + (error.message || 'Unknown error'));
+    } finally {
+        hideLoading();
+    }
+}
+
+function closeInviteLinkModal() {
+    document.getElementById('inviteLinkModal').classList.remove('active');
+}
+
+function copyInviteLink() {
+    const input = document.getElementById('inviteLink');
+    input.select();
+    document.execCommand('copy');
+    showSuccess('Link copied!');
+}
+
+// ==================== CIRCLE DASHBOARD ====================
+
+function openCircleDashboard(circleId) {
+    currentDashboardCircle = cachedCircles.find(c => c.id === circleId);
+    if (!currentDashboardCircle) return;
+
+    document.getElementById('dashboardCircleName').textContent = currentDashboardCircle.name;
+    document.getElementById('dashboardMemberCount').textContent = `${currentDashboardCircle.members.length} members`;
+    
+    renderDashboardLeaderboard();
+    renderDashboardFeed();
+    
+    document.getElementById('circleDashboardModal').classList.add('active');
+}
+
+function closeCircleDashboard() {
+    document.getElementById('circleDashboardModal').classList.remove('active');
+    currentDashboardCircle = null;
+}
+
+function switchDashboardTab(tab) {
+    document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.dashboard-tab-content').forEach(c => c.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    
+    if (tab === 'leaderboard') {
+        document.getElementById('dashboardLeaderboardTab').classList.add('active');
+    } else {
+        document.getElementById('dashboardFeedTab').classList.add('active');
+    }
+}
+
+function renderDashboardLeaderboard() {
+    const rankings = getCircleRankings(currentDashboardCircle.id);
+    const tbody = document.getElementById('dashboardLeaderboardBody');
+
+    tbody.innerHTML = rankings.map((r, idx) => {
+        const isYou = r.userId === currentUser.id;
+        const lastCheckin = getLastCheckin(r.userId, currentDashboardCircle.id);
+
+        return `
+            <tr class="${isYou ? 'current-user' : ''}">
+                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                <td><span class="table-consistency">${r.consistency}%</span></td>
+                <td><span class="table-streak">🔥 ${r.streak} ${r.streak === 1 ? 'week' : 'weeks'}</span></td>
+                <td><span class="table-last-checkin">${lastCheckin}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderDashboardFeed() {
+    // Get check-ins from circle members
+    const memberHabits = cachedHabits.filter(h => 
+        currentDashboardCircle.members.includes(h.userId)
+    );
+    
+    const feedCheckins = cachedCheckins
+        .filter(c => memberHabits.some(h => h.id === c.habitId))
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 20);
+
+    const container = document.getElementById('dashboardFeedList');
+
+    if (feedCheckins.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 40px 20px;">
+                <h3>No activity yet</h3>
+                <p>Check-ins will appear here</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = feedCheckins.map(checkin => {
+        const profile = cachedProfiles[checkin.userId];
+        const habit = cachedHabits.find(h => h.id === checkin.habitId);
+        const timeAgo = getTimeAgo(new Date(checkin.date));
+
+        return `
+            <div class="dashboard-feed-item">
+                <div class="feed-item-header">
+                    <span class="feed-item-user">${profile?.name || 'User'}</span>
+                    <span class="feed-item-time">${timeAgo}</span>
+                </div>
+                <div class="feed-item-action">
+                    Checked in: <strong>${habit?.name || 'habit'}</strong>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== FEED TAB ====================
+
+function renderFeed() {
+    const allCheckins = cachedCheckins
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 20);
+
+    const container = document.getElementById('feedList');
+
+    if (allCheckins.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No activity yet</h3>
+                <p>Start checking in to see activity here</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = allCheckins.map(checkin => {
+        const profile = cachedProfiles[checkin.userId];
+        const habit = cachedHabits.find(h => h.id === checkin.habitId);
+        const timeAgo = getTimeAgo(new Date(checkin.date));
+        const streak = getHabitStreak(checkin.habitId);
+
+        return `
+            <div class="feed-item">
+                <div class="feed-header">
+                    <span class="feed-user">${profile?.name || 'User'}</span>
+                    <span class="feed-time">${timeAgo}</span>
+                </div>
+                <div class="feed-message">
+                    Checked in: <strong>${habit?.name || 'habit'}</strong>
+                </div>
+                ${streak >= 1 ? `<span class="feed-badge streak">🔥 ${streak}-week streak</span>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== HABITS TAB (PLACEHOLDER) ====================
+
+function renderHabits() {
+    const container = document.getElementById('habitsList');
+    container.innerHTML = `
+        <div class="empty-state">
+            <h3>Part 3: Habits Coming Next!</h3>
+            <p>We'll build this in the next part</p>
+        </div>
+    `;
+}
+
+// ============================================================================
+// END OF PART 2
+// Part 3 will add: Habits management, check-ins, week tracker
+// ============================================================================
+// ============================================================================
+// PART 3: HABITS & CHECK-INS
+// ============================================================================
+
+// ==================== RENDER HABITS ====================
+
+function renderHabits() {
+    const container = document.getElementById('habitsList');
+
+    if (cachedHabits.filter(h => h.userId === currentUser.id).length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No habits yet</h3>
+                <p>Create your first habit to start tracking</p>
+                <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
+            </div>
+        `;
+        return;
+    }
+
+    const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+
+    container.innerHTML = userHabits.map(habit => {
+        // Get this week's dates
+        const weekStart = getWeekStart(new Date());
+        const weekDates = getWeekDatesForStart(weekStart);
+        
+        // Get check-ins for this week
+        const thisWeekCheckins = cachedCheckins.filter(c =>
+            c.habitId === habit.id &&
+            weekDates.includes(new Date(c.date).toDateString())
+        );
+
+        // Calculate this week %
+        const checkinCount = thisWeekCheckins.length;
+        const weekCompleted = checkinCount >= habit.frequency;
+        const thisWeekPercent = Math.min(Math.round((checkinCount / habit.frequency) * 100), 100);
+
+        // Get streak
+        const streak = getHabitStreak(habit.id);
+        const streakLabel = streak === 0 ? 'Start today' : (streak === 1 ? '1 week' : streak + ' weeks');
+
+        // Check if checked in today
+        const today = new Date().toDateString();
+        const checkedInToday = thisWeekCheckins.some(c => new Date(c.date).toDateString() === today);
+
+        // Week tracker visualization
+        const weekTracker = weekDates.map((date, idx) => {
+            const dayName = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][idx];
+            const hasCheckin = thisWeekCheckins.some(c => new Date(c.date).toDateString() === date);
+            const isSaturday = idx === 6;
+            const today = new Date();
+            const currentDate = new Date(date);
+            const isPastSaturday = isSaturday && currentDate < today && !weekCompleted;
+
+            let circleClass = 'day-circle';
+            if (hasCheckin) {
+                circleClass += ' completed';
+            } else if (isPastSaturday) {
+                circleClass += ' missed';
+            }
+
+            return `
+                <div class="day-dot">
+                    <div class="${circleClass}"></div>
+                    <div class="day-label">${dayName}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Connecting line logic
+        const completedDays = thisWeekCheckins.map(c => {
+            const date = new Date(c.date).toDateString();
+            return weekDates.indexOf(date);
+        }).filter(idx => idx !== -1).sort((a, b) => a - b);
+
+        let trackerClass = 'week-tracker';
+        let lineStyle = '';
+        if (completedDays.length >= 2 && weekCompleted) {
+            trackerClass += ' has-line';
+            const firstIdx = completedDays[0];
+            const lastIdx = completedDays[completedDays.length - 1];
+            const dotSize = 45;
+            const gap = 5;
+            const lineLeft = (firstIdx * (dotSize + gap)) + (dotSize / 2);
+            const lineWidth = ((lastIdx - firstIdx) * (dotSize + gap));
+            lineStyle = `style="--line-left: ${lineLeft}px; --line-width: ${lineWidth}px;"`;
+        }
+
+        // Circle tags
+        const circleTags = habit.circleTags?.map(circleId => {
+            const circle = cachedCircles.find(c => c.id === circleId);
+            return circle ? `<span class="habit-tag">${circle.name}</span>` : '';
+        }).join('') || '';
+
+        return `
+            <div class="habit-card" onclick="openEditHabitModal('${habit.id}')">
+                <div class="habit-info">
+                    <h4 class="habit-name">
+                        ${habit.name}
+                        ${habit.isPrivate ? '<span style="opacity: 0.5; margin-left: 8px;">🔒</span>' : ''}
+                    </h4>
+                    ${circleTags ? `<div class="habit-tags">${circleTags}</div>` : ''}
+                </div>
+
+                <div class="habit-progress">
+                    <div class="week-section">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <div class="week-label">This Week</div>
+                            <div class="week-label" style="color: var(--electric-blue); font-size: 11px;">${thisWeekPercent}%</div>
+                        </div>
+                        <div class="${trackerClass}" ${lineStyle}>
+                            ${weekTracker}
+                        </div>
+                    </div>
+
+                    <div class="streak-section">
+                        <div class="week-label">Streak</div>
+                        <div class="streak-badge">
+                            <div class="streak-circle ${streak > 0 ? '' : 'empty'}">${streak}</div>
+                            <div class="streak-subtitle">${streakLabel}</div>
+                        </div>
+                    </div>
+
+                    <div class="habit-action">
+                        ${checkedInToday ? `
+                            <button class="btn-checkin done" disabled onclick="event.stopPropagation()">
+                                ✓ Done Today
+                            </button>
+                        ` : `
+                            <button class="btn-checkin" onclick="event.stopPropagation(); checkIn('${habit.id}')">
+                                Check In
+                            </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== ADD HABIT ====================
+
+function openAddHabitModal() {
+    document.getElementById('addHabitModal').classList.add('active');
+    updateCircleTagSelector();
+}
+
+function closeAddHabitModal() {
+    document.getElementById('addHabitModal').classList.remove('active');
+    document.getElementById('habitName').value = '';
+    document.getElementById('habitFrequency').value = '3';
+    document.getElementById('habitPrivate').checked = false;
+}
+
+function togglePrivateHabit() {
+    const isPrivate = document.getElementById('habitPrivate').checked;
+    const tagGroup = document.getElementById('circleTagGroup');
+    
+    if (isPrivate) {
+        tagGroup.style.display = 'none';
+    } else {
+        tagGroup.style.display = 'block';
+    }
+}
+
+function updateCircleTagSelector() {
+    const container = document.getElementById('circleTagSelector');
+    
+    if (cachedCircles.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-secondary); font-size: 13px;">Create a StreakClub first to tag habits</p>`;
+        return;
+    }
+
+    container.innerHTML = cachedCircles.map(circle => `
+        <label class="tag-option">
+            <input type="checkbox" value="${circle.id}" onchange="updateTagSelection()">
+            <span>${circle.name}</span>
+        </label>
+    `).join('');
+}
+
+function updateTagSelection() {
+    // Visual feedback for selected tags
+    document.querySelectorAll('.tag-option').forEach(option => {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
+
+async function addHabit() {
+    const name = document.getElementById('habitName').value.trim();
+    const frequency = parseInt(document.getElementById('habitFrequency').value);
+    const isPrivate = document.getElementById('habitPrivate').checked;
+
+    if (!name) {
+        showToast('Please enter a habit name');
+        return;
+    }
+
+    // Get selected circle tags
+    const selectedTags = isPrivate ? [] : Array.from(
+        document.querySelectorAll('#circleTagSelector input:checked')
+    ).map(input => input.value);
+
+    if (!isPrivate && selectedTags.length === 0) {
+        showToast('Please tag at least one StreakClub or make it private');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Create habit
+        const { data: habit, error: habitError } = await sb
+            .from('habits')
+            .insert([{
+                user_id: currentUser.id,
+                name: name,
+                frequency: frequency,
+                is_private: isPrivate
+            }])
+            .select()
+            .single();
+
+        if (habitError) throw habitError;
+
+        // Add circle tags
+        if (!isPrivate && selectedTags.length > 0) {
+            const tags = selectedTags.map(circleId => ({
+                habit_id: habit.id,
+                circle_id: circleId
+            }));
+
+            const { error: tagsError } = await sb
+                .from('habit_circle_tags')
+                .insert(tags);
+
+            if (tagsError) throw tagsError;
+        }
+
+        // Add to cache
+        cachedHabits.push({
+            id: habit.id,
+            userId: habit.user_id,
+            name: habit.name,
+            frequency: habit.frequency,
+            isPrivate: habit.is_private,
+            circleTags: selectedTags,
+            createdAt: habit.created_at
+        });
+
+        showSuccess('Habit created!');
+        closeAddHabitModal();
+        renderHabits();
+
+    } catch (error) {
+        console.error('Add habit error:', error);
+        showToast('Failed to create habit: ' + (error.message || 'Unknown error'));
+    } finally {
+        hideLoading();
+    }
+}
+
+// ==================== EDIT HABIT ====================
+
+function openEditHabitModal(habitId) {
+    editingHabitId = habitId;
+    const habit = cachedHabits.find(h => h.id === habitId);
+    
+    if (!habit) return;
+
+    document.getElementById('editHabitName').value = habit.name;
+    document.getElementById('editHabitFrequency').value = habit.frequency;
+    document.getElementById('editHabitPrivate').checked = habit.isPrivate;
+    
+    updateEditCircleTagSelector(habit);
+    toggleEditPrivateHabit();
+    
+    document.getElementById('editHabitModal').classList.add('active');
+}
+
+function closeEditHabitModal() {
+    document.getElementById('editHabitModal').classList.remove('active');
+    editingHabitId = null;
+}
+
+function toggleEditPrivateHabit() {
+    const isPrivate = document.getElementById('editHabitPrivate').checked;
+    const tagGroup = document.getElementById('editCircleTagGroup');
+    
+    if (isPrivate) {
+        tagGroup.style.display = 'none';
+    } else {
+        tagGroup.style.display = 'block';
+    }
+}
+
+function updateEditCircleTagSelector(habit) {
+    const container = document.getElementById('editCircleTagSelector');
+    
+    if (cachedCircles.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-secondary); font-size: 13px;">No circles available</p>`;
+        return;
+    }
+
+    container.innerHTML = cachedCircles.map(circle => {
+        const isChecked = habit.circleTags?.includes(circle.id);
+        return `
+            <label class="tag-option ${isChecked ? 'selected' : ''}">
+                <input type="checkbox" value="${circle.id}" ${isChecked ? 'checked' : ''} onchange="updateEditTagSelection()">
+                <span>${circle.name}</span>
+            </label>
+        `;
+    }).join('');
+}
+
+function updateEditTagSelection() {
+    document.querySelectorAll('#editCircleTagSelector .tag-option').forEach(option => {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
+
+async function saveEditHabit() {
+    const name = document.getElementById('editHabitName').value.trim();
+    const frequency = parseInt(document.getElementById('editHabitFrequency').value);
+    const isPrivate = document.getElementById('editHabitPrivate').checked;
+
+    if (!name) {
+        showToast('Please enter a habit name');
+        return;
+    }
+
+    const selectedTags = isPrivate ? [] : Array.from(
+        document.querySelectorAll('#editCircleTagSelector input:checked')
+    ).map(input => input.value);
+
+    if (!isPrivate && selectedTags.length === 0) {
+        showToast('Please tag at least one StreakClub or make it private');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Update habit
+        const { error: habitError } = await sb
+            .from('habits')
+            .update({
+                name: name,
+                frequency: frequency,
+                is_private: isPrivate
+            })
+            .eq('id', editingHabitId);
+
+        if (habitError) throw habitError;
+
+        // Delete old tags
+        const { error: deleteError } = await sb
+            .from('habit_circle_tags')
+            .delete()
+            .eq('habit_id', editingHabitId);
+
+        if (deleteError) throw deleteError;
+
+        // Add new tags
+        if (!isPrivate && selectedTags.length > 0) {
+            const tags = selectedTags.map(circleId => ({
+                habit_id: editingHabitId,
+                circle_id: circleId
+            }));
+
+            const { error: tagsError } = await sb
+                .from('habit_circle_tags')
+                .insert(tags);
+
+            if (tagsError) throw tagsError;
+        }
+
+        // Update cache
+        const habit = cachedHabits.find(h => h.id === editingHabitId);
+        if (habit) {
+            habit.name = name;
+            habit.frequency = frequency;
+            habit.isPrivate = isPrivate;
+            habit.circleTags = selectedTags;
+        }
+
+        showSuccess('Habit updated!');
+        closeEditHabitModal();
+        renderHabits();
+
+    } catch (error) {
+        console.error('Update habit error:', error);
+        showToast('Failed to update habit: ' + (error.message || 'Unknown error'));
+    } finally {
+        hideLoading();
+    }
+}
+
+async function deleteHabit() {
+    if (!confirm('Are you sure you want to delete this habit? This will also delete all check-in history.')) {
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Delete habit (cascades to tags and check-ins)
+        const { error } = await sb
+            .from('habits')
+            .delete()
+            .eq('id', editingHabitId);
+
+        if (error) throw error;
+
+        // Remove from cache
+        cachedHabits = cachedHabits.filter(h => h.id !== editingHabitId);
+        cachedCheckins = cachedCheckins.filter(c => c.habitId !== editingHabitId);
+
+        showSuccess('Habit deleted');
+        closeEditHabitModal();
+        renderHabits();
+
+    } catch (error) {
+        console.error('Delete habit error:', error);
+        showToast('Failed to delete habit: ' + (error.message || 'Unknown error'));
+    } finally {
+        hideLoading();
+    }
+}
+
+// ==================== CHECK-IN ====================
+
+async function checkIn(habitId) {
+    showLoading();
+
+    try {
+        const now = new Date().toISOString();
+
+        // Create check-in
+        const { data: checkin, error: checkinError } = await sb
+            .from('checkins')
+            .insert([{
+                user_id: currentUser.id,
+                habit_id: habitId,
+                checked_in_at: now
+            }])
+            .select()
+            .single();
+
+        if (checkinError) throw checkinError;
+
+        // Add to cache
+        cachedCheckins.push({
+            id: checkin.id,
+            userId: checkin.user_id,
+            habitId: checkin.habit_id,
+            date: checkin.checked_in_at
+        });
+
+        showSuccess('Checked in! 🔥');
+        
+        // Refresh all views
+        renderHabits();
+        if (currentTab === 'clubs') renderClubs();
+        if (currentTab === 'feed') renderFeed();
+
+    } catch (error) {
+        console.error('Check-in error:', error);
+        if (error.code === '23505') {
+            showToast('Already checked in today!');
+        } else {
+            showToast('Check-in failed: ' + (error.message || 'Unknown error'));
+        }
+    } finally {
+        hideLoading();
+    }
+}
+
+// ==================== TRACK CURRENT TAB ====================
+
+let currentTab = 'clubs';
+
+// Override switchTab to track current tab
+const originalSwitchTab = switchTab;
+switchTab = function(tab) {
+    currentTab = tab;
+    originalSwitchTab.call(this, tab);
+};
+
+// ============================================================================
+// END OF PART 3
+// All core functionality complete! App is ready to use!
+// ============================================================================
+// ============================================================================
+// PART 4: DASHBOARD ENHANCEMENTS
+// ============================================================================
+// Adding: Today's Status, Personalized Insights, Enhanced Circle Cards
+
+// ==================== UPDATE RENDER CLUBS WITH TODAY'S STATUS & INSIGHTS ====================
+
+// Override the renderClubs function to include Today's Status and Insights
+const originalRenderClubs = renderClubs;
+renderClubs = function() {
+    const container = document.getElementById('clubsList');
+
+    if (cachedCircles.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No StreakClubs yet</h3>
+                <p>Create your first accountability circle</p>
+                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = cachedCircles.map(circle => {
+        // Get rankings
+        const rankings = getCircleRankings(circle.id);
+        
+        // Your position
+        const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+        const yourData = rankings.find(r => r.userId === currentUser.id);
+        const leader = rankings[0];
+        const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
+        
+        // Position banner
+        let positionBanner = '';
+        if (yourRank === 1) {
+            positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
+        } else if (yourRank <= 3) {
+            positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${Math.round(gap)}% behind 1st place</div>`;
+        } else {
+            positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
+        }
+
+        // Top 3 leaderboard
+        const top3 = rankings.slice(0, 3);
+        const leaderboardHTML = `
+            <table class="leaderboard-table" style="margin: 16px 0;">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Name</th>
+                        <th style="width: 100px;">Consistency</th>
+                        <th style="width: 90px;">Streak</th>
+                        <th style="width: 120px;">Last Check-in</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${top3.map((r, idx) => {
+                        const isYou = r.userId === currentUser.id;
+                        const lastCheckin = getLastCheckin(r.userId, circle.id);
+                        return `
+                            <tr class="${isYou ? 'current-user' : ''}">
+                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                                <td><span class="table-consistency">${r.consistency}%</span></td>
+                                <td><span class="table-streak">🔥 ${r.streak}w</span></td>
+                                <td><span class="table-last-checkin">${lastCheckin}</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        // TODAY'S STATUS
+        const todayStatus = getTodayStatus(circle.id);
+        const todayStatusHTML = `
+            <div class="today-status-section">
+                <div class="status-header">TODAY'S STATUS</div>
+                <div class="status-items">
+                    <div class="status-item ${todayStatus.userCheckedIn ? 'status-good' : 'status-bad'}">
+                        ${todayStatus.userCheckedIn ? '✅ You checked in today • Great job!' : '❌ You haven\'t checked in today'}
+                    </div>
+                    <div class="status-item status-neutral">
+                        ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${circle.members.length} members checked in today
+                    </div>
+                    ${todayStatus.atRisk.length > 0 ? `
+                        <div class="status-item status-warning">
+                            ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                        </div>
+                    ` : ''}
+                    ${!todayStatus.userCheckedIn ? `
+                        <button class="btn-check-in-cta" onclick="event.stopPropagation(); switchTab('habits')">
+                            CHECK IN NOW →
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // PERSONALIZED INSIGHTS
+        const insights = getPersonalizedInsights(circle.id, yourRank, yourData, rankings);
+        const insightsHTML = insights.length > 0 ? `
+            <div class="insights-box">
+                ${insights.map(insight => `
+                    <div class="insight-item">
+                        <span class="insight-icon">${insight.icon}</span>
+                        <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+
+        return `
+            <div class="card" style="cursor: pointer;" onclick="openCircleDashboard('${circle.id}')">
+                <div class="card-header">
+                    <h3 class="card-title">${circle.name}</h3>
+                    <span class="card-badge">${circle.members.length} members</span>
+                </div>
+                ${positionBanner}
+                ${leaderboardHTML}
+                ${todayStatusHTML}
+                ${insightsHTML}
+                <div style="text-align: center; padding: 16px 0 8px;">
+                    <button class="btn-view-details" onclick="event.stopPropagation(); openCircleDashboard('${circle.id}')">
+                        View Full Details →
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+// ==================== TODAY'S STATUS HELPER ====================
+
+function getTodayStatus(circleId) {
+    const circle = cachedCircles.find(c => c.id === circleId);
+    if (!circle) return { userCheckedIn: false, checkedInCount: 0, allCheckedIn: false, atRisk: [] };
+
+    const today = new Date().toDateString();
+
+    // Has current user checked in today?
+    const userCheckedIn = cachedCheckins.some(c => {
+        const habit = cachedHabits.find(h => h.id === c.habitId);
+        return c.userId === currentUser.id &&
+               new Date(c.date).toDateString() === today &&
+               habit && 
+               (habit.circleTags?.includes(circleId) || !habit.isPrivate);
+    });
+
+    // How many members checked in today?
+    const checkedInCount = circle.members.filter(memberId => {
+        const memberHabits = cachedHabits.filter(h => 
+            h.userId === memberId &&
+            (h.circleTags?.includes(circleId) || !h.isPrivate)
+        );
+
+        return cachedCheckins.some(c => 
+            c.userId === memberId &&
+            memberHabits.some(h => h.id === c.habitId) &&
+            new Date(c.date).toDateString() === today
+        );
+    }).length;
+
+    const allCheckedIn = checkedInCount === circle.members.length;
+
+    // Who will lose streak if they don't check in?
+    const atRisk = circle.members.filter(memberId => {
+        const memberHabits = cachedHabits.filter(h => 
+            h.userId === memberId &&
+            (h.circleTags?.includes(circleId) || !h.isPrivate)
+        );
+
+        if (memberHabits.length === 0) return false;
+
+        // Check if they have an active streak
+        const hasActiveStreak = memberHabits.some(h => getHabitStreak(h.id) > 0);
+        if (!hasActiveStreak) return false;
+
+        // Check if they checked in today
+        const checkedInToday = cachedCheckins.some(c => 
+            c.userId === memberId &&
+            memberHabits.some(h => h.id === c.habitId) &&
+            new Date(c.date).toDateString() === today
+        );
+
+        return !checkedInToday;
+    }).map(id => cachedProfiles[id]?.name || 'User');
+
+    return {
+        userCheckedIn,
+        checkedInCount,
+        allCheckedIn,
+        atRisk
+    };
+}
+
+// ==================== PERSONALIZED INSIGHTS HELPER ====================
+
+function getPersonalizedInsights(circleId, yourRank, yourData, rankings) {
+    const insights = [];
+
+    // Who's ahead of you?
+    if (yourRank > 1 && yourData) {
+        const personAhead = rankings[yourRank - 2];
+        const gapToNext = Math.round(personAhead.consistency - yourData.consistency);
+        if (gapToNext > 0) {
+            insights.push({
+                icon: '📈',
+                type: 'challenge',
+                message: `${personAhead.name} is ahead by ${gapToNext}% - catch up!`
+            });
+        }
+    }
+
+    // Longest streak in circle
+    const longestStreak = Math.max(...rankings.map(r => r.streak));
+    const streakLeader = rankings.find(r => r.streak === longestStreak);
+    if (streakLeader && streakLeader.streak >= 2 && streakLeader.userId !== currentUser.id) {
+        insights.push({
+            icon: '🔥',
+            type: 'win',
+            message: `${streakLeader.name} on ${longestStreak}-week streak!`
+        });
+    }
+
+    // Who needs encouragement?
+    const circle = cachedCircles.find(c => c.id === circleId);
+    const needsNudge = circle.members.filter(memberId => {
+        if (memberId === currentUser.id) return false;
+        
+        const memberHabits = cachedHabits.filter(h => 
+            h.userId === memberId &&
+            (h.circleTags?.includes(circleId) || !h.isPrivate)
+        );
+
+        let lastCheckin = null;
+        memberHabits.forEach(habit => {
+            const habitCheckins = cachedCheckins.filter(c => c.habitId === habit.id);
+            if (habitCheckins.length > 0) {
+                const latest = habitCheckins.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                if (!lastCheckin || new Date(latest.date) > new Date(lastCheckin)) {
+                    lastCheckin = latest.date;
+                }
+            }
+        });
+
+        if (!lastCheckin) return false;
+        const daysSince = Math.floor((new Date() - new Date(lastCheckin)) / (1000 * 60 * 60 * 24));
+        return daysSince >= 2;
+    }).slice(0, 1); // Just show first one
+
+    if (needsNudge.length > 0) {
+        const user = cachedProfiles[needsNudge[0]];
+        if (user) {
+            insights.push({
+                icon: '👋',
+                type: 'nudge',
+                message: `${user.name} needs encouragement - send a message!`
+            });
+        }
+    }
+
+    return insights.slice(0, 3); // Max 3 insights
+}
+
+// ==================== UPDATE DASHBOARD WITH TODAY'S STATUS ====================
+
+// Override renderDashboardLeaderboard to add Today's Status and Insights
+const originalRenderDashboardLeaderboard = renderDashboardLeaderboard;
+renderDashboardLeaderboard = function() {
+    // Call original to populate table
+    originalRenderDashboardLeaderboard.call(this);
+
+    const rankings = getCircleRankings(currentDashboardCircle.id);
+    const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+    const yourData = rankings.find(r => r.userId === currentUser.id);
+
+    // Get Today's Status
+    const todayStatus = getTodayStatus(currentDashboardCircle.id);
+    const todayStatusHTML = `
+        <div class="today-status-section" style="margin-top: 24px;">
+            <div class="status-header">TODAY'S STATUS</div>
+            <div class="status-items">
+                <div class="status-item ${todayStatus.userCheckedIn ? 'status-good' : 'status-bad'}">
+                    ${todayStatus.userCheckedIn ? '✅ You checked in today • Great job!' : '❌ You haven\'t checked in today'}
+                </div>
+                <div class="status-item status-neutral">
+                    ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
+                </div>
+                ${todayStatus.atRisk.length > 0 ? `
+                    <div class="status-item status-warning">
+                        ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                    </div>
+                ` : ''}
+                ${!todayStatus.userCheckedIn ? `
+                    <button class="btn-check-in-cta" onclick="closeCircleDashboard(); switchTab('habits')">
+                        CHECK IN NOW →
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    // Get Personalized Insights
+    const insights = getPersonalizedInsights(currentDashboardCircle.id, yourRank, yourData, rankings);
+    const insightsHTML = insights.length > 0 ? `
+        <div class="insights-box" style="margin-top: 20px;">
+            ${insights.map(insight => `
+                <div class="insight-item">
+                    <span class="insight-icon">${insight.icon}</span>
+                    <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
+                </div>
+            `).join('')}
+        </div>
+    ` : '';
+
+    // Append to dashboard
+    const leaderboardTab = document.getElementById('dashboardLeaderboardTab');
+    const existingTable = leaderboardTab.querySelector('.leaderboard-table');
+    
+    // Remove old status/insights if they exist
+    const oldStatus = leaderboardTab.querySelector('.today-status-section');
+    const oldInsights = leaderboardTab.querySelector('.insights-box');
+    if (oldStatus) oldStatus.remove();
+    if (oldInsights) oldInsights.remove();
+    
+    // Add new ones
+    existingTable.insertAdjacentHTML('afterend', todayStatusHTML + insightsHTML);
+};
+
+// ============================================================================
+// END OF PART 4
+// All original design features now complete!
+// ============================================================================
+// ============================================================================
+// PART 5: UI POLISH FIXES
+// ============================================================================
+// 1. Change "circles" to "clubs" everywhere
+// 2. Simplify tag text
+// 3. Hide tag section when private
+// 4. Add edit button instead of clicking card
+// 5. Remove "You checked in today" and move Today's Status to dashboard only
+// 6. Show position in dashboard
+
+// ==================== FIX 1: REMOVE TODAY'S STATUS FROM MAIN CARDS ====================
+
+// Override renderClubs to remove Today's Status from main cards
+renderClubs = function() {
+    const container = document.getElementById('clubsList');
+
+    if (cachedCircles.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No StreakClubs yet</h3>
+                <p>Create your first accountability club</p>
+                <button class="btn-primary" onclick="openCreateCircleModal()">Create StreakClub</button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = cachedCircles.map(circle => {
+        // Get rankings
+        const rankings = getCircleRankings(circle.id);
+        
+        // Your position
+        const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+        const yourData = rankings.find(r => r.userId === currentUser.id);
+        const leader = rankings[0];
+        const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
+        
+        // Position banner
+        let positionBanner = '';
+        if (yourRank === 1) {
+            positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
+        } else if (yourRank <= 3) {
+            positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${Math.round(gap)}% behind 1st place</div>`;
+        } else {
+            positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
+        }
+
+        // Top 3 leaderboard
+        const top3 = rankings.slice(0, 3);
+        const leaderboardHTML = `
+            <table class="leaderboard-table" style="margin: 16px 0;">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Name</th>
+                        <th style="width: 100px;">Consistency</th>
+                        <th style="width: 90px;">Streak</th>
+                        <th style="width: 120px;">Last Check-in</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${top3.map((r, idx) => {
+                        const isYou = r.userId === currentUser.id;
+                        const lastCheckin = getLastCheckin(r.userId, circle.id);
+                        return `
+                            <tr class="${isYou ? 'current-user' : ''}">
+                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                                <td><span class="table-consistency">${r.consistency}%</span></td>
+                                <td><span class="table-streak">🔥 ${r.streak}w</span></td>
+                                <td><span class="table-last-checkin">${lastCheckin}</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        return `
+            <div class="card" style="cursor: pointer;" onclick="openCircleDashboard('${circle.id}')">
+                <div class="card-header">
+                    <h3 class="card-title">${circle.name}</h3>
+                    <span class="card-badge">${circle.members.length} members</span>
+                </div>
+                ${positionBanner}
+                ${leaderboardHTML}
+                <div style="text-align: center; padding: 16px 0 8px;">
+                    <button class="btn-view-details" onclick="event.stopPropagation(); openCircleDashboard('${circle.id}')">
+                        View Full Details →
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+// ==================== FIX 2: ADD EDIT BUTTON & REMOVE CARD CLICK ====================
+
+// Override renderHabits to add edit button and remove onclick from card
+renderHabits = function() {
+    const container = document.getElementById('habitsList');
+
+    if (cachedHabits.filter(h => h.userId === currentUser.id).length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No habits yet</h3>
+                <p>Create your first habit to start tracking</p>
+                <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
+            </div>
+        `;
+        return;
+    }
+
+    const userHabits = cachedHabits.filter(h => h.userId === currentUser.id);
+
+    container.innerHTML = userHabits.map(habit => {
+        // Get this week's dates
+        const weekStart = getWeekStart(new Date());
+        const weekDates = getWeekDatesForStart(weekStart);
+        
+        // Get check-ins for this week
+        const thisWeekCheckins = cachedCheckins.filter(c =>
+            c.habitId === habit.id &&
+            weekDates.includes(new Date(c.date).toDateString())
+        );
+
+        // Calculate this week %
+        const checkinCount = thisWeekCheckins.length;
+        const weekCompleted = checkinCount >= habit.frequency;
+        const thisWeekPercent = Math.min(Math.round((checkinCount / habit.frequency) * 100), 100);
+
+        // Get streak
+        const streak = getHabitStreak(habit.id);
+        const streakLabel = streak === 0 ? 'Start today' : (streak === 1 ? '1 week' : streak + ' weeks');
+
+        // Check if checked in today
+        const today = new Date().toDateString();
+        const checkedInToday = thisWeekCheckins.some(c => new Date(c.date).toDateString() === today);
+
+        // Week tracker visualization
+        const weekTracker = weekDates.map((date, idx) => {
+            const dayName = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][idx];
+            const hasCheckin = thisWeekCheckins.some(c => new Date(c.date).toDateString() === date);
+            const isSaturday = idx === 6;
+            const currentDate = new Date(date);
+            const isPastSaturday = isSaturday && currentDate < new Date() && !weekCompleted;
+
+            let circleClass = 'day-circle';
+            if (hasCheckin) {
+                circleClass += ' completed';
+            } else if (isPastSaturday) {
+                circleClass += ' missed';
+            }
+
+            return `
+                <div class="day-dot">
+                    <div class="${circleClass}"></div>
+                    <div class="day-label">${dayName}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Connecting line logic
+        const completedDays = thisWeekCheckins.map(c => {
+            const date = new Date(c.date).toDateString();
+            return weekDates.indexOf(date);
+        }).filter(idx => idx !== -1).sort((a, b) => a - b);
+
+        let trackerClass = 'week-tracker';
+        let lineStyle = '';
+        if (completedDays.length >= 2 && weekCompleted) {
+            trackerClass += ' has-line';
+            const firstIdx = completedDays[0];
+            const lastIdx = completedDays[completedDays.length - 1];
+            const dotSize = 45;
+            const gap = 5;
+            const lineLeft = (firstIdx * (dotSize + gap)) + (dotSize / 2);
+            const lineWidth = ((lastIdx - firstIdx) * (dotSize + gap));
+            lineStyle = `style="--line-left: ${lineLeft}px; --line-width: ${lineWidth}px;"`;
+        }
+
+        // Club tags (changed from circle tags)
+        const clubTags = habit.circleTags?.map(circleId => {
+            const club = cachedCircles.find(c => c.id === circleId);
+            return club ? `<span class="habit-tag">${club.name}</span>` : '';
+        }).join('') || '';
+
+        return `
+            <div class="habit-card">
+                <div class="habit-info">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h4 class="habit-name">
+                            ${habit.name}
+                            ${habit.isPrivate ? '<span style="opacity: 0.5; margin-left: 8px;">🔒</span>' : ''}
+                        </h4>
+                        <button class="btn-edit-habit" onclick="openEditHabitModal('${habit.id}')" title="Edit habit">
+                            ✏️
+                        </button>
+                    </div>
+                    ${clubTags ? `<div class="habit-tags">${clubTags}</div>` : ''}
+                </div>
+
+                <div class="habit-progress">
+                    <div class="week-section">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <div class="week-label">This Week</div>
+                            <div class="week-label" style="color: var(--electric-blue); font-size: 11px;">${thisWeekPercent}%</div>
+                        </div>
+                        <div class="${trackerClass}" ${lineStyle}>
+                            ${weekTracker}
+                        </div>
+                    </div>
+
+                    <div class="streak-section">
+                        <div class="week-label">Streak</div>
+                        <div class="streak-badge">
+                            <div class="streak-circle ${streak > 0 ? '' : 'empty'}">${streak}</div>
+                            <div class="streak-subtitle">${streakLabel}</div>
+                        </div>
+                    </div>
+
+                    <div class="habit-action">
+                        ${checkedInToday ? `
+                            <button class="btn-checkin done" disabled onclick="event.stopPropagation()">
+                                ✓ Done Today
+                            </button>
+                        ` : `
+                            <button class="btn-checkin" onclick="event.stopPropagation(); checkIn('${habit.id}')">
+                                Check In
+                            </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+// ==================== FIX 3: UPDATE DASHBOARD WITH POSITION & SIMPLIFIED TODAY'S STATUS ====================
+
+renderDashboardLeaderboard = function() {
+    const rankings = getCircleRankings(currentDashboardCircle.id);
+    const tbody = document.getElementById('dashboardLeaderboardBody');
+
+    // Calculate your position for header
+    const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
+    const yourData = rankings.find(r => r.userId === currentUser.id);
+    const leader = rankings[0];
+    const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
+
+    // Update dashboard header with position
+    let positionText = '';
+    if (yourRank === 1) {
+        positionText = '🏆 You\'re #1';
+    } else if (yourRank > 0) {
+        positionText = `You're #${yourRank} • ${Math.round(gap)}% behind 1st`;
+    }
+    
+    document.getElementById('dashboardMemberCount').textContent = `${currentDashboardCircle.members.length} members • ${positionText}`;
+
+    tbody.innerHTML = rankings.map((r, idx) => {
+        const isYou = r.userId === currentUser.id;
+        const lastCheckin = getLastCheckin(r.userId, currentDashboardCircle.id);
+
+        return `
+            <tr class="${isYou ? 'current-user' : ''}">
+                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                <td><span class="table-consistency">${r.consistency}%</span></td>
+                <td><span class="table-streak">🔥 ${r.streak} ${r.streak === 1 ? 'week' : 'weeks'}</span></td>
+                <td><span class="table-last-checkin">${lastCheckin}</span></td>
+            </tr>
+        `;
+    }).join('');
+
+    // Get Today's Status (WITHOUT "You checked in today")
+    const todayStatus = getTodayStatus(currentDashboardCircle.id);
+    const todayStatusHTML = `
+        <div class="today-status-section" style="margin-top: 24px;">
+            <div class="status-header">TODAY'S STATUS</div>
+            <div class="status-items">
+                <div class="status-item status-neutral">
+                    ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
+                </div>
+                ${todayStatus.atRisk.length > 0 ? `
+                    <div class="status-item status-warning">
+                        ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                    </div>
+                ` : ''}
+                ${!todayStatus.userCheckedIn ? `
+                    <div class="status-item status-bad">
+                        ⚠️ You haven't checked in today
+                    </div>
+                    <button class="btn-check-in-cta" onclick="closeCircleDashboard(); switchTab('habits')">
+                        CHECK IN NOW →
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    // Get Personalized Insights
+    const insights = getPersonalizedInsights(currentDashboardCircle.id, yourRank, yourData, rankings);
+    const insightsHTML = insights.length > 0 ? `
+        <div class="insights-box" style="margin-top: 20px;">
+            ${insights.map(insight => `
+                <div class="insight-item">
+                    <span class="insight-icon">${insight.icon}</span>
+                    <span class="${insight.type === 'win' ? 'insight-win' : (insight.type === 'nudge' ? 'insight-nudge' : 'insight-challenge')}">${insight.message}</span>
+                </div>
+            `).join('')}
+        </div>
+    ` : '';
+
+    // Append to dashboard
+    const leaderboardTab = document.getElementById('dashboardLeaderboardTab');
+    const existingTable = leaderboardTab.querySelector('.leaderboard-table');
+    
+    // Remove old status/insights if they exist
+    const oldStatus = leaderboardTab.querySelector('.today-status-section');
+    const oldInsights = leaderboardTab.querySelector('.insights-box');
+    if (oldStatus) oldStatus.remove();
+    if (oldInsights) oldInsights.remove();
+    
+    // Add new ones
+    existingTable.insertAdjacentHTML('afterend', todayStatusHTML + insightsHTML);
+};
+
+// ============================================================================
+// END OF PART 5: UI POLISH COMPLETE
+// ============================================================================
+</script></body></html>
