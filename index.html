@@ -1080,6 +1080,494 @@
             border-color: var(--electric-blue);
             color: var(--electric-blue);
         }
+
+        /* ============================================ */
+        /* MOBILE RESPONSIVE FIXES */
+        /* ============================================ */
+
+        /* Base adjustments for mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            /* Header */
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 16px 12px;
+            }
+
+            .header h2 {
+                font-size: 24px;
+            }
+
+            .btn-add {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+
+            /* Tabs */
+            .tabs {
+                gap: 8px;
+                padding: 0 12px;
+            }
+
+            .tab {
+                padding: 10px 16px;
+                font-size: 12px;
+                letter-spacing: 0.3px;
+            }
+
+            /* Cards */
+            .card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+
+            .card-badge {
+                align-self: flex-start;
+            }
+
+            /* Position Banners */
+            .position-banner {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+
+            /* Leaderboard Tables */
+            .leaderboard-table {
+                font-size: 12px;
+            }
+
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px 6px;
+            }
+
+            .table-rank {
+                font-size: 12px;
+                width: 24px;
+                height: 24px;
+            }
+
+            .table-name {
+                font-size: 12px;
+            }
+
+            .table-consistency {
+                font-size: 13px;
+            }
+
+            .table-streak {
+                font-size: 11px;
+            }
+
+            .table-last-checkin {
+                font-size: 10px;
+            }
+
+            /* Hide Last Check-in column on very small screens */
+            .leaderboard-table th:nth-child(5),
+            .leaderboard-table td:nth-child(5) {
+                display: none;
+            }
+
+            /* Habit Cards - Stack vertically on mobile */
+            .habit-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+                padding: 16px;
+            }
+
+            .habit-info {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .habit-name {
+                font-size: 16px;
+                white-space: normal;
+            }
+
+            .btn-edit-habit {
+                font-size: 16px;
+                padding: 6px 10px;
+            }
+
+            .habit-progress {
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+            }
+
+            .week-section {
+                width: 100%;
+            }
+
+            /* Week Tracker - Smaller dots on mobile */
+            .day-circle {
+                width: 36px;
+                height: 36px;
+            }
+
+            .day-label {
+                font-size: 9px;
+            }
+
+            .week-label {
+                font-size: 9px;
+            }
+
+            .week-tracker {
+                gap: 4px;
+                justify-content: space-between;
+            }
+
+            .week-tracker.has-line::before {
+                top: 18px;
+            }
+
+            /* Adjust connecting line for smaller dots */
+            .week-tracker.has-line::before {
+                height: 2px;
+            }
+
+            /* Streak Section */
+            .streak-section {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .streak-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .streak-subtitle {
+                font-size: 11px;
+            }
+
+            /* Habit Action Buttons */
+            .habit-action {
+                width: 100%;
+            }
+
+            .btn-checkin {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+
+            /* Modals */
+            .modal {
+                padding: 12px;
+            }
+
+            .modal-content {
+                padding: 24px 20px;
+                max-width: 100%;
+            }
+
+            .modal-header h3 {
+                font-size: 20px;
+            }
+
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px 14px;
+            }
+
+            /* Tag Selector */
+            .tag-selector {
+                gap: 6px;
+            }
+
+            .tag-option {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+
+            /* Buttons */
+            .btn-primary {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .btn-secondary {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            /* Dashboard Modal */
+            .dashboard-tabs {
+                gap: 8px;
+            }
+
+            .dashboard-tab {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            .dashboard-leaderboard-table {
+                font-size: 12px;
+            }
+
+            /* Today's Status */
+            .today-status-section {
+                padding: 12px;
+            }
+
+            .status-header {
+                font-size: 10px;
+                margin-bottom: 8px;
+            }
+
+            .status-item {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            .btn-check-in-cta {
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+
+            /* Insights */
+            .insights-box {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .insight-item {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            .insight-icon {
+                font-size: 16px;
+            }
+
+            /* Feed Items */
+            .feed-item {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .feed-header {
+                font-size: 12px;
+            }
+
+            .feed-message {
+                font-size: 13px;
+            }
+
+            .feed-badge {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+
+            /* Dashboard Feed Items */
+            .dashboard-feed-item {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            .feed-item-header {
+                font-size: 11px;
+            }
+
+            .feed-item-user {
+                font-size: 12px;
+            }
+
+            .feed-item-action {
+                font-size: 12px;
+            }
+
+            /* Auth Screen */
+            .auth-box {
+                padding: 32px 24px;
+                max-width: 100%;
+            }
+
+            .auth-box h1 {
+                font-size: 28px;
+            }
+
+            .auth-box > p {
+                font-size: 14px;
+            }
+
+            /* Empty State */
+            .empty-state {
+                padding: 40px 16px;
+            }
+
+            .empty-state h3 {
+                font-size: 18px;
+            }
+
+            .empty-state p {
+                font-size: 14px;
+            }
+
+            /* View Details Button */
+            .btn-view-details {
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+        }
+
+        /* Extra small screens (< 400px) */
+        @media (max-width: 400px) {
+            .header h2 {
+                font-size: 20px;
+            }
+
+            .card-title {
+                font-size: 16px;
+            }
+
+            .habit-name {
+                font-size: 15px;
+            }
+
+            .day-circle {
+                width: 32px;
+                height: 32px;
+            }
+
+            .day-label {
+                font-size: 8px;
+            }
+
+            .week-label {
+                font-size: 8px;
+            }
+
+            .streak-circle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            /* Stack leaderboard columns more aggressively */
+            .leaderboard-table th:nth-child(4),
+            .leaderboard-table td:nth-child(4) {
+                display: none;
+            }
+
+            .modal-content {
+                padding: 20px 16px;
+            }
+        }
+
+        /* Landscape orientation on mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .habit-card {
+                flex-direction: row;
+            }
+
+            .habit-info {
+                flex: 0 0 30%;
+            }
+
+            .habit-progress {
+                flex-direction: row;
+            }
+
+            .week-section {
+                width: auto;
+            }
+
+            .day-circle {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* Tablet (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 24px;
+            }
+
+            .habit-card {
+                gap: 16px;
+            }
+
+            .day-circle {
+                width: 40px;
+                height: 40px;
+            }
+
+            .leaderboard-table {
+                font-size: 13px;
+            }
+        }
+
+        /* Touch-friendly tap targets */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary,
+            .btn-secondary,
+            .btn-checkin,
+            .tab,
+            .tag-option,
+            .btn-edit-habit {
+                min-height: 44px; /* iOS recommended touch target */
+                min-width: 44px;
+            }
+
+            .habit-card {
+                cursor: default; /* Remove pointer cursor on touch devices */
+            }
+        }
+
+        /* Prevent text from being too small */
+        @media (max-width: 768px) {
+            * {
+                -webkit-text-size-adjust: 100%;
+                text-size-adjust: 100%;
+            }
+        }
+
+        /* Safe area for notched phones (iPhone X, etc) */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+            }
+
+            .header {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-top: max(16px, env(safe-area-inset-top));
+            }
+        }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
