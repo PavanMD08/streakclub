@@ -41,7 +41,6 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* Header - Compact */
         .header {
             background: rgba(26, 40, 85, 0.95);
             backdrop-filter: blur(20px);
@@ -90,7 +89,6 @@
             cursor: pointer;
         }
 
-        /* Tabs - Compact, 2 tabs only */
         .tabs-nav {
             background: rgba(26, 40, 85, 0.8);
             backdrop-filter: blur(20px);
@@ -122,7 +120,6 @@
             border-bottom-color: var(--electric-blue);
         }
 
-        /* Main Content */
         .main-content {
             padding: 16px;
         }
@@ -152,7 +149,7 @@
             letter-spacing: 0.3px;
         }
 
-        /* Habit Card - Based on Sketch */
+        /* Habit Card - From Sketch */
         .habit-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
@@ -165,7 +162,6 @@
             gap: 14px;
         }
 
-        /* Left: Big Streak Circle */
         .habit-streak {
             flex-shrink: 0;
             text-align: center;
@@ -180,7 +176,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             color: var(--electric-blue);
             margin-bottom: 3px;
@@ -198,7 +194,6 @@
             color: var(--text-secondary);
         }
 
-        /* Center: Name + Dots */
         .habit-center {
             flex: 1;
             min-width: 0;
@@ -213,26 +208,17 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+
+        .habit-week {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .btn-edit {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-secondary);
-            padding: 3px 7px;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            -webkit-text-fill-color: var(--text-secondary);
-        }
-
-        .week-tracker {
+        .week-dots {
             display: flex;
             gap: 4px;
-            align-items: center;
         }
 
         .day-col {
@@ -268,11 +254,14 @@
             text-transform: uppercase;
         }
 
-        /* Right: Check-in Button */
+        .week-percent {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--electric-blue);
+        }
+
         .habit-action {
             flex-shrink: 0;
-            display: flex;
-            align-items: center;
         }
 
         .btn-check {
@@ -328,6 +317,100 @@
             max-width: 300px;
         }
 
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(11, 20, 55, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(26, 40, 85, 0.98);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 13px 14px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
         /* Auth Screen */
         .auth-screen {
             min-height: 100vh;
@@ -365,33 +448,6 @@
             font-size: 14px;
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        .form-group input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            padding: 13px 14px;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--electric-blue);
-        }
-
         .auth-toggle {
             text-align: center;
             margin-top: 20px;
@@ -405,7 +461,6 @@
             cursor: pointer;
         }
 
-        /* Utilities */
         .hidden {
             display: none !important;
         }
@@ -462,77 +517,6 @@
 
         .toast.active {
             display: block;
-        }
-
-        /* Club Cards */
-        .club-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-
-        .club-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .club-title {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .club-badge {
-            background: rgba(0, 217, 255, 0.15);
-            color: var(--electric-blue);
-            padding: 4px 10px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .position-banner {
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .position-banner.first-place {
-            background: rgba(255, 215, 0, 0.2);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFD700;
-        }
-
-        .position-banner.top-three {
-            background: rgba(0, 217, 255, 0.2);
-            border: 1px solid rgba(0, 217, 255, 0.3);
-            color: var(--electric-blue);
-        }
-
-        .position-banner.needs-improvement {
-            background: rgba(255, 152, 0, 0.2);
-            border: 1px solid rgba(255, 152, 0, 0.3);
-            color: #FF9800;
-        }
-
-        .btn-view-club {
-            background: rgba(0, 217, 255, 0.1);
-            border: 2px solid var(--electric-blue);
-            color: var(--electric-blue);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
         }
     </style>
     
@@ -605,13 +589,13 @@
             <div id="clubsTab" class="tab-content hidden">
                 <div class="section-header">
                     <h2>StreakClubs</h2>
-                    <button class="btn-add">+ NEW</button>
+                    <button class="btn-add" onclick="openCreateClubModal()">+ NEW</button>
                 </div>
                 <div id="clubsList">
                     <div class="empty-state">
                         <h3>No clubs yet</h3>
                         <p>Create your first club</p>
-                        <button class="btn-primary">Create StreakClub</button>
+                        <button class="btn-primary" onclick="openCreateClubModal()">Create StreakClub</button>
                     </div>
                 </div>
             </div>
@@ -620,10 +604,57 @@
             <div id="habitsTab" class="tab-content">
                 <div class="section-header">
                     <h2>My Habits</h2>
-                    <button class="btn-add" id="addHabitBtn">+ NEW</button>
+                    <button class="btn-add" id="addHabitBtn" onclick="openAddHabitModal()">+ NEW</button>
                 </div>
                 <div id="habitsList"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Add Habit Modal -->
+    <div id="addHabitModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Habit</h3>
+                <button class="btn-close" onclick="closeAddHabitModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="habitName" placeholder="e.g., Morning Run">
+            </div>
+            <div class="form-group">
+                <label>Frequency (times per week)</label>
+                <select id="habitFrequency">
+                    <option value="1">1 time</option>
+                    <option value="2">2 times</option>
+                    <option value="3" selected>3 times</option>
+                    <option value="4">4 times</option>
+                    <option value="5">5 times</option>
+                    <option value="6">6 times</option>
+                    <option value="7">7 times (daily)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="habitPrivate"> Private (only visible to you)
+                </label>
+            </div>
+            <button class="btn-primary" onclick="createHabit()">Add Habit</button>
+        </div>
+    </div>
+
+    <!-- Create Club Modal -->
+    <div id="createClubModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create StreakClub</h3>
+                <button class="btn-close" onclick="closeCreateClubModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Club Name</label>
+                <input type="text" id="clubName" placeholder="e.g., Morning Warriors">
+            </div>
+            <button class="btn-primary" onclick="createClub()">Create Club</button>
         </div>
     </div>
 
@@ -824,7 +855,7 @@
                     <div class="empty-state">
                         <h3>No habits yet</h3>
                         <p>Start tracking your first habit</p>
-                        <button class="btn-primary" onclick="alert('Add habit')">Add Habit</button>
+                        <button class="btn-primary" onclick="openAddHabitModal()">Add Habit</button>
                     </div>
                 `;
                 return;
@@ -854,12 +885,12 @@
                     const hasCheckin = thisWeekCheckins.some(c => new Date(c.checked_in_at).toDateString() === date);
                     const dayName = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][idx];
                     
-                    let dotClass = 'dot';
+                    let dotClass = 'day-dot';
                     if (hasCheckin) dotClass += ' completed';
                     else if (idx === 6 && new Date(date) < new Date() && checkinCount < habit.frequency) dotClass += ' missed';
 
                     return `
-                        <div class="day-dot">
+                        <div class="day-col">
                             <div class="${dotClass}"></div>
                             <div class="day-letter">${dayName}</div>
                         </div>
@@ -868,42 +899,22 @@
 
                 return `
                     <div class="habit-card">
-                        <!-- Left: Big Streak -->
                         <div class="habit-streak">
-                            <div class="streak-circle ${streak > 0 ? '' : 'empty'}">
-                                🔥${streak}
-                            </div>
+                            <div class="streak-circle ${streak > 0 ? '' : 'empty'}">${streak}</div>
                             <div class="streak-label">${streakLabel}</div>
                         </div>
 
-                        <!-- Center: Name + Week Dots -->
                         <div class="habit-center">
-                            <div class="habit-name">
-                                ${habit.name}
-                                ${habit.is_private ? '<span style="opacity:0.5">🔒</span>' : ''}
-                                <button class="btn-edit" onclick="alert('Edit')">✏️</button>
-                            </div>
-
-                            <div class="week-tracker">
-                                ${weekDates.map((date, idx) => {
-                                    const hasCheckin = thisWeekCheckins.some(c => new Date(c.checked_in_at).toDateString() === date);
-                                    const dayName = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][idx];
-                                    
-                                    let dotClass = 'day-dot';
-                                    if (hasCheckin) dotClass += ' completed';
-                                    else if (idx === 6 && new Date(date) < new Date() && checkinCount < habit.frequency) dotClass += ' missed';
-
-                                    return `
-                                        <div class="day-col">
-                                            <div class="${dotClass}"></div>
-                                            <div class="day-letter">${dayName}</div>
-                                        </div>
-                                    `;
-                                }).join('')}
+                            <div class="habit-name">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
+                            
+                            <div class="habit-week">
+                                <div class="week-dots">
+                                    ${weekHTML}
+                                </div>
+                                <div class="week-percent">${percent}%</div>
                             </div>
                         </div>
 
-                        <!-- Right: Check-in Button -->
                         <div class="habit-action">
                             ${checkedToday ? `
                                 <div class="btn-check done">✓</div>
@@ -981,6 +992,91 @@
             } catch (error) {
                 console.error(error);
                 showToast('Check-in failed');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Modal Functions
+        function openAddHabitModal() {
+            document.getElementById('addHabitModal').classList.add('active');
+        }
+
+        function closeAddHabitModal() {
+            document.getElementById('addHabitModal').classList.remove('active');
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitFrequency').value = '3';
+            document.getElementById('habitPrivate').checked = false;
+        }
+
+        async function createHabit() {
+            const name = document.getElementById('habitName').value.trim();
+            const frequency = parseInt(document.getElementById('habitFrequency').value);
+            const isPrivate = document.getElementById('habitPrivate').checked;
+
+            if (!name) {
+                showToast('Enter habit name');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                await sb.from('habits').insert([{
+                    user_id: currentUser.id,
+                    name: name,
+                    frequency: frequency,
+                    is_private: isPrivate
+                }]);
+
+                showToast('Habit added!', 'success');
+                closeAddHabitModal();
+                await loadData();
+
+            } catch (error) {
+                console.error(error);
+                showToast('Failed to add habit');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function openCreateClubModal() {
+            document.getElementById('createClubModal').classList.add('active');
+        }
+
+        function closeCreateClubModal() {
+            document.getElementById('createClubModal').classList.remove('active');
+            document.getElementById('clubName').value = '';
+        }
+
+        async function createClub() {
+            const name = document.getElementById('clubName').value.trim();
+
+            if (!name) {
+                showToast('Enter club name');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const { data: circle } = await sb.from('circles').insert([{
+                    name: name,
+                    created_by: currentUser.id
+                }]).select().single();
+
+                await sb.from('circle_members').insert([{
+                    circle_id: circle.id,
+                    user_id: currentUser.id
+                }]);
+
+                showToast('Club created!', 'success');
+                closeCreateClubModal();
+
+            } catch (error) {
+                console.error(error);
+                showToast('Failed to create club');
             } finally {
                 hideLoading();
             }
