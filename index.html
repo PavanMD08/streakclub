@@ -399,18 +399,6 @@
             border-color: var(--electric-blue);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-
         /* Auth Screen */
         .auth-screen {
             min-height: 100vh;
@@ -491,9 +479,7 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .toast {
             position: fixed;
@@ -609,8 +595,9 @@
 
         <div class="tabs-nav">
             <div class="tabs-container">
-                <button class="tab" onclick="switchTab('clubs')">STREAKCLUBS</button>
-                <button class="tab active" onclick="switchTab('habits')">MY HABITS</button>
+                <!-- ✅ FIXED: pass `this` -->
+                <button class="tab" onclick="switchTab('clubs', this)">STREAKCLUBS</button>
+                <button class="tab active" onclick="switchTab('habits', this)">MY HABITS</button>
             </div>
         </div>
 
@@ -844,7 +831,9 @@
             currentUser = null;
             cachedHabits = [];
             cachedCheckins = [];
-            
+            cachedCircles = [];
+            cachedProfiles = {};
+
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
         }
@@ -853,9 +842,9 @@
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userName').textContent = currentUser.name;
-            
+
             await loadData();
-            switchTab('habits');
+            switchTab('habits', document.querySelectorAll('.tab')[1]);
         }
 
         async function loadData() {
@@ -865,10 +854,7 @@
                 // Load habits
                 const { data: habitsData } = await sb
                     .from('habits')
-                    .select(`
-                        *,
-                        habit_circle_tags (circle_id)
-                    `)
+                    .select(`*, habit_circle_tags (circle_id)`)
                     .eq('user_id', currentUser.id);
 
                 cachedHabits = (habitsData || []).map(h => ({
@@ -885,17 +871,22 @@
                         .in('habit_id', habitIds);
 
                     cachedCheckins = checkinsData || [];
+                } else {
+                    cachedCheckins = [];
                 }
 
-                // Load circles
+                // Load circles (memberships)
                 const { data: memberships } = await sb
                     .from('circle_members')
                     .select('circle_id')
                     .eq('user_id', currentUser.id);
 
+                cachedCircles = [];
+                cachedProfiles = { [currentUser.id]: { id: currentUser.id, name: currentUser.name } };
+
                 if (memberships && memberships.length > 0) {
                     const circleIds = memberships.map(m => m.circle_id);
-                    
+
                     const { data: circlesData } = await sb
                         .from('circles')
                         .select('*')
@@ -908,61 +899,62 @@
 
                     cachedCircles = (circlesData || []).map(circle => ({
                         ...circle,
-                        members: allMembers.filter(m => m.circle_id === circle.id).map(m => m.user_id)
+                        members: (allMembers || []).filter(m => m.circle_id === circle.id).map(m => m.user_id)
                     }));
 
                     // Load all profiles
-                    const allMemberIds = [...new Set(allMembers.map(m => m.user_id))];
-                    const { data: profiles } = await sb
-                        .from('profiles')
-                        .select('*')
-                        .in('id', allMemberIds);
-
-                    profiles.forEach(p => {
-                        cachedProfiles[p.id] = { id: p.id, name: p.name };
-                    });
-
-                    // Load all member habits for rankings
-                    const { data: allHabitsData } = await sb
-                        .from('habits')
-                        .select(`
-                            *,
-                            habit_circle_tags (circle_id)
-                        `)
-                        .in('user_id', allMemberIds);
-
-                    const allHabits = (allHabitsData || []).map(h => ({
-                        ...h,
-                        circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
-                    }));
-
-                    // Load all check-ins for rankings
-                    if (allHabits.length > 0) {
-                        const allHabitIds = allHabits.map(h => h.id);
-                        const { data: allCheckinsData } = await sb
-                            .from('checkins')
+                    const allMemberIds = [...new Set((allMembers || []).map(m => m.user_id))];
+                    if (allMemberIds.length > 0) {
+                        const { data: profiles } = await sb
+                            .from('profiles')
                             .select('*')
-                            .in('habit_id', allHabitIds);
+                            .in('id', allMemberIds);
 
-                        // Merge with user's own habits
-                        cachedHabits = [...new Map([...cachedHabits, ...allHabits].map(h => [h.id, h])).values()];
-                        cachedCheckins = [...new Map([...cachedCheckins, ...(allCheckinsData || [])].map(c => [c.id, c])).values()];
+                        (profiles || []).forEach(p => {
+                            cachedProfiles[p.id] = { id: p.id, name: p.name };
+                        });
+
+                        // Load all member habits (for rankings)
+                        const { data: allHabitsData } = await sb
+                            .from('habits')
+                            .select(`*, habit_circle_tags (circle_id)`)
+                            .in('user_id', allMemberIds);
+
+                        const allHabits = (allHabitsData || []).map(h => ({
+                            ...h,
+                            circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
+                        }));
+
+                        // Load all check-ins (for rankings)
+                        if (allHabits.length > 0) {
+                            const allHabitIds = allHabits.map(h => h.id);
+                            const { data: allCheckinsData } = await sb
+                                .from('checkins')
+                                .select('*')
+                                .in('habit_id', allHabitIds);
+
+                            // Merge without duplicates
+                            cachedHabits = [...new Map([...cachedHabits, ...allHabits].map(h => [h.id, h])).values()];
+                            cachedCheckins = [...new Map([...(cachedCheckins || []), ...(allCheckinsData || [])].map(c => [c.id, c])).values()];
+                        }
                     }
                 }
 
                 renderHabits();
                 renderClubs();
-                
+
             } catch (error) {
                 console.error(error);
+                showToast('Load failed: ' + (error.message || 'Unknown error'));
             } finally {
                 hideLoading();
             }
         }
 
-        function switchTab(tab) {
+        // ✅ FIXED: no global event usage
+        function switchTab(tab, el) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            if (el) el.classList.add('active');
 
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.getElementById(tab + 'Tab').classList.remove('hidden');
@@ -1129,7 +1121,6 @@
         function openAddHabitModal() {
             document.getElementById('addHabitModal').classList.add('active');
             
-            // Show club tags
             const clubTagsGroup = document.getElementById('clubTagsGroup');
             const clubTagsList = document.getElementById('clubTagsList');
             
@@ -1149,20 +1140,13 @@
 
         function toggleClubTag(circleId) {
             const index = selectedClubTags.indexOf(circleId);
-            if (index > -1) {
-                selectedClubTags.splice(index, 1);
-            } else {
-                selectedClubTags.push(circleId);
-            }
+            if (index > -1) selectedClubTags.splice(index, 1);
+            else selectedClubTags.push(circleId);
             
-            // Update UI
             document.querySelectorAll('.club-tag-item').forEach(el => {
                 const tagId = el.getAttribute('onclick').match(/'([^']+)'/)[1];
-                if (selectedClubTags.includes(tagId)) {
-                    el.classList.add('selected');
-                } else {
-                    el.classList.remove('selected');
-                }
+                if (selectedClubTags.includes(tagId)) el.classList.add('selected');
+                else el.classList.remove('selected');
             });
         }
 
@@ -1187,13 +1171,12 @@
             showLoading();
 
             try {
-                // Create habit
                 const { data: habit, error: habitError } = await sb
                     .from('habits')
                     .insert([{
                         user_id: currentUser.id,
-                        name: name,
-                        frequency: frequency,
+                        name,
+                        frequency,
                         is_private: isPrivate
                     }])
                     .select()
@@ -1201,7 +1184,6 @@
 
                 if (habitError) throw habitError;
 
-                // Add circle tags
                 if (selectedClubTags.length > 0) {
                     const tags = selectedClubTags.map(circleId => ({
                         habit_id: habit.id,
@@ -1247,30 +1229,20 @@
             showLoading();
 
             try {
-                console.log('Creating club:', name);
-                
-                // Generate a random 6-character invite code
                 const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                 
-                // Create circle
                 const { data: circle, error: circleError } = await sb
                     .from('circles')
                     .insert([{
-                        name: name,
+                        name,
                         admin_id: currentUser.id,
                         invite_code: inviteCode
                     }])
                     .select()
                     .single();
 
-                if (circleError) {
-                    console.error('Circle error:', circleError);
-                    throw circleError;
-                }
+                if (circleError) throw circleError;
 
-                console.log('Circle created:', circle);
-
-                // Add creator as member
                 const { error: memberError } = await sb
                     .from('circle_members')
                     .insert([{
@@ -1278,20 +1250,15 @@
                         user_id: currentUser.id
                     }]);
 
-                if (memberError) {
-                    console.error('Member error:', memberError);
-                    throw memberError;
-                }
+                if (memberError) throw memberError;
 
                 showToast('Club created!', 'success');
                 closeCreateClubModal();
                 await loadData();
-                
-                // Switch to clubs tab to show the new club
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab')[0].classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-                document.getElementById('clubsTab').classList.remove('hidden');
+
+                // Switch to clubs tab
+                const tabs = document.querySelectorAll('.tab');
+                switchTab('clubs', tabs[0]);
 
             } catch (error) {
                 console.error('Create club error:', error);
@@ -1301,10 +1268,7 @@
             }
         }
 
-        // CLUB RENDERING AND DASHBOARD FUNCTIONS
-        async function initializeApp() {
-
-        // Club Rendering & Dashboard Functions
+        // ✅ IMPORTANT FIX: These are GLOBAL now (not inside initializeApp)
         function renderClubs() {
             const container = document.getElementById('clubsList');
 
@@ -1321,20 +1285,16 @@
 
             container.innerHTML = cachedCircles.map(circle => {
                 const rankings = getCircleRankings(circle.id);
-                
+
                 const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
                 const yourData = rankings.find(r => r.userId === currentUser.id);
                 const leader = rankings[0];
-                const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
-                
+                const gap = (yourData && leader) ? (leader.consistency - yourData.consistency) : 0;
+
                 let positionBanner = '';
-                if (yourRank === 1) {
-                    positionBanner = `<div class="position-banner first-place">🏆 You're #1</div>`;
-                } else if (yourRank <= 3) {
-                    positionBanner = `<div class="position-banner top-three">🏆 #${yourRank} • ${Math.round(gap)}% behind</div>`;
-                } else {
-                    positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank}</div>`;
-                }
+                if (yourRank === 1) positionBanner = `<div class="position-banner first-place">🏆 You're #1</div>`;
+                else if (yourRank > 0 && yourRank <= 3) positionBanner = `<div class="position-banner top-three">🏆 #${yourRank} • ${Math.round(gap)}% behind</div>`;
+                else if (yourRank > 0) positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank}</div>`;
 
                 const top3 = rankings.slice(0, 3);
                 const leaderboardHTML = `
@@ -1380,8 +1340,8 @@
 
             return circle.members.map(userId => {
                 const user = cachedProfiles[userId] || { name: 'User' };
-                const userHabits = cachedHabits.filter(h => 
-                    h.user_id === userId && 
+                const userHabits = cachedHabits.filter(h =>
+                    h.user_id === userId &&
                     (h.circleTags?.includes(circleId) || !h.is_private)
                 );
 
@@ -1405,7 +1365,6 @@
                 });
 
                 const consistency = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
-                
                 const streaks = userHabits.map(h => getStreak(h.id));
                 const avgStreak = streaks.length > 0 ? Math.round(streaks.reduce((a, b) => a + b, 0) / streaks.length) : 0;
 
@@ -1421,10 +1380,8 @@
             if (!circle) return;
 
             currentDashboardCircle = circle;
-            
             document.getElementById('dashboardTitle').textContent = circle.name;
             document.getElementById('clubDashboard').classList.add('active');
-            
             switchDashboardTab('leaderboard');
         }
 
@@ -1438,7 +1395,7 @@
             document.getElementById(tab + 'TabBtn').classList.add('active');
 
             document.querySelectorAll('.dashboard-content').forEach(t => t.classList.add('hidden'));
-            
+
             if (tab === 'leaderboard') {
                 document.getElementById('dashboardLeaderboardTab').classList.remove('hidden');
                 renderDashboardLeaderboard();
@@ -1449,6 +1406,8 @@
         }
 
         function renderDashboardLeaderboard() {
+            if (!currentDashboardCircle) return;
+
             const rankings = getCircleRankings(currentDashboardCircle.id);
             const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
 
@@ -1483,12 +1442,14 @@
         }
 
         function renderDashboardFeed() {
+            if (!currentDashboardCircle) return;
+
             const feed = [];
-            
+
             currentDashboardCircle.members.forEach(userId => {
                 const user = cachedProfiles[userId] || { name: 'User' };
-                const userHabits = cachedHabits.filter(h => 
-                    h.user_id === userId && 
+                const userHabits = cachedHabits.filter(h =>
+                    h.user_id === userId &&
                     (h.circleTags?.includes(currentDashboardCircle.id) || !h.is_private)
                 );
 
@@ -1524,9 +1485,7 @@
             };
 
             const html = feed.length === 0 ? `
-                <div class="empty-state">
-                    <p>No activity yet</p>
-                </div>
+                <div class="empty-state"><p>No activity yet</p></div>
             ` : feed.slice(0, 20).map(item => `
                 <div style="padding: 12px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
                     <div style="font-size: 13px; margin-bottom: 4px;">
@@ -1538,6 +1497,9 @@
 
             document.getElementById('dashboardFeedTab').innerHTML = html;
         }
+
+        // ✅ initializeApp is now clean and ONLY does session restore
+        async function initializeApp() {
             if (!sb) {
                 document.getElementById('authScreen').classList.remove('hidden');
                 return;
@@ -1545,24 +1507,27 @@
 
             try {
                 const { data: { session } } = await sb.auth.getSession();
-                
-                if (session?.user) {
-                    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
 
-                    if (profile) {
-                        currentUser = {
-                            id: session.user.id,
-                            name: profile.name,
-                            email: session.user.email
-                        };
-                        await showMainApp();
-                        return;
-                    }
+                if (session?.user) {
+                    const { data: profile } = await sb
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    currentUser = {
+                        id: session.user.id,
+                        name: profile?.name || 'User',
+                        email: session.user.email
+                    };
+
+                    await showMainApp();
+                    return;
                 }
             } catch (error) {
                 console.error(error);
             }
-            
+
             document.getElementById('authScreen').classList.remove('hidden');
         }
 
