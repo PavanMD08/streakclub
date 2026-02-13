@@ -518,6 +518,27 @@
         .toast.active {
             display: block;
         }
+
+        /* Club Tag Selector */
+        .club-tag-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .club-tag-item.selected {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        .club-tag-item:hover {
+            border-color: var(--electric-blue);
+        }
     </style>
     
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -639,6 +660,10 @@
                     <input type="checkbox" id="habitPrivate"> Private (only visible to you)
                 </label>
             </div>
+            <div class="form-group" id="clubTagsGroup">
+                <label>Tag StreakClubs (Optional)</label>
+                <div id="clubTagsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+            </div>
             <button class="btn-primary" onclick="createHabit()">Add Habit</button>
         </div>
     </div>
@@ -666,6 +691,8 @@
         let currentUser = null;
         let cachedHabits = [];
         let cachedCheckins = [];
+        let cachedCircles = [];
+        let selectedClubTags = [];
 
         if (typeof supabase !== 'undefined') {
             sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -806,13 +833,21 @@
             showLoading();
             
             try {
+                // Load habits
                 const { data: habitsData } = await sb
                     .from('habits')
-                    .select('*')
+                    .select(`
+                        *,
+                        habit_circle_tags (circle_id)
+                    `)
                     .eq('user_id', currentUser.id);
 
-                cachedHabits = habitsData || [];
+                cachedHabits = (habitsData || []).map(h => ({
+                    ...h,
+                    circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
+                }));
 
+                // Load check-ins
                 if (cachedHabits.length > 0) {
                     const habitIds = cachedHabits.map(h => h.id);
                     const { data: checkinsData } = await sb
@@ -821,6 +856,22 @@
                         .in('habit_id', habitIds);
 
                     cachedCheckins = checkinsData || [];
+                }
+
+                // Load circles
+                const { data: memberships } = await sb
+                    .from('circle_members')
+                    .select('circle_id')
+                    .eq('user_id', currentUser.id);
+
+                if (memberships && memberships.length > 0) {
+                    const circleIds = memberships.map(m => m.circle_id);
+                    const { data: circlesData } = await sb
+                        .from('circles')
+                        .select('*')
+                        .in('id', circleIds);
+
+                    cachedCircles = circlesData || [];
                 }
 
                 renderHabits();
@@ -1000,6 +1051,42 @@
         // Modal Functions
         function openAddHabitModal() {
             document.getElementById('addHabitModal').classList.add('active');
+            
+            // Show club tags
+            const clubTagsGroup = document.getElementById('clubTagsGroup');
+            const clubTagsList = document.getElementById('clubTagsList');
+            
+            if (cachedCircles.length === 0) {
+                clubTagsGroup.style.display = 'none';
+            } else {
+                clubTagsGroup.style.display = 'block';
+                clubTagsList.innerHTML = cachedCircles.map(circle => `
+                    <div class="club-tag-item" onclick="toggleClubTag('${circle.id}')">
+                        ${circle.name}
+                    </div>
+                `).join('');
+            }
+            
+            selectedClubTags = [];
+        }
+
+        function toggleClubTag(circleId) {
+            const index = selectedClubTags.indexOf(circleId);
+            if (index > -1) {
+                selectedClubTags.splice(index, 1);
+            } else {
+                selectedClubTags.push(circleId);
+            }
+            
+            // Update UI
+            document.querySelectorAll('.club-tag-item').forEach(el => {
+                const tagId = el.getAttribute('onclick').match(/'([^']+)'/)[1];
+                if (selectedClubTags.includes(tagId)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
         }
 
         function closeAddHabitModal() {
@@ -1007,6 +1094,7 @@
             document.getElementById('habitName').value = '';
             document.getElementById('habitFrequency').value = '3';
             document.getElementById('habitPrivate').checked = false;
+            selectedClubTags = [];
         }
 
         async function createHabit() {
@@ -1022,12 +1110,33 @@
             showLoading();
 
             try {
-                await sb.from('habits').insert([{
-                    user_id: currentUser.id,
-                    name: name,
-                    frequency: frequency,
-                    is_private: isPrivate
-                }]);
+                // Create habit
+                const { data: habit, error: habitError } = await sb
+                    .from('habits')
+                    .insert([{
+                        user_id: currentUser.id,
+                        name: name,
+                        frequency: frequency,
+                        is_private: isPrivate
+                    }])
+                    .select()
+                    .single();
+
+                if (habitError) throw habitError;
+
+                // Add circle tags
+                if (selectedClubTags.length > 0) {
+                    const tags = selectedClubTags.map(circleId => ({
+                        habit_id: habit.id,
+                        circle_id: circleId
+                    }));
+
+                    const { error: tagsError } = await sb
+                        .from('habit_circle_tags')
+                        .insert(tags);
+
+                    if (tagsError) throw tagsError;
+                }
 
                 showToast('Habit added!', 'success');
                 closeAddHabitModal();
@@ -1061,22 +1170,45 @@
             showLoading();
 
             try {
-                const { data: circle } = await sb.from('circles').insert([{
-                    name: name,
-                    created_by: currentUser.id
-                }]).select().single();
+                console.log('Creating club:', name);
+                
+                // Create circle
+                const { data: circle, error: circleError } = await sb
+                    .from('circles')
+                    .insert([{
+                        name: name,
+                        created_by: currentUser.id
+                    }])
+                    .select()
+                    .single();
 
-                await sb.from('circle_members').insert([{
-                    circle_id: circle.id,
-                    user_id: currentUser.id
-                }]);
+                if (circleError) {
+                    console.error('Circle error:', circleError);
+                    throw circleError;
+                }
+
+                console.log('Circle created:', circle);
+
+                // Add creator as member
+                const { error: memberError } = await sb
+                    .from('circle_members')
+                    .insert([{
+                        circle_id: circle.id,
+                        user_id: currentUser.id
+                    }]);
+
+                if (memberError) {
+                    console.error('Member error:', memberError);
+                    throw memberError;
+                }
 
                 showToast('Club created!', 'success');
                 closeCreateClubModal();
+                await loadData();
 
             } catch (error) {
-                console.error(error);
-                showToast('Failed to create club');
+                console.error('Create club error:', error);
+                showToast('Failed: ' + (error.message || 'Unknown error'));
             } finally {
                 hideLoading();
             }
