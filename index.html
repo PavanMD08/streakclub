@@ -895,15 +895,24 @@
 
                 if (memberships && memberships.length > 0) {
                     const circleIds = memberships.map(m => m.circle_id);
+                    
                     const { data: circlesData } = await sb
                         .from('circles')
                         .select('*')
                         .in('id', circleIds);
 
-                    cachedCircles = circlesData || [];
-                }
+                    const { data: allMembers } = await sb
+                        .from('circle_members')
+                        .select('*')
+                        .in('circle_id', circleIds);
 
-                // Load all profiles
+                    cachedCircles = (circlesData || []).map(circle => ({
+                        ...circle,
+                        members: allMembers.filter(m => m.circle_id === circle.id).map(m => m.user_id)
+                    }));
+
+                    // Load all profiles
+                    const allMemberIds = [...new Set(allMembers.map(m => m.user_id))];
                     const { data: profiles } = await sb
                         .from('profiles')
                         .select('*')
