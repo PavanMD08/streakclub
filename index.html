@@ -7,8 +7,11 @@
     
     <meta name="theme-color" content="#0B1437">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="StreakClub">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -2013,7 +2016,7 @@
                 showToast('Left club', 'success');
                 closeCircleDashboard();
                 await loadData();
-                renderClubs(); // Update UI
+                renderClubs(); // Update clubs list
 
             } catch (error) {
                 console.error(error);
@@ -2039,7 +2042,7 @@
                 showToast('Club deleted', 'success');
                 closeCircleDashboard();
                 await loadData();
-                renderClubs(); // Update UI
+                renderClubs(); // Update clubs list
 
             } catch (error) {
                 console.error(error);
@@ -2074,18 +2077,25 @@
 
             try {
                 // Delete habit (cascades to tags and checkins due to DB constraints)
-                await sb
+                const { data, error } = await sb
                     .from('habits')
                     .delete()
-                    .eq('id', habitToDelete);
+                    .eq('id', habitToDelete)
+                    .select();
 
+                if (error) {
+                    console.error('Delete error:', error);
+                    throw error;
+                }
+
+                console.log('Deleted habit:', data);
                 showToast('Habit deleted', 'success');
                 await loadData();
-                renderHabits(); // Update UI
+                renderHabits(); // Update habits list
 
             } catch (error) {
-                console.error(error);
-                showToast('Failed to delete habit');
+                console.error('Delete habit error:', error);
+                showToast(`Failed to delete: ${error.message}`);
             } finally {
                 hideLoading();
                 habitToDelete = null;
