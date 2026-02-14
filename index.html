@@ -1129,14 +1129,18 @@
         // CLUB RENDERING & DASHBOARD
         // ============================================================
         
+        // ============================================================
+        // CLUB RENDERING & DASHBOARD (WITH ORIGINAL CLEAN DESIGN)
+        // ============================================================
+        
         function renderClubs() {
             const container = document.getElementById('clubsList');
 
             if (cachedCircles.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <h3>No clubs yet</h3>
-                        <p>Create your first club</p>
+                        <h3>No StreakClubs yet</h3>
+                        <p>Create your first accountability circle</p>
                         <button class="btn-primary" onclick="openCreateClubModal()">Create StreakClub</button>
                     </div>
                 `;
@@ -1148,50 +1152,57 @@
                 const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
                 const yourData = rankings.find(r => r.userId === currentUser.id);
                 const leader = rankings[0];
-                const gap = yourData ? (leader.consistency - yourData.consistency) : 0;
+                const gap = yourData ? Math.round(leader.consistency - yourData.consistency) : 0;
                 
                 let positionBanner = '';
                 if (yourRank === 1) {
-                    positionBanner = `<div class="position-banner first-place">🏆 You're #1</div>`;
+                    positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
                 } else if (yourRank <= 3) {
-                    positionBanner = `<div class="position-banner top-three">🏆 #${yourRank} • ${Math.round(gap)}% behind</div>`;
+                    positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${gap}% behind 1st</div>`;
                 } else {
-                    positionBanner = `<div class="position-banner needs-improvement">⚠️ #${yourRank}</div>`;
+                    positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
                 }
 
                 const top3 = rankings.slice(0, 3);
                 const leaderboardHTML = `
-                    <table style="width: 100%; font-size: 11px; margin: 12px 0;">
+                    <table class="leaderboard-table" style="margin: 16px 0;">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--glass-border);">
-                                <th style="padding: 6px; text-align: left;">Rank</th>
-                                <th style="padding: 6px; text-align: left;">Name</th>
-                                <th style="padding: 6px; text-align: right;">Score</th>
+                            <tr>
+                                <th style="width: 50px;">Rank</th>
+                                <th>Name</th>
+                                <th style="width: 100px;">Consistency</th>
+                                <th style="width: 90px;">Streak</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${top3.map((r, idx) => `
-                                <tr style="${r.userId === currentUser.id ? 'background: rgba(0, 217, 255, 0.1);' : ''}">
-                                    <td style="padding: 6px;">${idx + 1}</td>
-                                    <td style="padding: 6px; font-weight: 600;">${r.name}</td>
-                                    <td style="padding: 6px; text-align: right; color: var(--electric-blue); font-weight: 700;">${r.consistency}%</td>
-                                </tr>
-                            `).join('')}
+                            ${top3.map((r, idx) => {
+                                const isYou = r.userId === currentUser.id;
+                                return `
+                                    <tr class="${isYou ? 'current-user' : ''}">
+                                        <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                                        <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
+                                        <td><span class="table-consistency">${r.consistency}%</span></td>
+                                        <td><span class="table-streak">🔥 ${r.streak}w</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
 
                 return `
-                    <div class="club-card">
-                        <div class="club-header">
-                            <div class="club-title">${circle.name}</div>
-                            <div class="club-badge">${circle.members.length} members</div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">${circle.name}</h3>
+                            <span class="card-badge">${circle.members.length} members</span>
                         </div>
                         ${positionBanner}
                         ${leaderboardHTML}
-                        <button class="btn-view-club" onclick="openCircleDashboard('${circle.id}')">
-                            View Full Details →
-                        </button>
+                        <div style="text-align: center; padding: 16px 0 8px;">
+                            <button class="btn-view-details" onclick="openCircleDashboard('${circle.id}')">
+                                View Full Details →
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1239,6 +1250,58 @@
             });
         }
 
+        function getTodayStatus(circleId) {
+            const circle = cachedCircles.find(c => c.id === circleId);
+            if (!circle) return { userCheckedIn: false, checkedInCount: 0, allCheckedIn: false, atRisk: [] };
+
+            const today = new Date().toDateString();
+
+            const userCheckedIn = cachedCheckins.some(c => {
+                const habit = cachedHabits.find(h => h.id === c.habit_id);
+                return c.user_id === currentUser.id &&
+                       new Date(c.checked_in_at).toDateString() === today &&
+                       habit && 
+                       (habit.circleTags?.includes(circleId) || !habit.is_private);
+            });
+
+            const checkedInCount = circle.members.filter(memberId => {
+                const memberHabits = cachedHabits.filter(h => 
+                    h.user_id === memberId &&
+                    (h.circleTags?.includes(circleId) || !h.is_private)
+                );
+
+                return cachedCheckins.some(c => 
+                    c.user_id === memberId &&
+                    memberHabits.some(h => h.id === c.habit_id) &&
+                    new Date(c.checked_in_at).toDateString() === today
+                );
+            }).length;
+
+            const allCheckedIn = checkedInCount === circle.members.length;
+
+            const atRisk = circle.members.filter(memberId => {
+                const memberHabits = cachedHabits.filter(h => 
+                    h.user_id === memberId &&
+                    (h.circleTags?.includes(circleId) || !h.is_private)
+                );
+
+                if (memberHabits.length === 0) return false;
+
+                const hasActiveStreak = memberHabits.some(h => getStreak(h.id) > 0);
+                if (!hasActiveStreak) return false;
+
+                const checkedInToday = cachedCheckins.some(c => 
+                    c.user_id === memberId &&
+                    memberHabits.some(h => h.id === c.habit_id) &&
+                    new Date(c.checked_in_at).toDateString() === today
+                );
+
+                return !checkedInToday;
+            }).map(id => cachedProfiles[id]?.name || 'User');
+
+            return { userCheckedIn, checkedInCount, allCheckedIn, atRisk };
+        }
+
         function openCircleDashboard(circleId) {
             const circle = cachedCircles.find(c => c.id === circleId);
             if (!circle) return;
@@ -1271,6 +1334,31 @@
             const rankings = getCircleRankings(currentDashboardCircle.id);
             const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
 
+            const todayStatus = getTodayStatus(currentDashboardCircle.id);
+            const todayStatusHTML = `
+                <div class="today-status-section" style="margin-top: 24px;">
+                    <div class="status-header" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">TODAY'S STATUS</div>
+                    <div class="status-items">
+                        <div class="status-item" style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; font-size: 13px;">
+                            ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
+                        </div>
+                        ${todayStatus.atRisk.length > 0 ? `
+                            <div class="status-item" style="padding: 10px; background: rgba(255,152,0,0.1); border-radius: 8px; margin-bottom: 8px; font-size: 13px; color: #FF9800;">
+                                ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                            </div>
+                        ` : ''}
+                        ${!todayStatus.userCheckedIn ? `
+                            <div class="status-item" style="padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-bottom: 12px; font-size: 13px; color: #EF4444;">
+                                ⚠️ You haven't checked in today
+                            </div>
+                            <button class="btn-check-in-cta" onclick="closeCircleDashboard(); document.querySelectorAll('.tab')[1].click();" style="width: 100%; background: var(--electric-blue); color: var(--navy); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                                CHECK IN NOW →
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
             const html = `
                 <div style="margin-bottom: 12px; padding: 10px; background: rgba(0, 217, 255, 0.1); border-radius: 10px; font-size: 12px; color: var(--electric-blue);">
                     ${currentDashboardCircle.members.length} members • You're #${yourRank}
@@ -1287,14 +1375,15 @@
                     <tbody>
                         ${rankings.map((r, idx) => `
                             <tr class="${r.userId === currentUser.id ? 'current-user' : ''}">
-                                <td>${idx + 1}</td>
-                                <td class="table-name">${r.name}</td>
+                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
+                                <td class="table-name">${r.name}${r.userId === currentUser.id ? ' (You)' : ''}</td>
                                 <td class="table-consistency">${r.consistency}%</td>
-                                <td class="table-streak">${r.streak}w</td>
+                                <td class="table-streak">🔥 ${r.streak}w</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
+                ${todayStatusHTML}
             `;
             document.getElementById('dashboardLeaderboardTab').innerHTML = html;
         }
@@ -1332,8 +1421,8 @@
             };
 
             const html = feed.length === 0 ? `<div class="empty-state"><p>No activity yet</p></div>` : feed.slice(0, 20).map(item => `
-                <div style="padding: 12px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
-                    <div style="font-size: 13px; margin-bottom: 4px;">
+                <div style="padding: 14px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
+                    <div style="font-size: 14px; margin-bottom: 4px;">
                         <strong>${item.userName}</strong> checked in to <strong>${item.habitName}</strong>
                     </div>
                     <div style="font-size: 11px; color: var(--text-secondary);">${getTimeAgo(item.timestamp)}</div>
