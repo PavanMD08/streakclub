@@ -960,14 +960,24 @@
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // If called from a click event, use event.target, otherwise find the tab button
+            if (typeof event !== 'undefined' && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Find and activate the correct tab button
+                const tabs = document.querySelectorAll('.tab');
+                if (tab === 'clubs') tabs[0]?.classList.add('active');
+                else if (tab === 'habits') tabs[1]?.classList.add('active');
+            }
 
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.getElementById(tab + 'Tab').classList.remove('hidden');
 
             const addBtn = document.getElementById('addHabitBtn');
             if (addBtn) {
-                addBtn.style.display = (tab === 'habits' && cachedHabits.length > 0) ? 'block' : 'none';
+                const userHabits = cachedHabits.filter(h => h.user_id === currentUser.id);
+                addBtn.style.display = (tab === 'habits' && userHabits.length > 0) ? 'block' : 'none';
             }
         }
 
@@ -1150,7 +1160,6 @@
             container.innerHTML = cachedCircles.map(circle => {
                 const rankings = getCircleRankings(circle.id);
                 const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
-                const yourData = rankings.find(r => r.userId === currentUser.id);
                 
                 // Status badge
                 let statusBadge = '';
@@ -1162,21 +1171,34 @@
                     statusBadge = `<div style="display: inline-block; background: rgba(255, 152, 0, 0.15); color: #FF9800; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 8px;">Rank #${yourRank}</div>`;
                 }
 
-                // Top 3 leaderboard
+                // Top 3 leaderboard with headers
                 const top3 = rankings.slice(0, 3);
                 const leaderboardHTML = `
                     <div style="margin-top: 16px;">
+                        <!-- Headers -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                <div style="width: 28px; font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Rank</div>
+                                <div style="flex: 1; font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Name</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px; flex-shrink: 0;">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; min-width: 45px; text-align: right;">Adherence</div>
+                                <div style="font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; min-width: 40px; text-align: right;">Streak</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Leaderboard rows -->
                         ${top3.map((r, idx) => {
                             const isYou = r.userId === currentUser.id;
                             return `
                                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 8px; margin-bottom: 6px;">
-                                    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
                                         <div style="width: 28px; height: 28px; border-radius: 50%; background: ${idx === 0 ? 'linear-gradient(135deg, var(--electric-blue), var(--electric-blue-dark))' : 'rgba(255, 255, 255, 0.1)'}; color: ${idx === 0 ? 'var(--navy)' : 'var(--text-primary)'}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;">${idx + 1}</div>
                                         <div style="font-size: 14px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.name}${isYou ? ' (You)' : ''}</div>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 16px; flex-shrink: 0;">
-                                        <div style="font-size: 13px; font-weight: 700; color: var(--electric-blue);">${r.consistency}%</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">🔥 ${r.streak}w</div>
+                                        <div style="font-size: 13px; font-weight: 700; color: var(--electric-blue); min-width: 45px; text-align: right;">${r.consistency}%</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); min-width: 40px; text-align: right;">🔥 ${r.streak}w</div>
                                     </div>
                                 </div>
                             `;
@@ -1185,7 +1207,7 @@
                 `;
 
                 return `
-                    <div class="card" style="margin-bottom: 16px;">
+                    <div style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <div>
                                 <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${circle.name}</h3>
@@ -1196,9 +1218,11 @@
                         
                         ${leaderboardHTML}
                         
-                        <button class="btn-view-details" onclick="openCircleDashboard('${circle.id}')" style="width: 100%; margin-top: 12px; background: transparent; border: 2px solid var(--electric-blue); color: var(--electric-blue); padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
-                            View More →
-                        </button>
+                        <div style="text-align: center; margin-top: 12px;">
+                            <button onclick="openCircleDashboard('${circle.id}')" style="background: var(--electric-blue); color: var(--navy); border: none; padding: 10px 20px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                                VIEW MORE →
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1361,6 +1385,19 @@
                     ${currentDashboardCircle.members.length} members • You're #${yourRank}
                 </div>
                 
+                <!-- Headers -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 12px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="width: 32px; font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Rank</div>
+                        <div style="flex: 1; font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Name</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 20px; flex-shrink: 0;">
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; min-width: 45px; text-align: right;">Adherence</div>
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; min-width: 40px; text-align: right;">Streak</div>
+                    </div>
+                </div>
+                
+                <!-- Leaderboard rows -->
                 <div style="margin-bottom: 12px;">
                     ${rankings.map((r, idx) => {
                         const isYou = r.userId === currentUser.id;
