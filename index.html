@@ -1151,58 +1151,54 @@
                 const rankings = getCircleRankings(circle.id);
                 const yourRank = rankings.findIndex(r => r.userId === currentUser.id) + 1;
                 const yourData = rankings.find(r => r.userId === currentUser.id);
-                const leader = rankings[0];
-                const gap = yourData ? Math.round(leader.consistency - yourData.consistency) : 0;
                 
-                let positionBanner = '';
+                // Status badge
+                let statusBadge = '';
                 if (yourRank === 1) {
-                    positionBanner = `<div class="position-banner first-place">🏆 You're #1 • Stay on top!</div>`;
+                    statusBadge = `<div style="display: inline-block; background: rgba(255, 215, 0, 0.2); color: #FFD700; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 8px;">🏆 #1 Leader</div>`;
                 } else if (yourRank <= 3) {
-                    positionBanner = `<div class="position-banner top-three">🏆 You're #${yourRank} • ${gap}% behind 1st</div>`;
+                    statusBadge = `<div style="display: inline-block; background: rgba(0, 217, 255, 0.15); color: var(--electric-blue); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 8px;">🏆 Top 3 • #${yourRank}</div>`;
                 } else {
-                    positionBanner = `<div class="position-banner needs-improvement">⚠️ You're #${yourRank} • Check in to climb!</div>`;
+                    statusBadge = `<div style="display: inline-block; background: rgba(255, 152, 0, 0.15); color: #FF9800; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 8px;">Rank #${yourRank}</div>`;
                 }
 
+                // Top 3 leaderboard
                 const top3 = rankings.slice(0, 3);
                 const leaderboardHTML = `
-                    <table class="leaderboard-table" style="margin: 16px 0;">
-                        <thead>
-                            <tr>
-                                <th style="width: 50px;">Rank</th>
-                                <th>Name</th>
-                                <th style="width: 100px;">Consistency</th>
-                                <th style="width: 90px;">Streak</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${top3.map((r, idx) => {
-                                const isYou = r.userId === currentUser.id;
-                                return `
-                                    <tr class="${isYou ? 'current-user' : ''}">
-                                        <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
-                                        <td><span class="table-name">${r.name}${isYou ? ' (You)' : ''}</span></td>
-                                        <td><span class="table-consistency">${r.consistency}%</span></td>
-                                        <td><span class="table-streak">🔥 ${r.streak}w</span></td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+                    <div style="margin-top: 16px;">
+                        ${top3.map((r, idx) => {
+                            const isYou = r.userId === currentUser.id;
+                            return `
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 8px; margin-bottom: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: ${idx === 0 ? 'linear-gradient(135deg, var(--electric-blue), var(--electric-blue-dark))' : 'rgba(255, 255, 255, 0.1)'}; color: ${idx === 0 ? 'var(--navy)' : 'var(--text-primary)'}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;">${idx + 1}</div>
+                                        <div style="font-size: 14px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.name}${isYou ? ' (You)' : ''}</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 16px; flex-shrink: 0;">
+                                        <div style="font-size: 13px; font-weight: 700; color: var(--electric-blue);">${r.consistency}%</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">🔥 ${r.streak}w</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 `;
 
                 return `
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">${circle.name}</h3>
-                            <span class="card-badge">${circle.members.length} members</span>
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div>
+                                <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${circle.name}</h3>
+                                ${statusBadge}
+                            </div>
+                            <div style="background: rgba(0, 217, 255, 0.15); color: var(--electric-blue); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">${circle.members.length} members</div>
                         </div>
-                        ${positionBanner}
+                        
                         ${leaderboardHTML}
-                        <div style="text-align: center; padding: 16px 0 8px;">
-                            <button class="btn-view-details" onclick="openCircleDashboard('${circle.id}')">
-                                View Full Details →
-                            </button>
-                        </div>
+                        
+                        <button class="btn-view-details" onclick="openCircleDashboard('${circle.id}')" style="width: 100%; margin-top: 12px; background: transparent; border: 2px solid var(--electric-blue); color: var(--electric-blue); padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                            View More →
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -1336,53 +1332,53 @@
 
             const todayStatus = getTodayStatus(currentDashboardCircle.id);
             const todayStatusHTML = `
-                <div class="today-status-section" style="margin-top: 24px;">
-                    <div class="status-header" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">TODAY'S STATUS</div>
-                    <div class="status-items">
-                        <div class="status-item" style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; font-size: 13px;">
-                            ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
-                        </div>
-                        ${todayStatus.atRisk.length > 0 ? `
-                            <div class="status-item" style="padding: 10px; background: rgba(255,152,0,0.1); border-radius: 8px; margin-bottom: 8px; font-size: 13px; color: #FF9800;">
-                                ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
-                            </div>
-                        ` : ''}
-                        ${!todayStatus.userCheckedIn ? `
-                            <div class="status-item" style="padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-bottom: 12px; font-size: 13px; color: #EF4444;">
-                                ⚠️ You haven't checked in today
-                            </div>
-                            <button class="btn-check-in-cta" onclick="closeCircleDashboard(); document.querySelectorAll('.tab')[1].click();" style="width: 100%; background: var(--electric-blue); color: var(--navy); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer;">
-                                CHECK IN NOW →
-                            </button>
-                        ` : ''}
+                <div style="margin-top: 24px; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">TODAY'S STATUS</div>
+                    
+                    <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px; font-size: 13px;">
+                        ${todayStatus.allCheckedIn ? '✅' : '📊'} ${todayStatus.checkedInCount}/${currentDashboardCircle.members.length} members checked in today
                     </div>
+                    
+                    ${todayStatus.atRisk.length > 0 ? `
+                        <div style="padding: 12px; background: rgba(255,152,0,0.1); border-radius: 8px; margin-bottom: 8px; font-size: 13px; color: #FF9800;">
+                            ⚠️ ${todayStatus.atRisk.join(', ')} will lose streak${todayStatus.atRisk.length > 1 ? 's' : ''} if no check-in
+                        </div>
+                    ` : ''}
+                    
+                    ${!todayStatus.userCheckedIn ? `
+                        <div style="padding: 12px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-bottom: 12px; font-size: 13px; color: #EF4444;">
+                            ⚠️ You haven't checked in today
+                        </div>
+                        <button onclick="closeCircleDashboard(); document.querySelectorAll('.tab')[1].click();" style="width: 100%; background: var(--electric-blue); color: var(--navy); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px;">
+                            CHECK IN NOW →
+                        </button>
+                    ` : ''}
                 </div>
             `;
 
             const html = `
-                <div style="margin-bottom: 12px; padding: 10px; background: rgba(0, 217, 255, 0.1); border-radius: 10px; font-size: 12px; color: var(--electric-blue);">
+                <div style="margin-bottom: 16px; padding: 12px; background: rgba(0, 217, 255, 0.1); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--electric-blue); text-align: center;">
                     ${currentDashboardCircle.members.length} members • You're #${yourRank}
                 </div>
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Name</th>
-                            <th>Score</th>
-                            <th>Streak</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rankings.map((r, idx) => `
-                            <tr class="${r.userId === currentUser.id ? 'current-user' : ''}">
-                                <td><span class="table-rank ${idx < 3 ? 'top' : ''}">${idx + 1}</span></td>
-                                <td class="table-name">${r.name}${r.userId === currentUser.id ? ' (You)' : ''}</td>
-                                <td class="table-consistency">${r.consistency}%</td>
-                                <td class="table-streak">🔥 ${r.streak}w</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                
+                <div style="margin-bottom: 12px;">
+                    ${rankings.map((r, idx) => {
+                        const isYou = r.userId === currentUser.id;
+                        return `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 10px; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${idx < 3 ? 'linear-gradient(135deg, var(--electric-blue), var(--electric-blue-dark))' : 'rgba(255, 255, 255, 0.1)'}; color: ${idx < 3 ? 'var(--navy)' : 'var(--text-primary)'}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;">${idx + 1}</div>
+                                    <div style="font-size: 15px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.name}${isYou ? ' (You)' : ''}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 20px; flex-shrink: 0;">
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--electric-blue); min-width: 45px; text-align: right;">${r.consistency}%</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); min-width: 40px; text-align: right;">🔥 ${r.streak}w</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
                 ${todayStatusHTML}
             `;
             document.getElementById('dashboardLeaderboardTab').innerHTML = html;
