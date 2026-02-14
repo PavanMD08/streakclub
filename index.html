@@ -996,7 +996,16 @@
             document.getElementById('userName').textContent = currentUser.name;
             
             await loadData();
-            switchTab('habits');
+            
+            // Check for pending invite from signup/login
+            const pendingInvite = localStorage.getItem('pendingInvite');
+            if (pendingInvite) {
+                localStorage.removeItem('pendingInvite');
+                await joinClubByInvite(pendingInvite);
+                switchTab('clubs');
+            } else {
+                switchTab('habits');
+            }
         }
 
         async function loadData() {
@@ -1178,14 +1187,13 @@
 
                 return `
                     <div class="habit-card">
-                        <button class="habit-card-menu" onclick="showDeleteHabitModal('${habit.id}')">🗑️ Delete</button>
                         <div class="habit-streak">
                             <div class="streak-circle ${streak > 0 ? '' : 'empty'}">${streak}</div>
                             <div class="streak-label">${streakLabel}</div>
                         </div>
 
                         <div class="habit-center">
-                            <div class="habit-name">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
+                            <div class="habit-name" onclick="showHabitOptions('${habit.id}', '${habit.name.replace(/'/g, "\\'")}');" style="cursor: pointer;">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
                             
                             <div class="habit-week">
                                 <div class="week-dots">
@@ -1894,10 +1902,16 @@
             const urlParams = new URLSearchParams(window.location.search);
             const inviteCode = urlParams.get('invite');
             
-            if (inviteCode && currentUser) {
-                await joinClubByInvite(inviteCode);
-                // Clean URL
-                window.history.replaceState({}, document.title, '/');
+            if (inviteCode) {
+                // Store invite code for after login/signup
+                localStorage.setItem('pendingInvite', inviteCode);
+                
+                if (currentUser) {
+                    await joinClubByInvite(inviteCode);
+                    localStorage.removeItem('pendingInvite');
+                    // Clean URL
+                    window.history.replaceState({}, document.title, '/');
+                }
             }
         }
 
@@ -2034,6 +2048,12 @@
         }
 
         // DELETE HABIT
+        function showHabitOptions(habitId, habitName) {
+            if (confirm(`Delete "${habitName}"?\n\nThis will remove it from all clubs and delete all check-in history. This cannot be undone.`)) {
+                showDeleteHabitModal(habitId);
+            }
+        }
+
         function showDeleteHabitModal(habitId) {
             habitToDelete = habitId;
             document.getElementById('deleteHabitModal').classList.add('active');
