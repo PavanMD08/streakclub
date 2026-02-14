@@ -1,7 +1,7 @@
 {
-  "name": "Streakclub",
-  "short_name": "Streakclub",
-  "start_url": "/",
+  "name": "StreakClub",
+  "short_name": "StreakClub",
+  "start_url": "/?v=2",
   "display": "standalone",
   "background_color": "#0B1437",
   "theme_color": "#0B1437",
