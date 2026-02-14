@@ -2055,7 +2055,7 @@
         // DELETE HABIT
         function showHabitOptions(habitId, habitName) {
             if (confirm(`Delete "${habitName}"?\n\nThis will remove it from all clubs and delete all check-in history. This cannot be undone.`)) {
-                showDeleteHabitModal(habitId);
+                confirmDeleteHabit(habitId);
             }
         }
 
@@ -2069,18 +2069,17 @@
             habitToDelete = null;
         }
 
-        async function confirmDeleteHabit() {
-            if (!habitToDelete) return;
+        async function confirmDeleteHabit(habitId) {
+            if (!habitId) return;
 
             showLoading();
-            closeDeleteHabitModal();
 
             try {
                 // Delete habit (cascades to tags and checkins due to DB constraints)
                 const { data, error } = await sb
                     .from('habits')
                     .delete()
-                    .eq('id', habitToDelete)
+                    .eq('id', habitId)
                     .select();
 
                 if (error) {
@@ -2098,7 +2097,6 @@
                 showToast(`Failed to delete: ${error.message}`);
             } finally {
                 hideLoading();
-                habitToDelete = null;
             }
         }
 
