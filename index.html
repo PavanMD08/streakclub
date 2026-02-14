@@ -2013,6 +2013,7 @@
                 showToast('Left club', 'success');
                 closeCircleDashboard();
                 await loadData();
+                renderClubs(); // Update UI
 
             } catch (error) {
                 console.error(error);
@@ -2038,6 +2039,7 @@
                 showToast('Club deleted', 'success');
                 closeCircleDashboard();
                 await loadData();
+                renderClubs(); // Update UI
 
             } catch (error) {
                 console.error(error);
@@ -2079,6 +2081,7 @@
 
                 showToast('Habit deleted', 'success');
                 await loadData();
+                renderHabits(); // Update UI
 
             } catch (error) {
                 console.error(error);
