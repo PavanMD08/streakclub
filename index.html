@@ -2011,20 +2011,27 @@
 
             showLoading();
             try {
-                await sb
+                const { data, error } = await sb
                     .from('circle_members')
                     .delete()
                     .eq('circle_id', currentDashboardCircle.id)
-                    .eq('user_id', currentUser.id);
+                    .eq('user_id', currentUser.id)
+                    .select();
 
+                if (error) {
+                    console.error('Leave club error:', error);
+                    throw error;
+                }
+
+                console.log('Left club:', data);
                 showToast('Left club', 'success');
                 closeCircleDashboard();
                 await loadData();
                 renderClubs(); // Update clubs list
 
             } catch (error) {
-                console.error(error);
-                showToast('Failed to leave club');
+                console.error('Leave club error:', error);
+                showToast(`Failed to leave: ${error.message}`);
             } finally {
                 hideLoading();
             }
@@ -2038,19 +2045,26 @@
 
             showLoading();
             try {
-                await sb
+                const { data, error } = await sb
                     .from('circles')
                     .delete()
-                    .eq('id', currentDashboardCircle.id);
+                    .eq('id', currentDashboardCircle.id)
+                    .select();
 
+                if (error) {
+                    console.error('Delete club error:', error);
+                    throw error;
+                }
+
+                console.log('Deleted club:', data);
                 showToast('Club deleted', 'success');
                 closeCircleDashboard();
                 await loadData();
                 renderClubs(); // Update clubs list
 
             } catch (error) {
-                console.error(error);
-                showToast('Failed to delete club');
+                console.error('Delete club error:', error);
+                showToast(`Failed to delete: ${error.message}`);
             } finally {
                 hideLoading();
             }
