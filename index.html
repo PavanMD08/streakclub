@@ -1824,9 +1824,6 @@
 
         async function initializeApp() {
             if (!sb) {
-            // Check for invite link in URL
-            await handleInviteLink();
-
                 document.getElementById('authScreen').classList.remove('hidden');
                 return;
             }
@@ -1843,6 +1840,10 @@
                             name: profile.name,
                             email: session.user.email
                         };
+                        
+                        // Check for invite link AFTER user is loaded
+                        await handleInviteLink();
+                        
                         await showMainApp();
                         return;
                     }
@@ -1850,6 +1851,9 @@
             } catch (error) {
                 console.error(error);
             }
+            
+            // Check for invite link even when not logged in (stores for after signup)
+            await handleInviteLink();
             
             document.getElementById('authScreen').classList.remove('hidden');
         }
