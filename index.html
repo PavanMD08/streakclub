@@ -2024,10 +2024,10 @@
                 }
 
                 console.log('Left club:', data);
-                showToast('Left club', 'success');
-                closeCircleDashboard();
                 await loadData();
-                renderClubs(); // Update clubs list
+                closeCircleDashboard();
+                renderClubs();
+                showToast('Left club', 'success');
 
             } catch (error) {
                 console.error('Leave club error:', error);
@@ -2057,10 +2057,10 @@
                 }
 
                 console.log('Deleted club:', data);
-                showToast('Club deleted', 'success');
-                closeCircleDashboard();
                 await loadData();
-                renderClubs(); // Update clubs list
+                closeCircleDashboard();
+                renderClubs();
+                showToast('Club deleted', 'success');
 
             } catch (error) {
                 console.error('Delete club error:', error);
