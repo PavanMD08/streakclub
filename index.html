@@ -286,6 +286,135 @@
             box-shadow: none;
         }
 
+        /* Habit Calendar Modal */
+        .calendar-header-stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .calendar-habit-name {
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .calendar-adherence {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--electric-blue);
+            margin: 0 12px;
+        }
+
+        .calendar-streak {
+            font-size: 13px;
+            font-weight: 700;
+            color: #FFD700;
+            white-space: nowrap;
+        }
+
+        .calendar-week-label {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .calendar-day-headers {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+        }
+
+        .calendar-weeks {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-week-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-dot {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+
+        .calendar-dot.checked {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+            color: var(--navy);
+            font-weight: 700;
+        }
+
+        .calendar-dot.today {
+            border-color: var(--electric-blue);
+            color: var(--electric-blue);
+        }
+
+        .calendar-dot.future {
+            opacity: 0.3;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .calendar-nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .calendar-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .calendar-nav-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -1204,7 +1333,7 @@
                 }).join('');
 
                 return `
-                    <div class="habit-card">
+                    <div class="habit-card" onclick="openHabitCalendar('${habit.id}')" style="cursor: pointer;">
                         <div class="habit-streak">
                             <div class="streak-circle ${streak > 0 ? '' : 'empty'}">${streak}</div>
                             <div class="streak-label">${streakLabel}</div>
@@ -1213,7 +1342,7 @@
                         <div class="habit-center">
                             <div class="habit-name">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
                             
-                            <div class="habit-week">
+                            <div class="habit-week" onclick="event.stopPropagation()">
                                 <div class="week-dots">
                                     ${weekHTML}
                                 </div>
@@ -1221,7 +1350,7 @@
                             </div>
                         </div>
 
-                        <div class="habit-action" style="display: flex; align-items: center; gap: 8px;">
+                        <div class="habit-action" style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation()">
                             ${checkedToday ? `
                                 <div class="btn-check done">✓</div>
                             ` : `
@@ -2091,6 +2220,112 @@
             }
         }
 
+        // HABIT CALENDAR
+        let calendarHabitId = null;
+        let calendarWeekOffset = 0;
+
+        function openHabitCalendar(habitId) {
+            calendarHabitId = habitId;
+            calendarWeekOffset = 0;
+            renderHabitCalendar();
+            document.getElementById('habitCalendarModal').classList.add('active');
+        }
+
+        function closeHabitCalendar() {
+            document.getElementById('habitCalendarModal').classList.remove('active');
+            calendarHabitId = null;
+        }
+
+        function calendarNavigate(direction) {
+            calendarWeekOffset += direction;
+            renderHabitCalendar();
+        }
+
+        function renderHabitCalendar() {
+            const habit = cachedHabits.find(h => h.id === calendarHabitId);
+            if (!habit) return;
+
+            const habitCheckins = cachedCheckins.filter(c => c.habit_id === calendarHabitId);
+            const checkedDates = new Set(habitCheckins.map(c => new Date(c.checked_in_at).toDateString()));
+
+            // Calculate adherence
+            const totalWeeks = Math.max(1, Math.ceil((new Date() - new Date(habit.created_at)) / (7 * 24 * 60 * 60 * 1000)));
+            let completedWeeks = 0;
+            for (let w = 0; w < totalWeeks; w++) {
+                const wStart = new Date();
+                wStart.setDate(wStart.getDate() - wStart.getDay() - (w * 7));
+                let count = 0;
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(wStart);
+                    d.setDate(d.getDate() + i);
+                    if (checkedDates.has(d.toDateString())) count++;
+                }
+                if (count >= habit.frequency) completedWeeks++;
+            }
+            const adherence = Math.round((completedWeeks / totalWeeks) * 100);
+            const streak = getStreak(calendarHabitId);
+
+            // Update header stats
+            document.getElementById('calendarHabitName').textContent = habit.name + (habit.is_private ? ' 🔒' : '');
+            document.getElementById('calendarAdherence').textContent = `${adherence}%`;
+            document.getElementById('calendarStreak').textContent = `🔥 ${streak}w`;
+
+            // Build 4 weeks
+            const today = new Date();
+            const todayStr = today.toDateString();
+            const currentWeekSunday = new Date(today);
+            currentWeekSunday.setDate(today.getDate() - today.getDay());
+            currentWeekSunday.setHours(0, 0, 0, 0);
+
+            const startWeekOffset = calendarWeekOffset * 4;
+            const weeks = [];
+
+            for (let w = 3; w >= 0; w--) {
+                const weekStart = new Date(currentWeekSunday);
+                weekStart.setDate(weekStart.getDate() - ((startWeekOffset + w) * 7));
+                const days = Array.from({length: 7}, (_, i) => {
+                    const d = new Date(weekStart);
+                    d.setDate(d.getDate() + i);
+                    return d;
+                });
+                weeks.push(days);
+            }
+
+            // Date range label
+            const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            document.getElementById('calendarWeekLabel').textContent =
+                `${fmt(weeks[0][0])} – ${fmt(weeks[3][6])}`;
+
+            // Render calendar
+            const habitCreated = new Date(habit.created_at);
+            document.getElementById('calendarWeeks').innerHTML = weeks.map(week => `
+                <div class="calendar-week-row">
+                    ${week.map(day => {
+                        const dayStr = day.toDateString();
+                        const isChecked = checkedDates.has(dayStr);
+                        const isToday = dayStr === todayStr;
+                        const isFuture = day > today && dayStr !== todayStr;
+                        const beforeCreation = day < habitCreated;
+
+                        let cls = 'calendar-dot';
+                        if (isChecked) cls += ' checked';
+                        else if (isToday) cls += ' today';
+                        else if (isFuture || beforeCreation) cls += ' future';
+
+                        return `<div class="${cls}">${day.getDate()}</div>`;
+                    }).join('')}
+                </div>
+            `).join('');
+
+            // Nav state
+            const oldestShown = new Date(currentWeekSunday);
+            oldestShown.setDate(oldestShown.getDate() - ((startWeekOffset + 4) * 7));
+            document.getElementById('calendarNavLabel').textContent =
+                calendarWeekOffset === 0 ? 'Most recent' : `${startWeekOffset + 4} weeks ago`;
+            document.getElementById('calendarNextBtn').disabled = calendarWeekOffset <= 0;
+            document.getElementById('calendarPrevBtn').disabled = oldestShown <= habitCreated;
+        }
+
         // DELETE HABIT
         function toggleHabitMenu(event, habitId) {
             event.stopPropagation();
@@ -2227,6 +2462,40 @@
                 <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px;">INVITE LINK</div>
                 <div class="invite-link" id="inviteLinkText"></div>
                 <button class="btn-copy" onclick="copyInviteLink()">📋 Copy Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Habit Calendar Modal -->
+    <div id="habitCalendarModal" class="modal">
+        <div class="modal-content" style="max-width: 480px; width: 100%;">
+            <div class="modal-header" style="padding-bottom: 0; border-bottom: none;">
+                <button class="btn-close" onclick="closeHabitCalendar()" style="margin-left: auto;">×</button>
+            </div>
+            <div class="calendar-header-stats">
+                <div class="calendar-habit-name" id="calendarHabitName"></div>
+                <div class="calendar-adherence" id="calendarAdherence"></div>
+                <div class="calendar-streak" id="calendarStreak"></div>
+            </div>
+
+            <div class="calendar-week-label" id="calendarWeekLabel"></div>
+
+            <div class="calendar-day-headers">
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+            </div>
+
+            <div class="calendar-weeks" id="calendarWeeks"></div>
+
+            <div class="calendar-nav">
+                <button class="calendar-nav-btn" id="calendarPrevBtn" onclick="calendarNavigate(-1)">← Previous</button>
+                <div class="calendar-nav-label" id="calendarNavLabel"></div>
+                <button class="calendar-nav-btn" id="calendarNextBtn" onclick="calendarNavigate(1)">Next →</button>
             </div>
         </div>
     </div>
