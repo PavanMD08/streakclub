@@ -1175,14 +1175,29 @@
                 const weekHTML = weekDates.map((date, idx) => {
                     const hasCheckin = thisWeekCheckins.some(c => new Date(c.checked_in_at).toDateString() === date);
                     const dayName = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][idx];
+                    const dateObj = new Date(date);
+                    const today = new Date();
+                    // Strip time - compare dates only
+                    const todayStr = today.toDateString();
+                    const dateStr = dateObj.toDateString();
+                    const isToday = dateStr === todayStr;
+                    const isPastDay = dateObj < today && !isToday;
+                    const isFuture = dateObj > today && !isToday;
                     
                     let dotClass = 'day-dot';
                     if (hasCheckin) dotClass += ' completed';
-                    else if (idx === 6 && new Date(date) < new Date() && checkinCount < habit.frequency) dotClass += ' missed';
+                    else if (isPastDay && checkinCount < habit.frequency) dotClass += ' missed';
+
+                    // Clickable: past days OR today, only if NOT already checked in, NOT future
+                    const clickable = (isPastDay || isToday) && !hasCheckin && !isFuture;
 
                     return `
                         <div class="day-col">
-                            <div class="${dotClass}"></div>
+                            <div class="${dotClass}" 
+                                style="${clickable ? 'cursor:pointer; border: 1.5px dashed rgba(0,217,255,0.6);' : ''}"
+                                onclick="${clickable ? `checkInForDate('${habit.id}', '${date}')` : ''}"
+                                title="${clickable ? 'Tap to check in' : ''}"
+                            ></div>
                             <div class="day-letter">${dayName}</div>
                         </div>
                     `;
@@ -1196,7 +1211,7 @@
                         </div>
 
                         <div class="habit-center">
-                            <div class="habit-name" onclick="showHabitOptions('${habit.id}', '${habit.name.replace(/'/g, "\\'")}');" style="cursor: pointer;">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
+                            <div class="habit-name">${habit.name}${habit.is_private ? ' 🔒' : ''}</div>
                             
                             <div class="habit-week">
                                 <div class="week-dots">
@@ -1206,12 +1221,18 @@
                             </div>
                         </div>
 
-                        <div class="habit-action">
+                        <div class="habit-action" style="display: flex; align-items: center; gap: 8px;">
                             ${checkedToday ? `
                                 <div class="btn-check done">✓</div>
                             ` : `
                                 <button class="btn-check" onclick="checkIn('${habit.id}')">□</button>
                             `}
+                            <div class="menu-3dot" style="position: relative;">
+                                <button class="menu-3dot-btn" onclick="toggleHabitMenu(event, '${habit.id}')" style="font-size: 18px; padding: 4px 6px; color: var(--text-secondary);">⋯</button>
+                                <div class="menu-3dot-dropdown" id="habitMenu_${habit.id}">
+                                    <div class="menu-3dot-item danger" onclick="showHabitOptions('${habit.id}', '${habit.name.replace(/'/g, "\\'")}')">🗑️ Delete Habit</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2071,6 +2092,50 @@
         }
 
         // DELETE HABIT
+        function toggleHabitMenu(event, habitId) {
+            event.stopPropagation();
+            // Close all other habit menus first
+            document.querySelectorAll('[id^="habitMenu_"]').forEach(m => {
+                if (m.id !== `habitMenu_${habitId}`) m.classList.remove('active');
+            });
+            document.getElementById(`habitMenu_${habitId}`).classList.toggle('active');
+        }
+
+        // Close habit menus when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('[id^="habitMenu_"]').forEach(m => m.classList.remove('active'));
+        });
+
+        // CHECK IN FOR PREVIOUS DAY
+        async function checkInForDate(habitId, dateString) {
+            showLoading();
+            try {
+                const date = new Date(dateString);
+                // Set time to noon to avoid timezone issues
+                date.setHours(12, 0, 0, 0);
+
+                const { error } = await sb
+                    .from('checkins')
+                    .insert([{
+                        habit_id: habitId,
+                        user_id: currentUser.id,
+                        checked_in_at: date.toISOString()
+                    }]);
+
+                if (error) throw error;
+
+                showToast('Checked in!', 'success');
+                await loadData();
+                renderHabits();
+
+            } catch (error) {
+                console.error(error);
+                showToast('Failed to check in');
+            } finally {
+                hideLoading();
+            }
+        }
+
         function showHabitOptions(habitId, habitName) {
             if (confirm(`Delete "${habitName}"?\n\nThis will remove it from all clubs and delete all check-in history. This cannot be undone.`)) {
                 confirmDeleteHabit(habitId);
