@@ -1273,7 +1273,10 @@
             const container = document.getElementById('habitsList');
             const addBtn = document.getElementById('addHabitBtn');
 
-            if (cachedHabits.length === 0) {
+            // Only show current user's habits
+            const myHabits = cachedHabits.filter(h => h.user_id === currentUser.id);
+
+            if (myHabits.length === 0) {
                 if (addBtn) addBtn.style.display = 'none';
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1287,7 +1290,7 @@
 
             if (addBtn) addBtn.style.display = 'block';
 
-            container.innerHTML = cachedHabits.map(habit => {
+            container.innerHTML = myHabits.map(habit => {
                 const weekStart = getWeekStart(new Date());
                 const weekDates = getWeekDates(weekStart);
                 
