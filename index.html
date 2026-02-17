@@ -939,7 +939,7 @@
                 </label>
             </div>
             <div class="form-group" id="clubTagsGroup">
-                <label>Tag StreakClubs (Optional)</label>
+                <label>StreakClubs (uncheck to remove)</label>
                 <div id="clubTagsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
             </div>
             <button class="btn-primary" onclick="createHabit()">Add Habit</button>
@@ -1128,6 +1128,9 @@
             document.getElementById('userName').textContent = currentUser.name;
             
             await loadData();
+            
+            // Run one-time migration to tag existing habits to clubs
+            await migrateHabitsTags();
             
             // Check for pending invite from signup/login
             const pendingInvite = localStorage.getItem('pendingInvite');
@@ -1811,7 +1814,6 @@
         function openAddHabitModal() {
             document.getElementById('addHabitModal').classList.add('active');
             
-            // Show club tags
             const clubTagsGroup = document.getElementById('clubTagsGroup');
             const clubTagsList = document.getElementById('clubTagsList');
             
@@ -1819,15 +1821,40 @@
                 clubTagsGroup.style.display = 'none';
             } else {
                 clubTagsGroup.style.display = 'block';
+                
+                // Auto-select ALL clubs by default
+                selectedClubTags = cachedCircles.map(c => c.id);
+                
                 clubTagsList.innerHTML = cachedCircles.map(circle => `
-                    <div class="club-tag-item" onclick="toggleClubTag('${circle.id}')">
+                    <div class="club-tag-item selected" onclick="toggleClubTag('${circle.id}')">
                         ${circle.name}
                     </div>
                 `).join('');
             }
-            
-            selectedClubTags = [];
         }
+
+        // When private is checked, clear all club tags
+        document.addEventListener('DOMContentLoaded', function() {
+            const privateCheckbox = document.getElementById('habitPrivate');
+            if (privateCheckbox) {
+                privateCheckbox.addEventListener('change', function() {
+                    const clubTagsGroup = document.getElementById('clubTagsGroup');
+                    if (this.checked) {
+                        // Private - deselect all clubs
+                        selectedClubTags = [];
+                        document.querySelectorAll('.club-tag-item').forEach(el => el.classList.remove('selected'));
+                        clubTagsGroup.style.display = 'none';
+                    } else {
+                        // Not private - re-show and re-select all clubs
+                        if (cachedCircles.length > 0) {
+                            selectedClubTags = cachedCircles.map(c => c.id);
+                            document.querySelectorAll('.club-tag-item').forEach(el => el.classList.add('selected'));
+                            clubTagsGroup.style.display = 'block';
+                        }
+                    }
+                });
+            }
+        });
 
         function toggleClubTag(circleId) {
             const index = selectedClubTags.indexOf(circleId);
@@ -2338,6 +2365,57 @@
                 calendarWeekOffset === 0 ? 'Most recent' : `${startWeekOffset + 4} weeks ago`;
             document.getElementById('calendarNextBtn').disabled = calendarWeekOffset <= 0;
             document.getElementById('calendarPrevBtn').disabled = oldestShown <= habitCreated;
+        }
+
+        // ONE-TIME MIGRATION: Tag all existing habits to all clubs
+        async function migrateHabitsTags() {
+            // Only run if not already done
+            if (localStorage.getItem('habitsMigrated_v1')) return;
+
+            if (cachedHabits.length === 0 || cachedCircles.length === 0) {
+                localStorage.setItem('habitsMigrated_v1', 'true');
+                return;
+            }
+
+            try {
+                // Get user's non-private habits
+                const userHabits = cachedHabits.filter(h => h.user_id === currentUser.id && !h.is_private);
+                
+                // Get user's circles
+                const userCircleIds = cachedCircles.map(c => c.id);
+
+                // Build inserts - all habits x all clubs
+                const inserts = [];
+                for (const habit of userHabits) {
+                    for (const circleId of userCircleIds) {
+                        inserts.push({ habit_id: habit.id, circle_id: circleId });
+                    }
+                }
+
+                if (inserts.length === 0) {
+                    localStorage.setItem('habitsMigrated_v1', 'true');
+                    return;
+                }
+
+                // Upsert (ignore duplicates)
+                const { error } = await sb
+                    .from('habit_circle_tags')
+                    .upsert(inserts, { onConflict: 'habit_id,circle_id', ignoreDuplicates: true });
+
+                if (error) {
+                    console.error('Migration error:', error);
+                    return;
+                }
+
+                console.log(`✅ Migrated ${inserts.length} habit-club links`);
+                localStorage.setItem('habitsMigrated_v1', 'true');
+                await loadData();
+                renderHabits();
+                renderClubs();
+
+            } catch (err) {
+                console.error('Migration failed:', err);
+            }
         }
 
         // DELETE HABIT
