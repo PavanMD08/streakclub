@@ -1317,15 +1317,29 @@
                     if (hasCheckin) dotClass += ' completed';
                     else if (isPastDay && checkinCount < habit.frequency) dotClass += ' missed';
 
-                    // Clickable: past days OR today, only if NOT already checked in, NOT future
-                    const clickable = (isPastDay || isToday) && !hasCheckin && !isFuture;
+                    // Clickable: past/today to check in, OR already checked in to undo
+                    const canCheckIn = (isPastDay || isToday) && !hasCheckin && !isFuture;
+                    const canUndo = (isPastDay || isToday) && hasCheckin && !isFuture;
+
+                    let dotStyle = '';
+                    let dotonclick = '';
+                    let dotTitle = '';
+                    if (canCheckIn) {
+                        dotStyle = 'cursor:pointer; border: 1.5px dashed rgba(0,217,255,0.6);';
+                        dotonclick = `checkInForDate('${habit.id}', '${date}')`;
+                        dotTitle = 'Tap to check in';
+                    } else if (canUndo) {
+                        dotStyle = 'cursor:pointer;';
+                        dotonclick = `undoCheckIn('${habit.id}', '${date}')`;
+                        dotTitle = 'Tap to undo';
+                    }
 
                     return `
                         <div class="day-col">
                             <div class="${dotClass}" 
-                                style="${clickable ? 'cursor:pointer; border: 1.5px dashed rgba(0,217,255,0.6);' : ''}"
-                                onclick="${clickable ? `checkInForDate('${habit.id}', '${date}')` : ''}"
-                                title="${clickable ? 'Tap to check in' : ''}"
+                                style="${dotStyle}"
+                                onclick="${dotonclick ? `event.stopPropagation(); ${dotonclick}` : ''}"
+                                title="${dotTitle}"
                             ></div>
                             <div class="day-letter">${dayName}</div>
                         </div>
@@ -1357,7 +1371,7 @@
                                 <button class="btn-check" onclick="checkIn('${habit.id}')">□</button>
                             `}
                             <div class="menu-3dot" style="position: relative;">
-                                <button class="menu-3dot-btn" onclick="toggleHabitMenu(event, '${habit.id}')" style="font-size: 18px; padding: 4px 6px; color: var(--text-secondary);">⋯</button>
+                                <button class="menu-3dot-btn" onclick="toggleHabitMenu(event, '${habit.id}')" style="font-size: 16px; padding: 2px 4px; color: var(--text-secondary);">⋮</button>
                                 <div class="menu-3dot-dropdown" id="habitMenu_${habit.id}">
                                     <div class="menu-3dot-item danger" onclick="showHabitOptions('${habit.id}', '${habit.name.replace(/'/g, "\\'")}')">🗑️ Delete Habit</div>
                                 </div>
@@ -2346,7 +2360,6 @@
             showLoading();
             try {
                 const date = new Date(dateString);
-                // Set time to noon to avoid timezone issues
                 date.setHours(12, 0, 0, 0);
 
                 const { error } = await sb
@@ -2366,6 +2379,38 @@
             } catch (error) {
                 console.error(error);
                 showToast('Failed to check in');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // UNDO CHECK IN
+        async function undoCheckIn(habitId, dateString) {
+            showLoading();
+            try {
+                const date = new Date(dateString);
+                const dayStart = new Date(date);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(date);
+                dayEnd.setHours(23, 59, 59, 999);
+
+                const { error } = await sb
+                    .from('checkins')
+                    .delete()
+                    .eq('habit_id', habitId)
+                    .eq('user_id', currentUser.id)
+                    .gte('checked_in_at', dayStart.toISOString())
+                    .lte('checked_in_at', dayEnd.toISOString());
+
+                if (error) throw error;
+
+                showToast('Check-in removed', 'success');
+                await loadData();
+                renderHabits();
+
+            } catch (error) {
+                console.error(error);
+                showToast('Failed to undo');
             } finally {
                 hideLoading();
             }
