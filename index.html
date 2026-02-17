@@ -1221,17 +1221,18 @@
                         circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
                     }));
 
-                    // Load all check-ins
-                    if (allHabits.length > 0) {
-                        const allHabitIds = allHabits.map(h => h.id);
+                    // Load all check-ins for all members directly by user_id
+                    if (allMemberIds.length > 0) {
                         const { data: allCheckinsData } = await sb
                             .from('checkins')
                             .select('*')
-                            .in('habit_id', allHabitIds);
+                            .in('user_id', allMemberIds);
 
                         // Merge all habits and checkins
                         cachedHabits = [...new Map([...cachedHabits, ...allHabits].map(h => [h.id, h])).values()];
                         cachedCheckins = [...new Map([...cachedCheckins, ...(allCheckinsData || [])].map(c => [c.id, c])).values()];
+                        
+                        console.log(`✅ Loaded ${allCheckinsData?.length || 0} total checkins for ${allMemberIds.length} members`);
                     }
                 }
 
