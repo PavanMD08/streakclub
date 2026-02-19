@@ -1132,6 +1132,9 @@
             // Run one-time migration to tag existing habits to clubs
             await migrateHabitsTags();
             
+            // Start realtime subscription for live updates
+            startRealtimeUpdates();
+            
             // Check for pending invite from signup/login
             const pendingInvite = localStorage.getItem('pendingInvite');
             if (pendingInvite) {
@@ -1562,7 +1565,8 @@
                 const user = cachedProfiles[userId] || { name: 'User' };
                 const userHabits = cachedHabits.filter(h => 
                     h.user_id === userId && 
-                    (h.circleTags?.includes(circleId) || !h.is_private)
+                    h.is_private === false &&
+                    h.circleTags?.includes(circleId)
                 );
 
                 if (userHabits.length === 0) {
@@ -1753,7 +1757,7 @@
                     ${rankings.map((r, idx) => {
                         const isYou = r.userId === currentUser.id;
                         return `
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 10px; margin-bottom: 8px;">
+                            <div onclick="openMemberDashboard('${r.userId}')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 10px; margin-bottom: 8px; cursor: pointer;">
                                 <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
                                     <div style="width: 32px; height: 32px; border-radius: 50%; background: ${idx < 3 ? 'linear-gradient(135deg, var(--electric-blue), var(--electric-blue-dark))' : 'rgba(255, 255, 255, 0.1)'}; color: ${idx < 3 ? 'var(--navy)' : 'var(--text-primary)'}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;">${idx + 1}</div>
                                     <div style="font-size: 15px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.name}${isYou ? ' (You)' : ''}</div>
@@ -2422,6 +2426,93 @@
             }
         }
 
+        // MEMBER DASHBOARD
+        function openMemberDashboard(userId) {
+            const user = cachedProfiles[userId] || { name: 'User' };
+            document.getElementById('memberDashboardName').textContent = user.name;
+            renderMemberDashboard(userId);
+            document.getElementById('memberDashboardModal').classList.add('active');
+        }
+
+        function closeMemberDashboard() {
+            document.getElementById('memberDashboardModal').classList.remove('active');
+        }
+
+        function renderMemberDashboard(userId) {
+            const rankings = getCircleRankings(currentDashboardCircle.id);
+            const memberRank = rankings.findIndex(r => r.userId === userId) + 1;
+            const memberData = rankings.find(r => r.userId === userId);
+            
+            if (!memberData) {
+                document.getElementById('memberDashboardContent').innerHTML = '<p>No data available</p>';
+                return;
+            }
+
+            // Get member's habits for this club
+            const memberHabits = cachedHabits.filter(h => 
+                h.user_id === userId && 
+                h.is_private === false &&
+                h.circleTags?.includes(currentDashboardCircle.id)
+            );
+
+            if (memberHabits.length === 0) {
+                document.getElementById('memberDashboardContent').innerHTML = `
+                    <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
+                        No public habits in this club yet.
+                    </div>
+                `;
+                return;
+            }
+
+            const weekStart = getWeekStart(new Date());
+            const weekDates = getWeekDates(weekStart);
+
+            // Calculate per-habit stats
+            const habitStats = memberHabits.map(habit => {
+                const weekCheckins = cachedCheckins.filter(c =>
+                    c.habit_id === habit.id &&
+                    weekDates.includes(new Date(c.checked_in_at).toDateString())
+                );
+                const progress = weekCheckins.length;
+                const percent = Math.min(100, Math.round((progress / habit.frequency) * 100));
+                return { habit, progress, percent };
+            });
+
+            const html = `
+                <div style="padding: 16px; background: rgba(0, 217, 255, 0.1); border-radius: 10px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary);">Rank in Club</div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--electric-blue);">#${memberRank}</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary);">Overall Adherence</div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--electric-blue);">${memberData.consistency}%</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary);">Streak</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #FFD700;">🔥 ${memberData.streak}w</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">Habits This Week</div>
+
+                ${habitStats.map(stat => `
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 10px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div style="font-size: 14px; font-weight: 600;">${stat.habit.name}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--electric-blue);">${stat.percent}%</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary);">
+                            <div>${stat.habit.frequency}x/week</div>
+                            <div>${stat.progress} / ${stat.habit.frequency}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+
+            document.getElementById('memberDashboardContent').innerHTML = html;
+        }
+
         // DELETE HABIT
         function toggleHabitMenu(event, habitId) {
             event.stopPropagation();
@@ -2639,6 +2730,17 @@
                 <button class="btn-secondary" onclick="closeDeleteHabitModal()" style="flex: 1;">Cancel</button>
                 <button class="btn-primary" onclick="confirmDeleteHabit()" style="flex: 1; background: #EF4444;">Delete</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Member Dashboard Modal -->
+    <div id="memberDashboardModal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3 id="memberDashboardName"></h3>
+                <button class="btn-close" onclick="closeMemberDashboard()">×</button>
+            </div>
+            <div id="memberDashboardContent"></div>
         </div>
     </div>
 
