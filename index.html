@@ -1132,9 +1132,6 @@
             // Run one-time migration to tag existing habits to clubs
             await migrateHabitsTags();
             
-            // Start realtime subscription for live updates
-            startRealtimeUpdates();
-            
             // Check for pending invite from signup/login
             const pendingInvite = localStorage.getItem('pendingInvite');
             if (pendingInvite) {
@@ -1566,12 +1563,20 @@
             const circle = cachedCircles.find(c => c.id === circleId);
             if (!circle) return [];
 
+            console.log(`🔍 Ranking for circle ${circleId}, members:`, circle.members);
+
             return circle.members.map(userId => {
                 const user = cachedProfiles[userId] || { name: 'User' };
                 const userHabits = cachedHabits.filter(h => 
                     h.user_id === userId && 
                     h.circleTags?.includes(circleId)
                 );
+
+                console.log(`User ${user.name}:`, {
+                    totalHabits: cachedHabits.filter(h => h.user_id === userId).length,
+                    habitsInClub: userHabits.length,
+                    sampleTags: cachedHabits.filter(h => h.user_id === userId)[0]?.circleTags
+                });
 
                 if (userHabits.length === 0) {
                     return { userId, name: user.name, consistency: 0, streak: 0 };
