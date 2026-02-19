@@ -1211,7 +1211,7 @@
                     });
 
                     // Load all member habits for rankings
-                    const { data: allHabitsData } = await sb
+                    const { data: allHabitsData, error: habitsError } = await sb
                         .from('habits')
                         .select(`
                             *,
@@ -1219,10 +1219,15 @@
                         `)
                         .in('user_id', allMemberIds);
 
+                    if (habitsError) console.error('Error loading member habits:', habitsError);
+                    console.log(`✅ Loaded ${allHabitsData?.length || 0} habits for ${allMemberIds.length} members`);
+
                     const allHabits = (allHabitsData || []).map(h => ({
                         ...h,
                         circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
                     }));
+
+                    console.log('Sample habit tags:', allHabits[0]?.circleTags);
 
                     // Load all check-ins for all members directly by user_id
                     if (allMemberIds.length > 0) {
@@ -1565,7 +1570,6 @@
                 const user = cachedProfiles[userId] || { name: 'User' };
                 const userHabits = cachedHabits.filter(h => 
                     h.user_id === userId && 
-                    h.is_private === false &&
                     h.circleTags?.includes(circleId)
                 );
 
@@ -2451,14 +2455,13 @@
             // Get member's habits for this club
             const memberHabits = cachedHabits.filter(h => 
                 h.user_id === userId && 
-                h.is_private === false &&
                 h.circleTags?.includes(currentDashboardCircle.id)
             );
 
             if (memberHabits.length === 0) {
                 document.getElementById('memberDashboardContent').innerHTML = `
                     <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
-                        No public habits in this club yet.
+                        No habits in this club yet.
                     </div>
                 `;
                 return;
