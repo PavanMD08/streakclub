@@ -1017,6 +1017,22 @@
         </div>
     </div>
 
+    <!-- Configure Goals for Challenge Modal -->
+    <div id="configureGoalsModal" class="modal">
+        <div class="modal-content" style="max-width: 440px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeConfigureGoals(); showLinkGoalsModal();">←</button>
+                <h3 id="configureGoalTitle"></h3>
+            </div>
+            
+            <div id="configureGoalContent">
+                <!-- Goal configuration will be populated here -->
+            </div>
+
+            <button class="btn-primary" id="configureNextBtn">Next →</button>
+        </div>
+    </div>
+
     <!-- Link Goals to Challenge Modal -->
     <div id="linkGoalsModal" class="modal">
         <div class="modal-content" style="max-width: 420px;">
@@ -2147,8 +2163,236 @@
             }
 
             closeLinkGoals();
-            showToast('Configure goals feature coming next!');
-            // TODO: Show configure goals modal
+            showConfigureGoalsFlow();
+        }
+
+        let currentConfigureIndex = 0;
+
+        function showConfigureGoalsFlow() {
+            currentConfigureIndex = 0;
+            currentChallengeData.goalConfigs = {};
+            showConfigureGoalAtIndex(0);
+        }
+
+        function showConfigureGoalAtIndex(index) {
+            const goalId = currentChallengeData.selectedGoals[index];
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            const isLast = index === currentChallengeData.selectedGoals.length - 1;
+            
+            document.getElementById('configureGoalTitle').textContent = goal.name;
+            
+            // Get habits for this goal
+            const goalHabits = cachedHabits.filter(h => h.goal_id === goalId);
+
+            let contentHTML = '';
+
+            // If Get Fitter, show club target option
+            if (goal.category === 'get_fitter') {
+                contentHTML += `
+                    <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
+                            <input type="checkbox" id="setClubTarget" onchange="toggleClubTarget()" style="width: 18px; height: 18px;">
+                            <span style="font-weight: 600;">Set challenge weight target</span>
+                        </label>
+                        
+                        <div id="clubTargetInputs" style="display: none;">
+                            <div class="form-group">
+                                <label>Current Weight:</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="clubCurrentWeight" value="${goal.current_value}" step="0.1" style="flex: 1;">
+                                    <span style="color: var(--text-secondary);">kg</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Challenge Target:</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="clubTargetWeight" step="0.1" placeholder="72" style="flex: 1;">
+                                    <span style="color: var(--text-secondary);">kg</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show habits to select
+            contentHTML += `
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary);">SELECT HABITS TO TRACK:</div>
+            `;
+
+            if (goalHabits.length > 0) {
+                contentHTML += goalHabits.map(habit => `
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px; min-height: 60px;">
+                        <input type="checkbox" checked data-habit-id="${habit.id}" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
+                        
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 600; font-size: 15px;">${habit.name}</div>
+                                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                    <input type="number" 
+                                        data-freq-for="${habit.id}"
+                                        value="${habit.frequency}" 
+                                        min="1" 
+                                        max="7" 
+                                        onclick="event.stopPropagation()"
+                                        style="width: 45px; padding: 4px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-align: center; font-size: 13px;">
+                                    <span style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">x/week</span>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                `).join('');
+            } else {
+                contentHTML += '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No habits in this goal</p>';
+            }
+
+            document.getElementById('configureGoalContent').innerHTML = contentHTML;
+            
+            const nextBtn = document.getElementById('configureNextBtn');
+            nextBtn.textContent = isLast ? 'Review & Create →' : 'Next Goal →';
+            nextBtn.onclick = () => saveCurrentGoalConfig(index, isLast);
+
+            document.getElementById('configureGoalsModal').classList.add('active');
+        }
+
+        function toggleClubTarget() {
+            const checkbox = document.getElementById('setClubTarget');
+            const inputs = document.getElementById('clubTargetInputs');
+            inputs.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function closeConfigureGoals() {
+            document.getElementById('configureGoalsModal').classList.remove('active');
+        }
+
+        function saveCurrentGoalConfig(index, isLast) {
+            const goalId = currentChallengeData.selectedGoals[index];
+            const goal = cachedGoals.find(g => g.id === goalId);
+
+            const config = {
+                goalId: goalId,
+                habits: []
+            };
+
+            // Save club target if Get Fitter
+            if (goal.category === 'get_fitter') {
+                const setTarget = document.getElementById('setClubTarget')?.checked;
+                if (setTarget) {
+                    const targetWeight = parseFloat(document.getElementById('clubTargetWeight').value);
+                    if (!targetWeight) {
+                        showToast('Please enter challenge target weight');
+                        return;
+                    }
+                    config.clubTargetValue = targetWeight;
+                }
+            }
+
+            // Save selected habits with frequencies
+            const habitCheckboxes = document.querySelectorAll('#configureGoalContent input[data-habit-id]');
+            habitCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const habitId = checkbox.dataset.habitId;
+                    const freqInput = document.querySelector(`input[data-freq-for="${habitId}"]`);
+                    const frequency = freqInput ? parseInt(freqInput.value) : 7;
+                    
+                    config.habits.push({
+                        habitId: habitId,
+                        clubFrequency: frequency
+                    });
+                }
+            });
+
+            if (config.habits.length === 0) {
+                showToast('Please select at least one habit');
+                return;
+            }
+
+            currentChallengeData.goalConfigs[goalId] = config;
+
+            if (isLast) {
+                closeConfigureGoals();
+                createChallengeNow();
+            } else {
+                closeConfigureGoals();
+                showConfigureGoalAtIndex(index + 1);
+            }
+        }
+
+        async function createChallengeNow() {
+            showLoading();
+
+            try {
+                // Generate invite code
+                const inviteCode = Math.random().toString(36).substring(2, 10);
+
+                // Create club in database
+                const { data: club, error: clubError } = await sb
+                    .from('clubs')
+                    .insert([{
+                        name: currentChallengeData.name,
+                        description: currentChallengeData.description,
+                        creator_id: currentUser.id,
+                        start_date: currentChallengeData.startDate,
+                        end_date: currentChallengeData.endDate,
+                        invite_code: inviteCode
+                    }])
+                    .select()
+                    .single();
+
+                if (clubError) throw clubError;
+
+                // Add creator as member
+                await sb.from('club_members').insert([{
+                    club_id: club.id,
+                    user_id: currentUser.id
+                }]);
+
+                // Add goals and habits
+                for (const goalId of currentChallengeData.selectedGoals) {
+                    const config = currentChallengeData.goalConfigs[goalId];
+                    
+                    const { data: clubGoal, error: goalError } = await sb
+                        .from('club_goals')
+                        .insert([{
+                            club_id: club.id,
+                            user_id: currentUser.id,
+                            personal_goal_id: goalId,
+                            club_target_value: config.clubTargetValue || null
+                        }])
+                        .select()
+                        .single();
+
+                    if (goalError) throw goalError;
+
+                    // Add habits
+                    for (const habitConfig of config.habits) {
+                        await sb.from('club_goal_habits').insert([{
+                            club_goal_id: clubGoal.id,
+                            habit_id: habitConfig.habitId,
+                            club_frequency: habitConfig.clubFrequency
+                        }]);
+                    }
+                }
+
+                showToast('Challenge created! 🎉', 'success');
+                currentChallengeData = {};
+                
+                // Show invite modal
+                showInviteCode(inviteCode, currentChallengeData.name);
+
+            } catch (error) {
+                console.error('Error creating challenge:', error);
+                showToast('Failed to create challenge');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showInviteCode(code, challengeName) {
+            showToast(`Challenge created! Invite code: ${code}`);
+            // TODO: Show proper invite modal
         }
 
         function openCreateClubModal() {
