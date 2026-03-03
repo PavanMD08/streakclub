@@ -446,6 +446,25 @@
             max-width: 300px;
         }
 
+        .goal-category-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .goal-category-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--electric-blue);
+        }
+
         /* Modal */
         .modal {
             position: fixed;
@@ -878,7 +897,7 @@
         <div class="tabs-nav">
             <div class="tabs-container">
                 <button class="tab" onclick="switchTab('clubs')">STREAKCLUBS</button>
-                <button class="tab active" onclick="switchTab('habits')">MY HABITS</button>
+                <button class="tab active" onclick="switchTab('goals')">MY GOALS</button>
             </div>
         </div>
 
@@ -899,13 +918,24 @@
             </div>
 
             <!-- Habits Tab -->
-            <div id="habitsTab" class="tab-content">
+            <div id="goalsTab" class="tab-content">
                 <div class="section-header">
                     <h2>My Habits</h2>
                     <button class="btn-add" id="addHabitBtn" onclick="openAddHabitModal()">+ NEW</button>
                 </div>
                 <div id="habitsList"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Check-in Modal -->
+    <div id="checkInModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeCheckInModal()">×</button>
+                <h3 id="checkInHabitName"></h3>
+            </div>
+            <div id="checkInContent"></div>
         </div>
     </div>
 
@@ -1062,13 +1092,14 @@
                 currentUser = { id: data.user.id, name, email };
                 showToast('Account created!', 'success');
                 
-                // Show welcome modal on first signup
+                // Show main app first
+                await showMainApp();
+                
+                // Then show welcome modal on first signup
                 if (!localStorage.getItem('hasSeenWelcome')) {
                     localStorage.setItem('hasSeenWelcome', 'true');
-                    setTimeout(() => showWelcomeModal(), 800);
+                    setTimeout(() => showWelcomeModal(), 500);
                 }
-                
-                setTimeout(() => showMainApp(), 600);
 
             } catch (error) {
                 console.error(error);
@@ -1128,6 +1159,7 @@
             document.getElementById('userName').textContent = currentUser.name;
             
             await loadData();
+            await loadGoals(); // Load goals
             
             // Run one-time migration to tag existing habits to clubs
             await migrateHabitsTags();
@@ -1139,7 +1171,7 @@
                 await joinClubByInvite(pendingInvite);
                 switchTab('clubs');
             } else {
-                switchTab('habits');
+                switchTab('goals'); // Show goals tab by default
             }
         }
 
@@ -1254,23 +1286,27 @@
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             
-            // If called from a click event, use event.target, otherwise find the tab button
             if (typeof event !== 'undefined' && event.target) {
                 event.target.classList.add('active');
             } else {
-                // Find and activate the correct tab button
                 const tabs = document.querySelectorAll('.tab');
-                if (tab === 'clubs') tabs[0]?.classList.add('active');
-                else if (tab === 'habits') tabs[1]?.classList.add('active');
+                if (tab === 'goals') tabs[0]?.classList.add('active');
+                else if (tab === 'clubs') tabs[1]?.classList.add('active');
             }
 
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.getElementById(tab + 'Tab').classList.remove('hidden');
 
+            // Render content based on tab
+            if (tab === 'goals') {
+                renderGoals();
+            } else if (tab === 'clubs') {
+                renderClubs();
+            }
+
             const addBtn = document.getElementById('addHabitBtn');
             if (addBtn) {
-                const userHabits = cachedHabits.filter(h => h.user_id === currentUser.id);
-                addBtn.style.display = (tab === 'habits' && userHabits.length > 0) ? 'block' : 'none';
+                addBtn.style.display = 'none'; // Hide add habit button (goals have their own flow)
             }
         }
 
@@ -2066,6 +2102,1665 @@
             document.getElementById('authScreen').classList.remove('hidden');
         }
 
+        // ============================================
+        // GOALS SYSTEM - PHASE 1A: DATABASE FUNCTIONS
+        // ============================================
+        
+        let cachedGoals = [];
+
+        async function createGoal(goalData) {
+            try {
+                const { data, error } = await sb
+                    .from('goals')
+                    .insert([{
+                        user_id: currentUser.id,
+                        category: goalData.category,
+                        name: goalData.name,
+                        start_value: goalData.start_value,
+                        current_value: goalData.current_value || goalData.start_value,
+                        target_value: goalData.target_value,
+                        target_date: goalData.target_date,
+                        is_active: true
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                console.log('✅ Goal created:', data);
+                return data;
+            } catch (error) {
+                console.error('❌ Error creating goal:', error);
+                throw error;
+            }
+        }
+
+        async function loadGoals() {
+            try {
+                const { data, error } = await sb
+                    .from('goals')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                cachedGoals = data || [];
+                console.log('✅ Loaded goals:', cachedGoals.length);
+                return cachedGoals;
+            } catch (error) {
+                console.error('❌ Error loading goals:', error);
+                return [];
+            }
+        }
+
+        async function createGoalHabit(goalId, habitData) {
+            try {
+                const { data, error } = await sb
+                    .from('habits')
+                    .insert([{
+                        user_id: currentUser.id,
+                        name: habitData.name,
+                        frequency: habitData.frequency,
+                        is_private: false,
+                        goal_id: goalId,
+                        metric_type: habitData.metric_type,
+                        metric_unit: habitData.metric_unit,
+                        metric_options: habitData.metric_options,
+                        track_values: habitData.trackValues !== false
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                console.log('✅ Habit created for goal:', data);
+                return data;
+            } catch (error) {
+                console.error('❌ Error creating habit:', error);
+                throw error;
+            }
+        }
+
+        // ============================================
+        // END GOALS SYSTEM - PHASE 1A
+        // ============================================
+
+        // ============================================
+        // PHASE 1B: GOAL CREATION MODALS
+        // ============================================
+
+        let selectedGoalCategory = null;
+        let selectedHabits = [];
+
+        function showChooseGoalModal() {
+            // Check which goals already exist
+            const existingCategories = cachedGoals.map(g => g.category);
+            
+            const categories = [
+                { id: 'get_fitter', emoji: '🏃', name: 'Get Fitter', enabled: true },
+                { id: 'break_habits', emoji: '🔥', name: 'Break Bad Habits', enabled: true },
+                { id: 'mental_wellness', emoji: '🧠', name: 'Improve Mental Wellness', enabled: true },
+                { id: 'grow_learn', emoji: '🌱', name: 'Grow & Learn', enabled: true },
+                { id: 'custom', emoji: '✏️', name: 'Build Your Own', enabled: true }
+            ];
+
+            const categoriesHTML = categories.map(cat => {
+                const alreadyExists = existingCategories.includes(cat.id);
+                const isDisabled = alreadyExists && cat.id !== 'custom'; // Custom goals can be multiple
+                
+                return `
+                    <button class="goal-category-btn ${isDisabled ? 'disabled' : ''}" 
+                            onclick="${isDisabled ? '' : `selectGoalCategory('${cat.id}')`}"
+                            style="${isDisabled ? 'opacity: 0.4; cursor: not-allowed;' : ''}">
+                        <span style="font-size: 24px; margin-right: 12px;">${cat.emoji}</span>
+                        <div style="flex: 1; text-align: left;">
+                            <span style="font-weight: 600; display: block;">${cat.name}</span>
+                            ${isDisabled ? '<span style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: block;">Goal already exists. Edit current goal if needed.</span>' : ''}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            const modal = document.getElementById('chooseGoalModal');
+            const content = modal.querySelector('.modal-content > div:last-child');
+            content.innerHTML = categoriesHTML;
+            
+            document.getElementById('chooseGoalModal').classList.add('active');
+        }
+
+        function selectGoalCategory(category) {
+            selectedGoalCategory = category;
+            document.getElementById('chooseGoalModal').classList.remove('active');
+            
+            if (category === 'get_fitter') {
+                showGetFitterModal();
+            } else if (category === 'break_habits' || category === 'mental_wellness' || category === 'grow_learn') {
+                showSelectHabitsForCategory(category);
+            } else if (category === 'custom') {
+                showToast('Custom goals coming soon!');
+                showChooseGoalModal();
+            }
+        }
+
+        function showSelectHabitsForCategory(category) {
+            let habitTemplates = [];
+            let goalName = '';
+
+            if (category === 'break_habits') {
+                goalName = 'Break Bad Habits';
+                habitTemplates = [
+                    { name: 'No Sugar', frequency: 7, metric_type: 'binary', description: 'Stay sugar-free', checked: true },
+                    { name: 'No Alcohol', frequency: 7, metric_type: 'binary', description: 'Avoid alcohol', checked: true },
+                    { name: 'No Smoking', frequency: 7, metric_type: 'binary', description: 'Stay smoke-free', checked: false },
+                    { name: 'Limit Social Media', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Track screen time', checked: true, canToggleTracking: true, trackValues: true },
+                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary', description: 'Device-free time', checked: false },
+                    { name: 'No Fap', frequency: 7, metric_type: 'binary', description: 'Maintain streak', checked: false }
+                ];
+            } else if (category === 'mental_wellness') {
+                goalName = 'Mental Wellness';
+                habitTemplates = [
+                    { name: 'Meditation', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: true, canToggleTracking: true, trackValues: true },
+                    { name: 'Breathwork', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Breathing exercises', checked: false, canToggleTracking: true, trackValues: true },
+                    { name: 'Journaling', frequency: 7, metric_type: 'binary', description: 'Write daily', checked: true }
+                ];
+            } else if (category === 'grow_learn') {
+                goalName = 'Grow & Learn';
+                habitTemplates = [
+                    { name: 'Reading', frequency: 7, metric_type: 'number', metric_unit: 'pages', description: 'Track pages read', checked: true, canToggleTracking: true, trackValues: true },
+                    { name: 'Learn New Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Practice time', checked: true, canToggleTracking: true, trackValues: true },
+                    { name: 'Complete Course', frequency: 5, metric_type: 'percentage', metric_unit: '%', description: 'Track progress', checked: false, canToggleTracking: true, trackValues: true },
+                    { name: 'Practice Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: false, canToggleTracking: true, trackValues: true }
+                ];
+            }
+
+            selectedHabits = habitTemplates.filter(h => h.checked).map(h => ({
+                ...h,
+                trackValues: h.trackValues !== false
+            }));
+
+            const habitsList = document.getElementById('habitsList');
+            const habitsHTML = habitTemplates.map((habit, idx) => `
+                <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;">
+                    <input type="checkbox" ${habit.checked ? 'checked' : ''} onchange="toggleHabitForCategory(${idx}, '${category}')" style="margin-top: 4px; width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px; font-size: 15px;">${habit.name}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">${habit.description}</div>
+                        
+                        ${habit.canToggleTracking ? `
+                            <label onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; cursor: pointer;">
+                                <input type="checkbox" 
+                                    id="track_cat_${idx}" 
+                                    ${habit.trackValues ? 'checked' : ''}
+                                    onchange="toggleValueTrackingCategory(${idx}, this.checked, '${category}')"
+                                    style="width: 16px; height: 16px;">
+                                <span style="color: var(--text-secondary);">Track values (${habit.metric_unit || 'details'})</span>
+                            </label>
+                        ` : ''}
+                        
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                            <input type="number" 
+                                id="freq_cat_${idx}" 
+                                value="${habit.frequency}" 
+                                min="1" 
+                                max="7" 
+                                onchange="updateHabitFrequencyCategory(${idx}, this.value, '${category}')"
+                                onclick="event.stopPropagation()"
+                                style="width: 50px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-align: center;">
+                            <span style="font-size: 13px; color: var(--text-secondary);">times/week</span>
+                        </div>
+                    </div>
+                </label>
+            `).join('');
+
+            habitsList.innerHTML = habitsHTML;
+            document.getElementById('selectHabitsModal').querySelector('h3').textContent = `Select habits for ${goalName}`;
+            document.getElementById('selectHabitsModal').classList.add('active');
+            
+            // Update create button
+            const createBtn = document.querySelector('#selectHabitsModal .btn-primary');
+            createBtn.onclick = () => createGoalWithHabitsForCategory(category, goalName);
+        }
+
+        function toggleHabitForCategory(idx, category) {
+            // Similar to toggleHabit but for category-specific habits
+            const habitTemplate = getCategoryHabits(category)[idx];
+            const habitIdx = selectedHabits.findIndex(h => h.name === habitTemplate.name);
+            
+            const freqInput = document.getElementById(`freq_cat_${idx}`);
+            const frequency = freqInput ? parseInt(freqInput.value) : habitTemplate.frequency;
+            
+            if (habitIdx > -1) {
+                selectedHabits.splice(habitIdx, 1);
+            } else {
+                selectedHabits.push({ ...habitTemplate, frequency });
+            }
+        }
+
+        function toggleValueTrackingCategory(idx, trackValues, category) {
+            const habitTemplate = getCategoryHabits(category)[idx];
+            const habitInSelected = selectedHabits.find(h => h.name === habitTemplate.name);
+            if (habitInSelected) {
+                habitInSelected.trackValues = trackValues;
+            }
+        }
+
+        function updateHabitFrequencyCategory(idx, newFreq, category) {
+            const freq = parseInt(newFreq);
+            if (freq < 1 || freq > 7) return;
+            
+            const habitTemplate = getCategoryHabits(category)[idx];
+            const habitInSelected = selectedHabits.find(h => h.name === habitTemplate.name);
+            if (habitInSelected) {
+                habitInSelected.frequency = freq;
+            }
+        }
+
+        function getCategoryHabits(category) {
+            if (category === 'break_habits') {
+                return [
+                    { name: 'No Sugar', frequency: 7, metric_type: 'binary' },
+                    { name: 'No Alcohol', frequency: 7, metric_type: 'binary' },
+                    { name: 'No Smoking', frequency: 7, metric_type: 'binary' },
+                    { name: 'Limit Social Media', frequency: 7, metric_type: 'number', metric_unit: 'minutes' },
+                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary' },
+                    { name: 'No Fap', frequency: 7, metric_type: 'binary' }
+                ];
+            } else if (category === 'mental_wellness') {
+                return [
+                    { name: 'Meditation', frequency: 7, metric_type: 'number', metric_unit: 'minutes' },
+                    { name: 'Breathwork', frequency: 7, metric_type: 'number', metric_unit: 'minutes' },
+                    { name: 'Journaling', frequency: 7, metric_type: 'binary' }
+                ];
+            } else if (category === 'grow_learn') {
+                return [
+                    { name: 'Reading', frequency: 7, metric_type: 'number', metric_unit: 'pages' },
+                    { name: 'Learn New Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes' },
+                    { name: 'Complete Course', frequency: 5, metric_type: 'percentage', metric_unit: '%' },
+                    { name: 'Practice Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes' }
+                ];
+            }
+        }
+
+        async function createGoalWithHabitsForCategory(category, goalName) {
+            if (selectedHabits.length === 0) {
+                showToast('Please select at least 1 habit');
+                return;
+            }
+
+            showLoading();
+            closeSelectHabitsModal();
+
+            try {
+                const goal = await createGoal({
+                    category: category,
+                    name: goalName,
+                    start_value: null,
+                    current_value: null,
+                    target_value: null,
+                    target_date: null
+                });
+
+                for (const habit of selectedHabits) {
+                    await createGoalHabit(goal.id, {
+                        ...habit,
+                        trackValues: habit.trackValues !== false
+                    });
+                }
+
+                document.getElementById('goalCreatedMessage').textContent = `Your ${goalName} goal has been created!`;
+                document.getElementById('goalCreatedModal').classList.add('active');
+
+                await loadGoals();
+                await loadData();
+
+            } catch (error) {
+                showToast('Failed to create goal');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showGetFitterModal() {
+            document.getElementById('getFitterModal').classList.add('active');
+        }
+
+        function closeGetFitterModal() {
+            document.getElementById('getFitterModal').classList.remove('active');
+        }
+
+        function continueToHabits() {
+            const currentWeight = parseFloat(document.getElementById('currentWeight').value);
+            const targetWeight = parseFloat(document.getElementById('targetWeight').value);
+            
+            if (!currentWeight || !targetWeight) {
+                showToast('Please enter current and target weight');
+                return;
+            }
+
+            if (currentWeight === targetWeight) {
+                showToast('Target weight must be different from current weight');
+                return;
+            }
+
+            closeGetFitterModal();
+            showSelectHabitsModal();
+        }
+
+        function showSelectHabitsModal() {
+            console.log('🔍 Showing habits modal');
+            const habitTemplates = [
+                { name: 'Track Weight', frequency: 7, metric_type: 'number', metric_unit: 'kg', description: 'Track your progress', checked: true, canToggleTracking: false },
+                { name: 'Workout', frequency: 4, metric_type: 'binary_plus_type', metric_unit: null, metric_options: ['Gym', 'Running', 'Yoga', 'Swimming', 'Cycling', 'Sports', 'Other'], description: 'Log type & notes', checked: true, canToggleTracking: true, trackValues: true },
+                { name: 'Steps', frequency: 7, metric_type: 'number', metric_unit: 'steps', description: 'Count your daily steps', checked: false, canToggleTracking: true, trackValues: true },
+                { name: 'Diet Adherence', frequency: 7, metric_type: 'percentage', metric_unit: '%', description: 'Rate how clean you ate', checked: true, canToggleTracking: true, trackValues: true },
+                { name: 'Drinking Water', frequency: 7, metric_type: 'number', metric_unit: 'liters', description: 'Track liters consumed', checked: false, canToggleTracking: true, trackValues: true },
+                { name: 'Sleep', frequency: 7, metric_type: 'number', metric_unit: 'hours', description: 'Log hours slept', checked: false, canToggleTracking: true, trackValues: true }
+            ];
+
+            selectedHabits = habitTemplates.filter(h => h.checked).map(h => ({
+                ...h,
+                trackValues: h.trackValues !== false
+            }));
+
+            const habitsList = document.getElementById('habitsList');
+            const habitsHTML = habitTemplates.map((habit, idx) => `
+                <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;">
+                    <input type="checkbox" ${habit.checked ? 'checked' : ''} onchange="toggleHabit(${idx})" style="margin-top: 4px; width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1; cursor: pointer;" onclick="event.target.closest('label').querySelector('input[type=checkbox]').click()">
+                        <div style="font-weight: 600; margin-bottom: 4px; font-size: 15px;">${habit.name}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">${habit.description}</div>
+                        
+                        ${habit.canToggleTracking ? `
+                            <label onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; cursor: pointer;">
+                                <input type="checkbox" 
+                                    id="track_${idx}" 
+                                    ${habit.trackValues ? 'checked' : ''}
+                                    onchange="toggleValueTracking(${idx}, this.checked)"
+                                    style="width: 16px; height: 16px;">
+                                <span style="color: var(--text-secondary);">Track values (${habit.metric_unit || 'details'})</span>
+                            </label>
+                        ` : ''}
+                        
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                            <input type="number" 
+                                id="freq_${idx}" 
+                                value="${habit.frequency}" 
+                                min="1" 
+                                max="7" 
+                                onchange="updateHabitFrequency(${idx}, this.value)"
+                                onclick="event.stopPropagation()"
+                                style="width: 50px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-align: center; font-size: 14px;">
+                            <span style="font-size: 13px; color: var(--text-secondary);">times/week</span>
+                        </div>
+                    </div>
+                </label>
+            `).join('');
+            
+            console.log('📝 Habits HTML length:', habitsHTML.length);
+            habitsList.innerHTML = habitsHTML;
+
+            document.getElementById('selectHabitsModal').classList.add('active');
+        }
+
+        function toggleValueTracking(idx, trackValues) {
+            const habitInSelected = selectedHabits.find(h => {
+                const templates = [
+                    { name: 'Track Weight' },
+                    { name: 'Workout' },
+                    { name: 'Steps' },
+                    { name: 'Diet Adherence' },
+                    { name: 'Drinking Water' },
+                    { name: 'Sleep' }
+                ];
+                return h.name === templates[idx].name;
+            });
+            
+            if (habitInSelected) {
+                habitInSelected.trackValues = trackValues;
+            }
+        }
+
+        function updateHabitFrequency(idx, newFreq) {
+            const freq = parseInt(newFreq);
+            if (freq < 1 || freq > 7) return;
+            
+            const habitTemplates = [
+                { name: 'Track Weight', frequency: 7, metric_type: 'number', metric_unit: 'kg' },
+                { name: 'Workout', frequency: 4, metric_type: 'binary_plus_type', metric_unit: null, metric_options: ['Gym', 'Running', 'Yoga', 'Swimming', 'Cycling', 'Sports', 'Other'] },
+                { name: 'Steps', frequency: 7, metric_type: 'number', metric_unit: 'steps' },
+                { name: 'Diet Adherence', frequency: 7, metric_type: 'percentage', metric_unit: '%' },
+                { name: 'Drinking Water', frequency: 7, metric_type: 'number', metric_unit: 'liters' },
+                { name: 'Sleep', frequency: 7, metric_type: 'number', metric_unit: 'hours' }
+            ];
+
+            const habit = habitTemplates[idx];
+            const habitInSelected = selectedHabits.find(h => h.name === habit.name);
+            
+            if (habitInSelected) {
+                habitInSelected.frequency = freq;
+            }
+        }
+
+        function toggleHabit(idx) {
+            const habitTemplates = [
+                { name: 'Track Weight', metric_type: 'number', metric_unit: 'kg' },
+                { name: 'Workout', metric_type: 'binary_plus_type', metric_unit: null, metric_options: ['Gym', 'Running', 'Yoga', 'Swimming', 'Cycling', 'Sports', 'Other'] },
+                { name: 'Steps', metric_type: 'number', metric_unit: 'steps' },
+                { name: 'Diet Adherence', metric_type: 'percentage', metric_unit: '%' },
+                { name: 'Drinking Water', metric_type: 'number', metric_unit: 'liters' },
+                { name: 'Sleep', metric_type: 'number', metric_unit: 'hours' }
+            ];
+
+            const habit = habitTemplates[idx];
+            const habitIdx = selectedHabits.findIndex(h => h.name === habit.name);
+            
+            // Get current frequency from input
+            const freqInput = document.getElementById(`freq_${idx}`);
+            const frequency = freqInput ? parseInt(freqInput.value) : 7;
+            
+            if (habitIdx > -1) {
+                // Unchecking - remove from selected
+                selectedHabits.splice(habitIdx, 1);
+            } else {
+                // Checking - add to selected with current frequency
+                selectedHabits.push({
+                    ...habit,
+                    frequency: frequency
+                });
+            }
+        }
+
+        function closeSelectHabitsModal() {
+            document.getElementById('selectHabitsModal').classList.remove('active');
+        }
+
+        async function createGoalWithHabits() {
+            if (selectedHabits.length === 0) {
+                showToast('Please select at least 1 habit');
+                return;
+            }
+
+            const currentWeight = parseFloat(document.getElementById('currentWeight').value);
+            const targetWeight = parseFloat(document.getElementById('targetWeight').value);
+            const targetDate = document.getElementById('targetDate').value || null;
+
+            showLoading();
+            closeSelectHabitsModal();
+
+            try {
+                const goal = await createGoal({
+                    category: 'get_fitter',
+                    name: 'Get Fitter',
+                    start_value: currentWeight,
+                    current_value: currentWeight,
+                    target_value: targetWeight,
+                    target_date: targetDate
+                });
+
+                for (const habit of selectedHabits) {
+                    await createGoalHabit(goal.id, {
+                        ...habit,
+                        trackValues: habit.trackValues !== false
+                    });
+                }
+
+                document.getElementById('goalCreatedMessage').textContent = `Your goal to reach ${targetWeight} kg has been created!`;
+                document.getElementById('goalCreatedModal').classList.add('active');
+
+                await loadGoals();
+                await loadData();
+
+            } catch (error) {
+                showToast('Failed to create goal');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeGoalCreatedModal() {
+            document.getElementById('goalCreatedModal').classList.remove('active');
+            switchTab('goals');
+        }
+
+        // ============================================
+        // END PHASE 1B
+        // ============================================
+
+        // ============================================
+        // PHASE 1C: DISPLAY GOALS ON DASHBOARD
+        // ============================================
+
+        function renderGoals() {
+            const container = document.getElementById('goalsTab');
+            
+            if (cachedGoals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No goals yet</h3>
+                        <p>Goals help you track progress toward what you want to achieve.</p>
+                        <div style="margin: 20px 0; font-size: 14px; color: var(--text-secondary);">
+                            <div style="margin-bottom: 8px;"><strong>Examples:</strong></div>
+                            <div>• Lose 10 kg by June</div>
+                            <div>• Stay clean for 30 days</div>
+                            <div>• Meditate daily for a month</div>
+                        </div>
+                        <button class="btn-primary" onclick="showChooseGoalModal()">Create Your First Goal</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const goalsHTML = cachedGoals.map(goal => {
+                let progressPercent = 0;
+                let progressText = '0% - Start tracking!';
+                
+                if (goal.category === 'get_fitter' && goal.start_value && goal.target_value) {
+                    const total = Math.abs(goal.start_value - goal.target_value);
+                    const current = Math.abs(goal.start_value - goal.current_value);
+                    progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
+                    progressText = `${progressPercent}% ${progressPercent === 0 ? '- Start tracking!' : ''}`;
+                }
+
+                const daysLeft = goal.target_date ? 
+                    Math.ceil((new Date(goal.target_date) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+
+                return `
+                    <div class="goal-card" style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; position: relative;">
+                        <div onclick="openGoalDetail('${goal.id}')" style="cursor: pointer;">
+                            <div style="font-size: 20px; margin-bottom: 8px;">${goal.category === 'get_fitter' ? '🏃' : '🎯'} ${goal.name}</div>
+                            ${goal.category === 'get_fitter' ? `
+                                <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">
+                                    ${goal.current_value} kg → ${goal.target_value} kg
+                                </div>
+                            ` : ''}
+                            <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                                <div style="width: ${progressPercent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: var(--electric-blue); font-weight: 600;">${progressText}</span>
+                                ${daysLeft !== null ? `<span style="color: var(--text-secondary);">Due: ${daysLeft} days</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="menu-3dot" style="position: absolute; top: 16px; right: 16px;">
+                            <button class="menu-3dot-btn" onclick="event.stopPropagation(); toggleGoalMenu(event, '${goal.id}')" style="padding: 4px 8px;">⋮</button>
+                            <div class="menu-3dot-dropdown" id="goalMenu_${goal.id}">
+                                <div class="menu-3dot-item" onclick="editGoalTarget('${goal.id}')">⚖️ Edit Target</div>
+                                <div class="menu-3dot-item" onclick="manageGoalHabits('${goal.id}')">📝 Manage Habits</div>
+                                <div class="menu-3dot-item danger" onclick="deleteGoal('${goal.id}')">🗑️ Delete Goal</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">My Goals</h2>
+                    <button class="btn-primary" onclick="showChooseGoalModal()" style="max-width: 120px; font-size: 13px; padding: 8px 16px;">+ New Goal</button>
+                </div>
+                ${goalsHTML}
+            `;
+        }
+
+        function openGoalDetail(goalId) {
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            // Load habits for this goal
+            const goalHabits = cachedHabits.filter(h => h.goal_id === goalId);
+
+            let progressPercent = 0;
+            let progressText = '0% - Start tracking!';
+            
+            if (goal.category === 'get_fitter' && goal.start_value && goal.target_value) {
+                const total = Math.abs(goal.start_value - goal.target_value);
+                const current = Math.abs(goal.start_value - goal.current_value);
+                progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
+                const remaining = Math.abs(goal.target_value - goal.current_value);
+                progressText = progressPercent === 0 ? '0% - Start tracking!' : `${progressPercent}% (${remaining.toFixed(1)} kg to go)`;
+            }
+
+            const daysLeft = goal.target_date ? 
+                Math.ceil((new Date(goal.target_date) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+
+            const habitsHTML = goalHabits.length > 0 ? goalHabits.map(habit => {
+                // Check if checked in today
+                const today = new Date().toDateString();
+                const checkedToday = cachedCheckins.some(c => 
+                    c.habit_id === habit.id && 
+                    new Date(c.checked_in_at).toDateString() === today
+                );
+
+                // Get this week's check-ins
+                const weekStart = getWeekStart(new Date());
+                const weekDates = getWeekDates(weekStart);
+                const thisWeekCheckins = cachedCheckins.filter(c =>
+                    c.habit_id === habit.id &&
+                    weekDates.includes(new Date(c.checked_in_at).toDateString())
+                );
+
+                return `
+                    <div onclick="openHabitDetail('${habit.id}')" style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 12px; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 15px;">${habit.name}</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    This week: ${thisWeekCheckins.length}/${habit.frequency} ${checkedToday ? '✓' : ''}
+                                </div>
+                            </div>
+                            ${checkedToday ? `
+                                <div style="padding: 8px 16px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; color: #4CAF50; font-size: 13px; font-weight: 600;">
+                                    ✓ Done
+                                </div>
+                            ` : `
+                                <button onclick="event.stopPropagation(); openCheckIn('${habit.id}')" style="padding: 8px 16px; background: var(--electric-blue); color: var(--navy); border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                    Log
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No habits in this goal yet.</p>';
+
+            // Create full screen detail view
+            const detailHTML = `
+                <div style="padding: 20px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <button onclick="closeGoalDetail()" style="background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; margin-right: 12px;">←</button>
+                        <h2 style="margin: 0; flex: 1;">${goal.category === 'get_fitter' ? '🏃' : '🎯'} ${goal.name}</h2>
+                        <button onclick="event.stopPropagation(); toggleGoalMenu(event, '${goal.id}')" style="background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer;">⋮</button>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(0, 217, 255, 0.1); border-radius: 12px; margin-bottom: 24px;">
+                        ${goal.category === 'get_fitter' ? `
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                                ${goal.current_value} kg → ${goal.target_value} kg
+                            </div>
+                        ` : ''}
+                        <div style="background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 12px;">
+                            <div style="width: ${progressPercent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: var(--electric-blue); font-weight: 600;">${progressText}</span>
+                            ${daysLeft !== null ? `<span style="color: var(--text-secondary);">${daysLeft} days left</span>` : ''}
+                        </div>
+                    </div>
+
+                    <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">Your Habits (tap to see details)</div>
+                    ${habitsHTML}
+                </div>
+            `;
+
+            // Hide main app, show detail view
+            document.getElementById('mainApp').innerHTML = detailHTML;
+        }
+
+        function closeGoalDetail() {
+            // Restore main app
+            location.reload(); // Simple way to restore - can optimize later
+        }
+
+        function openHabitDetail(habitId) {
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            // Get all check-ins for this habit, sorted by date
+            const habitCheckins = cachedCheckins
+                .filter(c => c.habit_id === habitId)
+                .sort((a, b) => new Date(b.checked_in_at) - new Date(a.checked_in_at));
+
+            // Calculate weekly streak
+            const weeklyStreak = calculateWeeklyStreak(habitId);
+
+            let graphHTML = '';
+            // Graph for numeric habits (weight, steps, water, sleep, diet)
+            if ((habit.metric_type === 'number' || habit.metric_type === 'percentage') && habitCheckins.length > 0) {
+                graphHTML = renderHabitGraph(habit, habitCheckins);
+            }
+
+            // History list (always present, collapsed by default)
+            let historyHTML = '';
+            if (habitCheckins.length > 0) {
+                historyHTML = `
+                    <div style="margin-top: 24px;">
+                        <button id="toggleHistory" onclick="toggleHistoryView()" 
+                            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
+                            <span>View History</span>
+                            <span id="historyArrow">▼</span>
+                        </button>
+                        
+                        <div id="historyContent" style="display: none; margin-top: 12px;">
+                            ${habitCheckins.map(c => {
+                                const date = new Date(c.checked_in_at);
+                                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                                let valueDisplay = '';
+                                if (habit.metric_type === 'number') {
+                                    valueDisplay = `${c.metric_value} ${habit.metric_unit}`;
+                                } else if (habit.metric_type === 'percentage') {
+                                    valueDisplay = `${c.metric_value}%`;
+                                } else if (habit.metric_type === 'binary_plus_type') {
+                                    valueDisplay = c.metric_text || 'Completed';
+                                } else {
+                                    valueDisplay = '✓ Done';
+                                }
+
+                                return `
+                                    <div style="padding: 14px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="flex: 1;">
+                                                <div style="font-weight: 600; font-size: 15px; color: var(--electric-blue);">${valueDisplay}</div>
+                                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${dateStr} at ${timeStr}</div>
+                                            </div>
+                                            <button onclick="event.stopPropagation(); editCheckIn('${c.id}', '${habitId}')" 
+                                                style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                historyHTML = `
+                    <div style="padding: 40px; text-align: center; color: var(--text-secondary); margin-top: 24px;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
+                        <div>No check-ins yet</div>
+                        <div style="font-size: 13px; margin-top: 8px;">Start logging to see your progress</div>
+                    </div>
+                `;
+            }
+
+            // Create full screen habit detail
+            const detailHTML = `
+                <div style="padding: 20px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <button onclick="closeHabitDetail('${habit.goal_id}')" style="background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; margin-right: 12px;">←</button>
+                        <h2 style="margin: 0; flex: 1;">${habit.name}</h2>
+                    </div>
+
+                    <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Goal: ${habit.frequency}x per week</div>
+                            <div style="font-size: 14px; font-weight: 600; color: var(--electric-blue);">🔥 ${weeklyStreak} ${weeklyStreak === 1 ? 'week' : 'weeks'}</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">Total check-ins: ${habitCheckins.length}</div>
+                    </div>
+
+                    <button onclick="event.stopPropagation(); openCheckInWithDate('${habitId}')" 
+                        style="width: 100%; padding: 14px; background: var(--electric-blue); color: var(--navy); border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; margin-bottom: 24px;">
+                        Log ${habit.name}
+                    </button>
+
+                    ${graphHTML}
+                    ${historyHTML}
+                </div>
+            `;
+
+            document.getElementById('mainApp').innerHTML = detailHTML;
+        }
+
+        function toggleHistoryView() {
+            const content = document.getElementById('historyContent');
+            const arrow = document.getElementById('historyArrow');
+            const button = document.getElementById('toggleHistory');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▲';
+                button.querySelector('span:first-child').textContent = 'Hide History';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▼';
+                button.querySelector('span:first-child').textContent = 'View History';
+            }
+        }
+
+        function calculateWeeklyStreak(habitId) {
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!habit) return 0;
+
+            const checkins = cachedCheckins
+                .filter(c => c.habit_id === habitId)
+                .sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
+
+            if (checkins.length === 0) return 0;
+
+            let streak = 0;
+            const today = new Date();
+            const currentWeekStart = getWeekStart(today);
+            
+            // Go backwards week by week
+            let weekStart = new Date(currentWeekStart);
+            
+            while (true) {
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                weekEnd.setHours(23, 59, 59);
+                
+                // Count check-ins in this week
+                const weekCheckins = checkins.filter(c => {
+                    const checkInDate = new Date(c.checked_in_at);
+                    return checkInDate >= weekStart && checkInDate <= weekEnd;
+                });
+                
+                // Did we hit frequency this week?
+                if (weekCheckins.length >= habit.frequency) {
+                    streak++;
+                    // Move to previous week
+                    weekStart.setDate(weekStart.getDate() - 7);
+                } else {
+                    // Streak broken
+                    break;
+                }
+                
+                // Safety: don't go back more than 2 years
+                if (streak > 100) break;
+            }
+            
+            return streak;
+        }
+
+        function openCheckInWithDate(habitId) {
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            // Show date picker modal
+            const today = new Date();
+            const dates = [];
+            
+            // Today + last 13 days (14 days total)
+            for (let i = 0; i < 14; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                dates.push(date);
+            }
+
+            const dateOptions = dates.map((d, idx) => {
+                const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const label = idx === 0 ? 'Today' : idx === 1 ? 'Yesterday' : dateStr;
+                return `<option value="${d.toISOString()}">${label}</option>`;
+            }).join('');
+
+            const modalHTML = `
+                <div id="datePickerModal" class="modal active">
+                    <div class="modal-content" style="max-width: 360px;">
+                        <div class="modal-header">
+                            <h3>Log ${habit.name}</h3>
+                            <button class="btn-close" onclick="closeDatePicker()">×</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>When?</label>
+                            <select id="checkInDate" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 15px;">
+                                ${dateOptions}
+                            </select>
+                        </div>
+
+                        <button class="btn-primary" onclick="proceedToCheckIn('${habitId}')">Continue</button>
+                    </div>
+                </div>
+            `;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = modalHTML;
+            document.body.appendChild(tempDiv.firstElementChild);
+        }
+
+        function closeDatePicker() {
+            const modal = document.getElementById('datePickerModal');
+            if (modal) modal.remove();
+        }
+
+        function proceedToCheckIn(habitId) {
+            const selectedDate = document.getElementById('checkInDate').value;
+            closeDatePicker();
+            
+            // Store selected date globally
+            window.selectedCheckInDate = selectedDate;
+            
+            // Open normal check-in modal
+            openCheckIn(habitId);
+        }
+
+        function editCheckIn(checkInId, habitId) {
+            const checkIn = cachedCheckins.find(c => c.id === checkInId);
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!checkIn || !habit) return;
+
+            const date = new Date(checkIn.checked_in_at);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            let editContent = '';
+
+            if (habit.metric_type === 'number') {
+                editContent = `
+                    <div class="form-group">
+                        <label>Value:</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="editValue" value="${checkIn.metric_value}" step="${habit.metric_unit === 'kg' ? '0.1' : '1'}" style="flex: 1;">
+                            <span style="color: var(--text-secondary);">${habit.metric_unit}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (habit.metric_type === 'percentage') {
+                editContent = `
+                    <div class="form-group">
+                        <label>Rating:</label>
+                        <div style="margin: 20px 0;">
+                            <input type="range" id="editSlider" min="0" max="100" value="${checkIn.metric_value}" 
+                                oninput="document.getElementById('editSliderValue').textContent = this.value + '%'"
+                                style="width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1);">
+                            <div id="editSliderValue" style="text-align: center; font-size: 24px; font-weight: 700; color: var(--electric-blue); margin-top: 12px;">${checkIn.metric_value}%</div>
+                        </div>
+                    </div>
+                `;
+            } else if (habit.metric_type === 'binary_plus_type') {
+                const parts = (checkIn.metric_text || '').split(' - ');
+                const type = parts[0] || 'Workout';
+                const notes = parts[1] || '';
+                
+                editContent = `
+                    <div class="form-group">
+                        <label>Type:</label>
+                        <select id="editType" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                            ${habit.metric_options?.map(opt => `<option value="${opt}" ${opt === type ? 'selected' : ''}>${opt}</option>`).join('') || `<option>${type}</option>`}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes:</label>
+                        <input type="text" id="editNotes" value="${notes}" placeholder="Optional">
+                    </div>
+                `;
+            }
+
+            const modalHTML = `
+                <div id="editCheckInModal" class="modal active">
+                    <div class="modal-content" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h3>Edit Check-in</h3>
+                            <button class="btn-close" onclick="closeEditCheckIn()">×</button>
+                        </div>
+                        
+                        <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: var(--text-secondary);">
+                            ${dateStr}
+                        </div>
+
+                        ${editContent}
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button onclick="deleteCheckIn('${checkInId}', '${habitId}')" 
+                                style="flex: 1; padding: 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; border-radius: 8px; color: #EF4444; font-weight: 600; cursor: pointer;">
+                                Delete
+                            </button>
+                            <button onclick="updateCheckIn('${checkInId}', '${habitId}')" 
+                                style="flex: 1; padding: 12px; background: var(--electric-blue); border: none; border-radius: 8px; color: var(--navy); font-weight: 600; cursor: pointer;">
+                                Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = modalHTML;
+            document.body.appendChild(tempDiv.firstElementChild);
+        }
+
+        function closeEditCheckIn() {
+            const modal = document.getElementById('editCheckInModal');
+            if (modal) modal.remove();
+        }
+
+        async function updateCheckIn(checkInId, habitId) {
+            const checkIn = cachedCheckins.find(c => c.id === checkInId);
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!checkIn || !habit) return;
+
+            let updateData = {};
+
+            if (habit.metric_type === 'number') {
+                const value = parseFloat(document.getElementById('editValue').value);
+                if (!value) {
+                    showToast('Please enter a valid value');
+                    return;
+                }
+                updateData.metric_value = value;
+
+                // Update goal current_value if weight
+                if (habit.metric_unit === 'kg' && habit.name === 'Track Weight') {
+                    const goal = cachedGoals.find(g => g.id === habit.goal_id);
+                    if (goal) {
+                        await sb.from('goals').update({ current_value: value }).eq('id', goal.id);
+                    }
+                }
+            } else if (habit.metric_type === 'percentage') {
+                updateData.metric_value = parseInt(document.getElementById('editSlider').value);
+            } else if (habit.metric_type === 'binary_plus_type') {
+                const type = document.getElementById('editType').value;
+                const notes = document.getElementById('editNotes').value;
+                updateData.metric_text = notes ? `${type} - ${notes}` : type;
+            }
+
+            showLoading();
+            closeEditCheckIn();
+
+            try {
+                await sb.from('checkins').update(updateData).eq('id', checkInId);
+                showToast('Updated!', 'success');
+                await loadData();
+                await loadGoals();
+                openHabitDetail(habitId);
+            } catch (error) {
+                showToast('Failed to update');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteCheckIn(checkInId, habitId) {
+            if (!confirm('Delete this check-in?')) return;
+
+            showLoading();
+            closeEditCheckIn();
+
+            try {
+                await sb.from('checkins').delete().eq('id', checkInId);
+                showToast('Deleted', 'success');
+                await loadData();
+                await loadGoals();
+                openHabitDetail(habitId);
+            } catch (error) {
+                showToast('Failed to delete');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeHabitDetail(goalId) {
+            openGoalDetail(goalId);
+        }
+
+        function renderHabitGraph(habit, checkins) {
+            const graphWidth = 400;
+            const graphHeight = 150;
+            const padding = { left: 50, right: 20, top: 20, bottom: 30 };
+            const plotWidth = graphWidth - padding.left - padding.right;
+            const plotHeight = graphHeight - padding.top - padding.bottom;
+
+            // Get values
+            const sortedCheckins = [...checkins].sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
+            const values = sortedCheckins.map(c => c.metric_value);
+            const minValue = Math.min(...values) * 0.9;
+            const maxValue = Math.max(...values) * 1.1;
+            const range = maxValue - minValue || 1;
+
+            // Create points
+            const points = sortedCheckins.map((c, i) => {
+                const x = padding.left + (i / Math.max(sortedCheckins.length - 1, 1)) * plotWidth;
+                const y = padding.top + plotHeight - ((c.metric_value - minValue) / range) * plotHeight;
+                return `${x},${y}`;
+            }).join(' ');
+
+            const firstDate = new Date(sortedCheckins[0].checked_in_at);
+            const lastDate = new Date(sortedCheckins[sortedCheckins.length - 1].checked_in_at);
+            const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            return `
+                <div style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 24px;">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">📊 Progress</div>
+                    <svg width="100%" viewBox="0 0 ${graphWidth} ${graphHeight}">
+                        <!-- Grid lines -->
+                        ${[0, 0.5, 1].map(ratio => {
+                            const y = padding.top + plotHeight * (1 - ratio);
+                            const value = (minValue + range * ratio).toFixed(habit.metric_type === 'percentage' ? 0 : 1);
+                            return `
+                                <line x1="${padding.left}" y1="${y}" x2="${graphWidth - padding.right}" y2="${y}" 
+                                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                                <text x="${padding.left - 5}" y="${y + 4}" 
+                                    text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${value}${habit.metric_type === 'percentage' ? '%' : ''}</text>
+                            `;
+                        }).join('')}
+                        
+                        <!-- Line -->
+                        <polyline points="${points}" fill="none" stroke="var(--electric-blue)" stroke-width="3"/>
+                        
+                        <!-- Points -->
+                        ${sortedCheckins.map((c, i) => {
+                            const x = padding.left + (i / Math.max(sortedCheckins.length - 1, 1)) * plotWidth;
+                            const y = padding.top + plotHeight - ((c.metric_value - minValue) / range) * plotHeight;
+                            return `<circle cx="${x}" cy="${y}" r="4" fill="var(--electric-blue)"/>`;
+                        }).join('')}
+                        
+                        <!-- X-axis -->
+                        <text x="${padding.left}" y="${graphHeight - 5}" fill="rgba(255,255,255,0.4)" font-size="11">${formatDate(firstDate)}</text>
+                        <text x="${graphWidth - padding.right}" y="${graphHeight - 5}" text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${formatDate(lastDate)}</text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function renderWeightGraph(goalId) {
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal || goal.category !== 'get_fitter') return '';
+
+            // Get weight tracking habit
+            const weightHabit = cachedHabits.find(h => 
+                h.goal_id === goalId && 
+                h.name === 'Track Weight'
+            );
+
+            if (!weightHabit) return '';
+
+            // Get weight check-ins
+            const weightCheckins = cachedCheckins
+                .filter(c => c.habit_id === weightHabit.id && c.metric_value)
+                .sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
+
+            if (weightCheckins.length === 0) {
+                return `
+                    <div style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 24px; text-align: center; color: var(--text-secondary);">
+                        <div style="font-size: 14px; margin-bottom: 8px;">📊 Weight Progress</div>
+                        <div style="font-size: 13px;">Start tracking to see your graph</div>
+                    </div>
+                `;
+            }
+
+            // Calculate graph dimensions and scale
+            const weights = weightCheckins.map(c => c.metric_value);
+            const minWeight = Math.min(...weights, goal.target_value) - 2;
+            const maxWeight = Math.max(...weights, goal.start_value) + 2;
+            const range = maxWeight - minWeight;
+
+            // Create SVG points
+            const graphWidth = 400;
+            const graphHeight = 150;
+            const padding = { left: 40, right: 20, top: 20, bottom: 30 };
+            const plotWidth = graphWidth - padding.left - padding.right;
+            const plotHeight = graphHeight - padding.top - padding.bottom;
+
+            const points = weightCheckins.map((c, i) => {
+                const x = padding.left + (i / Math.max(weightCheckins.length - 1, 1)) * plotWidth;
+                const y = padding.top + plotHeight - ((c.metric_value - minWeight) / range) * plotHeight;
+                return `${x},${y}`;
+            }).join(' ');
+
+            // Format dates for x-axis
+            const firstDate = new Date(weightCheckins[0].checked_in_at);
+            const lastDate = new Date(weightCheckins[weightCheckins.length - 1].checked_in_at);
+            const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            return `
+                <div style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 24px;">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">📊 Weight Progress</div>
+                    <svg width="100%" viewBox="0 0 ${graphWidth} ${graphHeight}" style="overflow: visible;">
+                        <!-- Grid lines -->
+                        ${[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                            const y = padding.top + plotHeight * (1 - ratio);
+                            const weight = (minWeight + range * ratio).toFixed(1);
+                            return `
+                                <line x1="${padding.left}" y1="${y}" x2="${graphWidth - padding.right}" y2="${y}" 
+                                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                                <text x="${padding.left - 5}" y="${y + 4}" 
+                                    text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${weight}</text>
+                            `;
+                        }).join('')}
+                        
+                        <!-- Target line -->
+                        ${(() => {
+                            const targetY = padding.top + plotHeight - ((goal.target_value - minWeight) / range) * plotHeight;
+                            return `
+                                <line x1="${padding.left}" y1="${targetY}" x2="${graphWidth - padding.right}" y2="${targetY}" 
+                                    stroke="#4CAF50" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+                                <text x="${graphWidth - padding.right}" y="${targetY - 5}" 
+                                    text-anchor="end" fill="#4CAF50" font-size="11" font-weight="600">Target</text>
+                            `;
+                        })()}
+                        
+                        <!-- Line graph -->
+                        <polyline points="${points}" 
+                            fill="none" stroke="var(--electric-blue)" stroke-width="3" 
+                            stroke-linecap="round" stroke-linejoin="round"/>
+                        
+                        <!-- Data points -->
+                        ${weightCheckins.map((c, i) => {
+                            const x = padding.left + (i / Math.max(weightCheckins.length - 1, 1)) * plotWidth;
+                            const y = padding.top + plotHeight - ((c.metric_value - minWeight) / range) * plotHeight;
+                            return `
+                                <circle cx="${x}" cy="${y}" r="4" fill="var(--electric-blue)"/>
+                                <circle cx="${x}" cy="${y}" r="2" fill="var(--navy)"/>
+                            `;
+                        }).join('')}
+                        
+                        <!-- X-axis labels -->
+                        <text x="${padding.left}" y="${graphHeight - 5}" 
+                            fill="rgba(255,255,255,0.4)" font-size="11">${formatDate(firstDate)}</text>
+                        <text x="${graphWidth - padding.right}" y="${graphHeight - 5}" 
+                            text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${formatDate(lastDate)}</text>
+                    </svg>
+                    <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+                        <div>Start: ${goal.start_value} kg</div>
+                        <div>Current: ${goal.current_value} kg</div>
+                        <div style="color: #4CAF50;">Target: ${goal.target_value} kg</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openCheckIn(habitId) {
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            document.getElementById('checkInHabitName').textContent = habit.name;
+            
+            let contentHTML = '';
+
+            // If track_values is false, just binary check-in
+            if (habit.track_values === false || habit.metric_type === 'binary') {
+                contentHTML = `
+                    <div class="form-group">
+                        <label>Did you complete this today?</label>
+                        <div style="display: flex; gap: 12px; margin: 16px 0;">
+                            <button onclick="saveSimpleCheckIn('${habitId}', true)" style="flex: 1; padding: 14px; background: var(--electric-blue); color: var(--navy); border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Yes ✓</button>
+                            <button onclick="closeCheckInModal()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Skip</button>
+                        </div>
+                    </div>
+                `;
+            } else if (habit.metric_type === 'number') {
+                // Weight, Steps, Water, Sleep - requires value
+                contentHTML = `
+                    <div class="form-group">
+                        <label>Enter value:</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="checkInValue" step="${habit.metric_unit === 'kg' ? '0.1' : '1'}" placeholder="0" style="flex: 1;" autofocus>
+                            <span style="color: var(--text-secondary);">${habit.metric_unit}</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="saveCheckIn('${habitId}')">Save</button>
+                `;
+            } else if (habit.metric_type === 'percentage') {
+                // Diet Adherence
+                contentHTML = `
+                    <div class="form-group">
+                        <label>How would you rate this?</label>
+                        <div style="margin: 20px 0;">
+                            <input type="range" id="checkInSlider" min="0" max="100" value="80" 
+                                oninput="document.getElementById('sliderValue').textContent = this.value + '%'"
+                                style="width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); outline: none;">
+                            <div id="sliderValue" style="text-align: center; font-size: 24px; font-weight: 700; color: var(--electric-blue); margin-top: 12px;">80%</div>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="saveCheckIn('${habitId}')">Save</button>
+                `;
+            } else if (habit.metric_type === 'binary_plus_type') {
+                // Workout
+                contentHTML = `
+                    <div class="form-group">
+                        <label>Did you workout today?</label>
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                            <button id="workoutYes" onclick="toggleWorkoutChoice(true)" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid transparent; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">Yes ✓</button>
+                            <button id="workoutNo" onclick="toggleWorkoutChoice(false)" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid transparent; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">Skip</button>
+                        </div>
+                    </div>
+                    <div id="workoutDetails" style="display: none;">
+                        <div class="form-group">
+                            <label>Type:</label>
+                            <select id="workoutType" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                ${habit.metric_options?.map(opt => `<option value="${opt}">${opt}</option>`).join('') || '<option>Workout</option>'}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes (optional):</label>
+                            <input type="text" id="workoutNotes" placeholder="e.g., Leg day" style="width: 100%;">
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="saveWorkoutBtn" onclick="saveCheckIn('${habitId}')" style="display: none;">Save</button>
+                `;
+            }
+
+            document.getElementById('checkInContent').innerHTML = contentHTML;
+            document.getElementById('checkInModal').classList.add('active');
+        }
+
+        async function saveSimpleCheckIn(habitId, completed) {
+            if (!completed) {
+                closeCheckInModal();
+                return;
+            }
+
+            showLoading();
+            closeCheckInModal();
+
+            try {
+                await sb.from('checkins').insert([{
+                    user_id: currentUser.id,
+                    habit_id: habitId,
+                    checked_in_at: new Date().toISOString(),
+                    binary_value: true
+                }]);
+
+                showToast('✓ Logged!', 'success');
+                await loadData();
+                await loadGoals();
+                
+                // Refresh views
+                const habit = cachedHabits.find(h => h.id === habitId);
+                if (habit?.goal_id) {
+                    const currentView = document.getElementById('mainApp').innerHTML;
+                    if (currentView.includes('Your Habits')) {
+                        openGoalDetail(habit.goal_id);
+                    } else if (currentView.includes('History')) {
+                        openHabitDetail(habitId);
+                    }
+                }
+                
+                renderGoals();
+            } catch (error) {
+                showToast('Failed to save check-in');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeCheckInModal() {
+            document.getElementById('checkInModal').classList.remove('active');
+        }
+
+        function toggleWorkoutChoice(didWorkout) {
+            const yesBtn = document.getElementById('workoutYes');
+            const noBtn = document.getElementById('workoutNo');
+            const details = document.getElementById('workoutDetails');
+            const saveBtn = document.getElementById('saveWorkoutBtn');
+
+            if (didWorkout) {
+                yesBtn.style.borderColor = 'var(--electric-blue)';
+                yesBtn.style.background = 'rgba(0, 217, 255, 0.2)';
+                noBtn.style.borderColor = 'transparent';
+                noBtn.style.background = 'rgba(255,255,255,0.1)';
+                details.style.display = 'block';
+                saveBtn.style.display = 'block';
+            } else {
+                // Skip - just close modal
+                closeCheckInModal();
+            }
+        }
+
+        async function saveCheckIn(habitId) {
+            const habit = cachedHabits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            // Use selected date or default to now
+            const checkInDate = window.selectedCheckInDate || new Date().toISOString();
+            delete window.selectedCheckInDate; // Clear after use
+
+            let checkInData = {
+                user_id: currentUser.id,
+                habit_id: habitId,
+                checked_in_at: checkInDate
+            };
+
+            // Get values based on metric type
+            if (habit.metric_type === 'number') {
+                const value = parseFloat(document.getElementById('checkInValue').value);
+                if (!value || value <= 0) {
+                    showToast('Please enter a valid value');
+                    return;
+                }
+                checkInData.metric_value = value;
+                checkInData.binary_value = true;
+
+                // Update current_value for weight tracking
+                if (habit.metric_unit === 'kg' && habit.name === 'Track Weight') {
+                    const goal = cachedGoals.find(g => g.id === habit.goal_id);
+                    if (goal) {
+                        await sb.from('goals').update({ current_value: value }).eq('id', goal.id);
+                    }
+                }
+            } else if (habit.metric_type === 'percentage') {
+                const value = parseInt(document.getElementById('checkInSlider').value);
+                checkInData.metric_value = value;
+                checkInData.binary_value = true;
+            } else if (habit.metric_type === 'binary_plus_type') {
+                const type = document.getElementById('workoutType').value;
+                const notes = document.getElementById('workoutNotes').value;
+                checkInData.binary_value = true;
+                checkInData.metric_text = notes ? `${type} - ${notes}` : type;
+            }
+
+            showLoading();
+            closeCheckInModal();
+
+            try {
+                await sb.from('checkins').insert([checkInData]);
+                
+                const checkInDateObj = new Date(checkInDate);
+                const isToday = checkInDateObj.toDateString() === new Date().toDateString();
+                showToast(isToday ? '✓ Logged!' : '✓ Logged for past date!', 'success');
+                
+                // Reload data and refresh views
+                await loadData();
+                await loadGoals();
+                
+                // Refresh habit detail if open
+                openHabitDetail(habitId);
+                
+            } catch (error) {
+                showToast('Failed to save check-in');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function toggleGoalMenu(event, goalId) {
+            event.stopPropagation();
+            // Close all other menus
+            document.querySelectorAll('[id^="goalMenu_"]').forEach(m => {
+                if (m.id !== `goalMenu_${goalId}`) m.classList.remove('active');
+            });
+            document.getElementById(`goalMenu_${goalId}`).classList.toggle('active');
+        }
+
+        // Close goal menus when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('[id^="goalMenu_"]').forEach(m => m.classList.remove('active'));
+        });
+
+        function editGoalTarget(goalId) {
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            if (goal.category === 'get_fitter') {
+                // Populate edit modal
+                document.getElementById('currentWeight').value = goal.current_value;
+                document.getElementById('targetWeight').value = goal.target_value;
+                document.getElementById('targetDate').value = goal.target_date || '';
+                
+                // Show modal
+                document.getElementById('getFitterModal').classList.add('active');
+                
+                // Change button to "Update Goal"
+                const continueBtn = document.querySelector('#getFitterModal .btn-primary');
+                continueBtn.textContent = 'Update Goal';
+                continueBtn.onclick = async function() {
+                    const currentWeight = parseFloat(document.getElementById('currentWeight').value);
+                    const targetWeight = parseFloat(document.getElementById('targetWeight').value);
+                    const targetDate = document.getElementById('targetDate').value || null;
+                    
+                    if (!currentWeight || !targetWeight) {
+                        showToast('Please enter current and target weight');
+                        return;
+                    }
+
+                    showLoading();
+                    try {
+                        await sb.from('goals').update({
+                            current_value: currentWeight,
+                            target_value: targetWeight,
+                            target_date: targetDate
+                        }).eq('id', goalId);
+
+                        showToast('Goal updated!', 'success');
+                        await loadGoals();
+                        renderGoals();
+                        document.getElementById('getFitterModal').classList.remove('active');
+                        
+                        // Reset button
+                        continueBtn.textContent = 'Continue';
+                        continueBtn.onclick = function() { continueToHabits(); };
+                    } catch (error) {
+                        showToast('Failed to update goal');
+                        console.error(error);
+                    } finally {
+                        hideLoading();
+                    }
+                };
+            } else {
+                showToast('Edit coming for this goal type in next version!');
+            }
+        }
+
+        let currentEditingGoalId = null;
+
+        async function manageGoalHabits(goalId) {
+            currentEditingGoalId = goalId;
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            // Load habits for this goal
+            const { data: goalHabits } = await sb
+                .from('habits')
+                .select('*')
+                .eq('goal_id', goalId);
+
+            const habitTemplates = [
+                { name: 'Track Weight', metric_type: 'number', metric_unit: 'kg', description: 'Track your progress' },
+                { name: 'Workout', metric_type: 'binary_plus_type', metric_unit: null, metric_options: ['Gym', 'Running', 'Yoga', 'Swimming', 'Cycling', 'Sports', 'Other'], description: 'Log type & notes' },
+                { name: 'Steps', metric_type: 'number', metric_unit: 'steps', description: 'Count your daily steps' },
+                { name: 'Diet Adherence', metric_type: 'percentage', metric_unit: '%', description: 'Rate how clean you ate' },
+                { name: 'Drinking Water', metric_type: 'number', metric_unit: 'liters', description: 'Track liters consumed' },
+                { name: 'Sleep', metric_type: 'number', metric_unit: 'hours', description: 'Log hours slept' }
+            ];
+
+            const habitsHTML = habitTemplates.map((template, idx) => {
+                const existingHabit = goalHabits?.find(h => h.name === template.name);
+                const isChecked = !!existingHabit;
+                const frequency = existingHabit?.frequency || 7;
+
+                return `
+                    <label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;">
+                        <input type="checkbox" 
+                            ${isChecked ? 'checked' : ''} 
+                            data-habit-id="${existingHabit?.id || ''}"
+                            data-habit-name="${template.name}"
+                            style="margin-top: 4px; width: 18px; height: 18px; cursor: pointer;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 4px; font-size: 15px;">${template.name}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">${template.description}</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="number" 
+                                    value="${frequency}" 
+                                    min="1" 
+                                    max="7" 
+                                    data-freq-for="${template.name}"
+                                    style="width: 50px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-align: center;">
+                                <span style="font-size: 13px; color: var(--text-secondary);">times/week</span>
+                            </div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            document.getElementById('manageHabitsList').innerHTML = habitsHTML;
+            document.getElementById('manageHabitsModal').classList.add('active');
+        }
+
+        function closeManageHabitsModal() {
+            document.getElementById('manageHabitsModal').classList.remove('active');
+            currentEditingGoalId = null;
+        }
+
+        async function saveGoalHabits() {
+            if (!currentEditingGoalId) return;
+
+            showLoading();
+            closeManageHabitsModal();
+
+            try {
+                const checkboxes = document.querySelectorAll('#manageHabitsList input[type="checkbox"]');
+                
+                for (const checkbox of checkboxes) {
+                    const habitId = checkbox.dataset.habitId;
+                    const habitName = checkbox.dataset.habitName;
+                    const isChecked = checkbox.checked;
+                    const freqInput = document.querySelector(`input[data-freq-for="${habitName}"]`);
+                    const frequency = parseInt(freqInput?.value || 7);
+
+                    if (isChecked && !habitId) {
+                        // Create new habit
+                        const template = [
+                            { name: 'Track Weight', metric_type: 'number', metric_unit: 'kg' },
+                            { name: 'Workout', metric_type: 'binary_plus_type', metric_unit: null, metric_options: ['Gym', 'Running', 'Yoga', 'Swimming', 'Cycling', 'Sports', 'Other'] },
+                            { name: 'Steps', metric_type: 'number', metric_unit: 'steps' },
+                            { name: 'Diet Adherence', metric_type: 'percentage', metric_unit: '%' },
+                            { name: 'Drinking Water', metric_type: 'number', metric_unit: 'liters' },
+                            { name: 'Sleep', metric_type: 'number', metric_unit: 'hours' }
+                        ].find(t => t.name === habitName);
+
+                        if (template) {
+                            await createGoalHabit(currentEditingGoalId, { ...template, frequency });
+                        }
+                    } else if (!isChecked && habitId) {
+                        // Delete habit
+                        await sb.from('habits').delete().eq('id', habitId);
+                    } else if (isChecked && habitId) {
+                        // Update frequency
+                        await sb.from('habits').update({ frequency }).eq('id', habitId);
+                    }
+                }
+
+                showToast('Habits updated!', 'success');
+                await loadData();
+                renderGoals();
+            } catch (error) {
+                showToast('Failed to update habits');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteGoal(goalId) {
+            if (!confirm('Delete this goal? All check-in data will be preserved, but the goal will be removed.')) return;
+
+            showLoading();
+            try {
+                await sb.from('goals').update({ is_active: false }).eq('id', goalId);
+                showToast('Goal deleted', 'success');
+                await loadGoals();
+                renderGoals();
+            } catch (error) {
+                showToast('Failed to delete goal');
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================
+        // END PHASE 1C
+        // ============================================
+
         initializeApp();
 
         // ============================================================
@@ -2653,25 +4348,137 @@
             <div class="modal-header">
                 <h3>Welcome to StreakClub</h3>
             </div>
-            <p style="color: var(--text-secondary); margin-bottom: 20px; text-align: center;">Stay consistent with your friends through habit streaks.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; text-align: center;">Set Goals, Build Habits and Stay Consistent with Friends.</p>
             
             <div class="welcome-steps">
                 <div style="font-weight: 700; margin-bottom: 12px; font-size: 14px;">How it works:</div>
                 <div class="welcome-step">
                     <div class="step-number">1</div>
-                    <div class="step-text">Create or join a StreakClub</div>
+                    <div class="step-text">Choose your goal direction</div>
                 </div>
                 <div class="welcome-step">
                     <div class="step-number">2</div>
-                    <div class="step-text">Add 1–3 habits</div>
+                    <div class="step-text">Track daily actions</div>
                 </div>
                 <div class="welcome-step">
                     <div class="step-number">3</div>
-                    <div class="step-text">Check in daily and track your streak</div>
+                    <div class="step-text">See progress & compete</div>
                 </div>
             </div>
             
-            <button class="btn-primary" onclick="closeWelcomeModal()">Get Started</button>
+            <button class="btn-primary" onclick="closeWelcomeModal(); showChooseGoalModal();">Get Started</button>
+        </div>
+    </div>
+
+    <!-- Choose Goal Category Modal -->
+    <div id="chooseGoalModal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3>What goal are you working towards?</h3>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; text-align: center; font-size: 14px;">Choose the direction you want to improve.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="goal-category-btn" onclick="selectGoalCategory('get_fitter')">
+                    <span style="font-size: 24px; margin-right: 12px;">🏃</span>
+                    <span style="font-weight: 600;">Get Fitter</span>
+                </button>
+                <button class="goal-category-btn" onclick="selectGoalCategory('break_habits')">
+                    <span style="font-size: 24px; margin-right: 12px;">🔥</span>
+                    <span style="font-weight: 600;">Break Bad Habits</span>
+                </button>
+                <button class="goal-category-btn" onclick="selectGoalCategory('mental_wellness')">
+                    <span style="font-size: 24px; margin-right: 12px;">🧠</span>
+                    <span style="font-weight: 600;">Improve Mental Wellness</span>
+                </button>
+                <button class="goal-category-btn" onclick="selectGoalCategory('grow_learn')">
+                    <span style="font-size: 24px; margin-right: 12px;">🌱</span>
+                    <span style="font-weight: 600;">Grow & Learn</span>
+                </button>
+                <button class="goal-category-btn" onclick="selectGoalCategory('custom')">
+                    <span style="font-size: 24px; margin-right: 12px;">✏️</span>
+                    <span style="font-weight: 600;">Build Your Own</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Get Fitter - Set Target Modal -->
+    <div id="getFitterModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeGetFitterModal(); showChooseGoalModal();">←</button>
+                <h3>🏃 Get Fitter</h3>
+            </div>
+            
+            <div class="form-group">
+                <label>What's your current weight?</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" id="currentWeight" step="0.1" placeholder="75" style="flex: 1;">
+                    <span style="color: var(--text-secondary);">kg</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>What's your target weight?</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" id="targetWeight" step="0.1" placeholder="68" style="flex: 1;">
+                    <span style="color: var(--text-secondary);">kg</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>When do you want to reach it? (Optional)</label>
+                <input type="date" id="targetDate">
+            </div>
+
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Based on this, we'll suggest habits to track.</p>
+
+            <button class="btn-primary" onclick="continueToHabits()">Continue</button>
+        </div>
+    </div>
+
+    <!-- Select Habits Modal -->
+    <div id="selectHabitsModal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeSelectHabitsModal(); showGetFitterModal();">←</button>
+                <h3>Select habits to track</h3>
+            </div>
+            
+            <div id="habitsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <!-- Habits will be populated here -->
+            </div>
+
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Must select at least 1 habit</p>
+
+            <button class="btn-primary" onclick="createGoalWithHabits()">Create Goal</button>
+        </div>
+    </div>
+
+    <!-- Goal Created Success Modal -->
+    <div id="goalCreatedModal" class="modal">
+        <div class="modal-content" style="max-width: 360px; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+            <h3 style="margin-bottom: 12px;">Goal Created!</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;" id="goalCreatedMessage"></p>
+            <button class="btn-primary" onclick="closeGoalCreatedModal()">View Goal</button>
+        </div>
+    </div>
+
+    <!-- Manage Goal Habits Modal -->
+    <div id="manageHabitsModal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeManageHabitsModal()">×</button>
+                <h3>Manage Habits</h3>
+            </div>
+            
+            <div id="manageHabitsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <!-- Habits will be populated here -->
+            </div>
+
+            <button class="btn-primary" onclick="saveGoalHabits()">Save Changes</button>
         </div>
     </div>
 
