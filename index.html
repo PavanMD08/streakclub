@@ -914,13 +914,13 @@
             <div id="clubsTab" class="tab-content hidden">
                 <div class="section-header">
                     <h2>StreakClubs</h2>
-                    <button class="btn-add" onclick="openCreateClubModal()">+ NEW</button>
+                    <button class="btn-add" onclick="openCreateChallenge()">+ NEW</button>
                 </div>
                 <div id="clubsList">
                     <div class="empty-state">
-                        <h3>No clubs yet</h3>
-                        <p>Create your first club</p>
-                        <button class="btn-primary" onclick="openCreateClubModal()">Create StreakClub</button>
+                        <h3>No challenges yet</h3>
+                        <p>Create your first challenge</p>
+                        <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
                     </div>
                 </div>
             </div>
@@ -985,17 +985,35 @@
     </div>
 
     <!-- Create Club Modal -->
-    <div id="createClubModal" class="modal">
-        <div class="modal-content">
+    <!-- Create Challenge Modal - Step 1: Name & Timeline -->
+    <div id="createChallengeModal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
             <div class="modal-header">
-                <h3>Create StreakClub</h3>
-                <button class="btn-close" onclick="closeCreateClubModal()">×</button>
+                <h3>Create Challenge</h3>
+                <button class="btn-close" onclick="closeCreateChallenge()">×</button>
             </div>
+            
             <div class="form-group">
-                <label>Club Name</label>
-                <input type="text" id="clubName" placeholder="e.g., Morning Warriors">
+                <label>Challenge Name:</label>
+                <input type="text" id="challengeName" placeholder="Transformation 2026" style="width: 100%;">
             </div>
-            <button class="btn-primary" onclick="createClub()">Create Club</button>
+
+            <div class="form-group">
+                <label>Start Date:</label>
+                <input type="date" id="challengeStartDate" style="width: 100%;">
+            </div>
+
+            <div class="form-group">
+                <label>End Date:</label>
+                <input type="date" id="challengeEndDate" style="width: 100%;">
+            </div>
+
+            <div class="form-group">
+                <label>Description (Optional):</label>
+                <textarea id="challengeDescription" placeholder="30-day fitness challenge with the squad!" rows="3" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; resize: vertical;"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="proceedToLinkGoals()">Next: Link Your Goals →</button>
         </div>
     </div>
 
@@ -1995,6 +2013,65 @@
             } finally {
                 hideLoading();
             }
+        }
+
+        // ============================================
+        // STREAKCLUBS - NEW CHALLENGE FLOW
+        // ============================================
+
+        let currentChallengeData = {};
+
+        function openCreateChallenge() {
+            // Set default dates
+            const today = new Date();
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + 30); // Default 30 days
+
+            document.getElementById('challengeStartDate').valueAsDate = today;
+            document.getElementById('challengeEndDate').valueAsDate = endDate;
+            
+            document.getElementById('createChallengeModal').classList.add('active');
+        }
+
+        function closeCreateChallenge() {
+            document.getElementById('createChallengeModal').classList.remove('active');
+            document.getElementById('challengeName').value = '';
+            document.getElementById('challengeDescription').value = '';
+            currentChallengeData = {};
+        }
+
+        function proceedToLinkGoals() {
+            const name = document.getElementById('challengeName').value.trim();
+            const startDate = document.getElementById('challengeStartDate').value;
+            const endDate = document.getElementById('challengeEndDate').value;
+            const description = document.getElementById('challengeDescription').value.trim();
+
+            if (!name) {
+                showToast('Please enter challenge name');
+                return;
+            }
+
+            if (!startDate || !endDate) {
+                showToast('Please select start and end dates');
+                return;
+            }
+
+            if (new Date(endDate) <= new Date(startDate)) {
+                showToast('End date must be after start date');
+                return;
+            }
+
+            // Save challenge data
+            currentChallengeData = {
+                name,
+                startDate,
+                endDate,
+                description
+            };
+
+            closeCreateChallenge();
+            showToast('Link goals feature coming next!');
+            // TODO: Show link goals modal
         }
 
         function openCreateClubModal() {
