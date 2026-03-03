@@ -1017,6 +1017,24 @@
         </div>
     </div>
 
+    <!-- Link Goals to Challenge Modal -->
+    <div id="linkGoalsModal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeLinkGoals(); openCreateChallenge();">←</button>
+                <h3>Link Your Goals</h3>
+            </div>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">Which goals will you track in this challenge?</p>
+            
+            <div id="availableGoalsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <!-- Goals will be populated here -->
+            </div>
+
+            <button class="btn-primary" onclick="proceedToConfigureGoals()">Next: Configure Goals →</button>
+        </div>
+    </div>
+
     <!-- Club Dashboard Modal -->
     <div id="clubDashboard" class="modal">
         <div class="modal-content" style="max-width: 600px; max-height: 85vh;">
@@ -2070,8 +2088,67 @@
             };
 
             closeCreateChallenge();
-            showToast('Link goals feature coming next!');
-            // TODO: Show link goals modal
+            showLinkGoalsModal();
+        }
+
+        function showLinkGoalsModal() {
+            if (cachedGoals.length === 0) {
+                showToast('You need at least one goal first. Create a goal in My Goals tab.');
+                return;
+            }
+
+            const goalsList = document.getElementById('availableGoalsList');
+            const goalsHTML = cachedGoals.map(goal => {
+                const emoji = goal.category === 'get_fitter' ? '🏃' : 
+                             goal.category === 'break_habits' ? '🔥' :
+                             goal.category === 'mental_wellness' ? '🧠' :
+                             goal.category === 'grow_learn' ? '🌱' : '🎯';
+                
+                const subtitle = goal.category === 'get_fitter' ? 
+                                `${goal.start_value || goal.current_value}→${goal.target_value} kg` :
+                                'Consistency tracking';
+
+                return `
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
+                        <input type="checkbox" value="${goal.id}" onchange="toggleChallengeGoal('${goal.id}')" style="width: 20px; height: 20px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 15px;">${emoji} ${goal.name}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${subtitle}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            goalsList.innerHTML = goalsHTML;
+            document.getElementById('linkGoalsModal').classList.add('active');
+        }
+
+        function closeLinkGoals() {
+            document.getElementById('linkGoalsModal').classList.remove('active');
+        }
+
+        function toggleChallengeGoal(goalId) {
+            if (!currentChallengeData.selectedGoals) {
+                currentChallengeData.selectedGoals = [];
+            }
+
+            const index = currentChallengeData.selectedGoals.indexOf(goalId);
+            if (index > -1) {
+                currentChallengeData.selectedGoals.splice(index, 1);
+            } else {
+                currentChallengeData.selectedGoals.push(goalId);
+            }
+        }
+
+        function proceedToConfigureGoals() {
+            if (!currentChallengeData.selectedGoals || currentChallengeData.selectedGoals.length === 0) {
+                showToast('Please select at least one goal');
+                return;
+            }
+
+            closeLinkGoals();
+            showToast('Configure goals feature coming next!');
+            // TODO: Show configure goals modal
         }
 
         function openCreateClubModal() {
