@@ -2230,6 +2230,10 @@
             document.getElementById('chooseGoalModal').classList.add('active');
         }
 
+        function closeChooseGoalModal() {
+            document.getElementById('chooseGoalModal').classList.remove('active');
+        }
+
         function selectGoalCategory(category) {
             selectedGoalCategory = category;
             document.getElementById('chooseGoalModal').classList.remove('active');
@@ -4375,6 +4379,7 @@
         <div class="modal-content" style="max-width: 420px;">
             <div class="modal-header">
                 <h3>What goal are you working towards?</h3>
+                <button class="btn-close" onclick="closeChooseGoalModal()">×</button>
             </div>
             <p style="color: var(--text-secondary); margin-bottom: 24px; text-align: center; font-size: 14px;">Choose the direction you want to improve.</p>
             
