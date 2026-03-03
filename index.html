@@ -2706,16 +2706,21 @@
                     .single();
 
                 if (clubError) throw clubError;
+                console.log('✅ Club created:', club.id);
 
                 // Add creator as member
-                await sb.from('club_members').insert([{
+                const { error: memberError } = await sb.from('club_members').insert([{
                     club_id: club.id,
                     user_id: currentUser.id
                 }]);
+                if (memberError) throw memberError;
+                console.log('✅ Creator added as member');
 
                 // Add goals and habits
                 for (const goalId of currentChallengeData.selectedGoals) {
+                    console.log('Processing goal:', goalId);
                     const config = currentChallengeData.goalConfigs[goalId];
+                    console.log('Goal config:', config);
                     
                     const { data: clubGoal, error: goalError } = await sb
                         .from('club_goals')
@@ -2729,17 +2734,22 @@
                         .single();
 
                     if (goalError) throw goalError;
+                    console.log('✅ Club goal created:', clubGoal.id);
 
                     // Add habits
                     for (const habitConfig of config.habits) {
-                        await sb.from('club_goal_habits').insert([{
+                        console.log('Adding habit:', habitConfig);
+                        const { error: habitError } = await sb.from('club_goal_habits').insert([{
                             club_goal_id: clubGoal.id,
                             habit_id: habitConfig.habitId,
                             club_frequency: habitConfig.clubFrequency
                         }]);
+                        if (habitError) throw habitError;
                     }
+                    console.log('✅ All habits added for goal');
                 }
 
+                console.log('✅ All goals processed, showing success...');
                 showToast('Challenge created! 🎉', 'success');
                 
                 // Save name and code before resetting
