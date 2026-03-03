@@ -1575,6 +1575,7 @@
         let currentDashboardClub = null;
 
         async function openClubDashboard(clubId) {
+            console.log('openClubDashboard called with:', clubId);
             showLoading();
 
             try {
@@ -1584,6 +1585,8 @@
                     .eq('id', clubId)
                     .single();
 
+                console.log('Club loaded:', club);
+
                 if (!club) {
                     showToast('Club not found');
                     hideLoading();
@@ -1591,6 +1594,7 @@
                 }
 
                 currentDashboardClub = club;
+                console.log('Set currentDashboardClub:', currentDashboardClub);
 
                 const dashboardHTML = `
                     <div class="modal active" id="clubDashboardModal" style="z-index: 1000;">
@@ -1612,7 +1616,11 @@
                 `;
 
                 document.body.insertAdjacentHTML('beforeend', dashboardHTML);
+                console.log('Modal HTML inserted');
+                
                 hideLoading();
+                
+                console.log('About to call switchClubDashboardTab...');
                 switchClubDashboardTab('leaderboard');
 
             } catch (error) {
