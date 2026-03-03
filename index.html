@@ -2547,22 +2547,22 @@
                 contentHTML += `
                     <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;">
                         <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                            <input type="checkbox" id="setClubTarget" onchange="toggleClubTarget()" style="width: 18px; height: 18px;">
+                            <input type="checkbox" id="setClubTarget" checked onchange="toggleClubTarget()" style="width: 18px; height: 18px;">
                             <span style="font-weight: 600;">Set challenge weight target</span>
                         </label>
                         
-                        <div id="clubTargetInputs" style="display: none;">
+                        <div id="clubTargetInputs">
                             <div class="form-group">
                                 <label>Current Weight:</label>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="clubCurrentWeight" value="${goal.current_value}" step="0.1" style="flex: 1;">
+                                    <input type="number" id="clubCurrentWeight" value="${goal.current_value || goal.start_value}" step="0.1" style="flex: 1;">
                                     <span style="color: var(--text-secondary);">kg</span>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Challenge Target:</label>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="clubTargetWeight" step="0.1" placeholder="72" style="flex: 1;">
+                                    <input type="number" id="clubTargetWeight" step="0.1" placeholder="${goal.target_value}" style="flex: 1;">
                                     <span style="color: var(--text-secondary);">kg</span>
                                 </div>
                             </div>
