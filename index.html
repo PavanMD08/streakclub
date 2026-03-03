@@ -2802,12 +2802,12 @@
                         </div>
                         
                         <div style="background: rgba(0,217,255,0.1); padding: 16px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Share this code with friends to invite them:</div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--electric-blue); font-family: monospace; text-align: center; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
-                                ${challengeDetails.inviteCode}
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Share this link with friends:</div>
+                            <div style="font-size: 14px; font-weight: 600; color: var(--electric-blue); padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; word-break: break-all; font-family: monospace;">
+                                ${inviteLink}
                             </div>
-                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
-                                They can enter this code when joining a challenge
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+                                Friends click the link to join your challenge
                             </div>
                         </div>
 
@@ -4673,23 +4673,6 @@
 
         function closeInviteModal() {
             document.getElementById('inviteModal').classList.remove('active');
-        }
-
-        async function copyInviteLink() {
-            const link = document.getElementById('inviteLinkText').textContent;
-            try {
-                await navigator.clipboard.writeText(link);
-                showToast('Link copied!', 'success');
-            } catch (err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = link;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast('Link copied!', 'success');
-            }
         }
 
         async function handleInviteLink() {
