@@ -1239,19 +1239,14 @@
             showLoading();
             
             try {
-                // Load habits
+                // Load habits (only goal-based habits)
                 const { data: habitsData } = await sb
                     .from('habits')
-                    .select(`
-                        *,
-                        habit_circle_tags (circle_id)
-                    `)
-                    .eq('user_id', currentUser.id);
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .not('goal_id', 'is', null);
 
-                cachedHabits = (habitsData || []).map(h => ({
-                    ...h,
-                    circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
-                }));
+                cachedHabits = habitsData || [];
 
                 // Load check-ins
                 if (cachedHabits.length > 0) {
@@ -1264,77 +1259,7 @@
                     cachedCheckins = checkinsData || [];
                 }
 
-                // Load circles
-                const { data: memberships } = await sb
-                    .from('circle_members')
-                    .select('circle_id')
-                    .eq('user_id', currentUser.id);
-
-                if (memberships && memberships.length > 0) {
-                    const circleIds = memberships.map(m => m.circle_id);
-                    
-                    const { data: circlesData } = await sb
-                        .from('circles')
-                        .select('*')
-                        .in('id', circleIds);
-
-                    const { data: allMembers } = await sb
-                        .from('circle_members')
-                        .select('*')
-                        .in('circle_id', circleIds);
-
-                    cachedCircles = (circlesData || []).map(circle => ({
-                        ...circle,
-                        members: allMembers.filter(m => m.circle_id === circle.id).map(m => m.user_id)
-                    }));
-
-                    // Load all member profiles
-                    const allMemberIds = [...new Set(allMembers.map(m => m.user_id))];
-                    const { data: profiles } = await sb
-                        .from('profiles')
-                        .select('*')
-                        .in('id', allMemberIds);
-
-                    profiles.forEach(p => {
-                        cachedProfiles[p.id] = { id: p.id, name: p.name };
-                    });
-
-                    // Load all member habits for rankings
-                    const { data: allHabitsData, error: habitsError } = await sb
-                        .from('habits')
-                        .select(`
-                            *,
-                            habit_circle_tags (circle_id)
-                        `)
-                        .in('user_id', allMemberIds);
-
-                    if (habitsError) console.error('Error loading member habits:', habitsError);
-                    console.log(`✅ Loaded ${allHabitsData?.length || 0} habits for ${allMemberIds.length} members`);
-
-                    const allHabits = (allHabitsData || []).map(h => ({
-                        ...h,
-                        circleTags: h.habit_circle_tags ? h.habit_circle_tags.map(t => t.circle_id) : []
-                    }));
-
-                    console.log('Sample habit tags:', allHabits[0]?.circleTags);
-
-                    // Load all check-ins for all members directly by user_id
-                    if (allMemberIds.length > 0) {
-                        const { data: allCheckinsData } = await sb
-                            .from('checkins')
-                            .select('*')
-                            .in('user_id', allMemberIds);
-
-                        // Merge all habits and checkins
-                        cachedHabits = [...new Map([...cachedHabits, ...allHabits].map(h => [h.id, h])).values()];
-                        cachedCheckins = [...new Map([...cachedCheckins, ...(allCheckinsData || [])].map(c => [c.id, c])).values()];
-                        
-                        console.log(`✅ Loaded ${allCheckinsData?.length || 0} total checkins for ${allMemberIds.length} members`);
-                    }
-                }
-
                 renderHabits();
-                renderClubs();
                 
             } catch (error) {
                 console.error(error);
@@ -1573,29 +1498,68 @@
         async function renderClubs() {
             const container = document.getElementById('clubsList');
 
-            // Load user's clubs
-            const { data: memberClubs, error } = await sb
-                .from('club_members')
-                .select(`
-                    club_id,
-                    clubs:club_id (
-                        id,
-                        name,
-                        description,
-                        start_date,
-                        end_date
-                    )
-                `)
-                .eq('user_id', currentUser.id);
+            try {
+                // Load user's club memberships
+                const { data: memberClubs, error: memberError } = await sb
+                    .from('club_members')
+                    .select('club_id')
+                    .eq('user_id', currentUser.id);
 
-            if (error) {
+                if (memberError) throw memberError;
+
+                if (!memberClubs || memberClubs.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No challenges yet</h3>
+                            <p>Create your first challenge</p>
+                            <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const clubIds = memberClubs.map(m => m.club_id);
+
+                // Get club details
+                const { data: clubs, error: clubsError } = await sb
+                    .from('clubs')
+                    .select('*')
+                    .in('id', clubIds);
+
+                if (clubsError) throw clubsError;
+
+                // Render each club
+                const clubsHTML = await Promise.all(clubs.map(async club => {
+                    const daysLeft = Math.ceil((new Date(club.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    // Get member count
+                    const { data: members } = await sb
+                        .from('club_members')
+                        .select('user_id', { count: 'exact' })
+                        .eq('club_id', club.id);
+
+                    const memberCount = members?.length || 0;
+
+                    return `
+                        <div onclick="openClubDashboard('${club.id}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${club.name}</h3>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${memberCount} members</div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
+                            </div>
+                            <div style="font-size: 13px; color: var(--electric-blue); margin-top: 4px;">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Challenge ended'}
+                            </div>
+                        </div>
+                    `;
+                }));
+
+                container.innerHTML = clubsHTML.join('');
+
+            } catch (error) {
                 console.error('Error loading clubs:', error);
-                return;
-            }
-
-            const clubs = memberClubs?.map(m => m.clubs).filter(Boolean) || [];
-
-            if (clubs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>No challenges yet</h3>
@@ -1603,41 +1567,7 @@
                         <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
                     </div>
                 `;
-                return;
             }
-
-            // Render each club
-            const clubsHTML = await Promise.all(clubs.map(async club => {
-                const daysLeft = Math.ceil((new Date(club.end_date) - new Date()) / (1000 * 60 * 60 * 24));
-                
-                // Get all members
-                const { data: members } = await sb
-                    .from('club_members')
-                    .select(`
-                        user_id,
-                        profiles:user_id (name)
-                    `)
-                    .eq('club_id', club.id);
-
-                const memberCount = members?.length || 0;
-
-                return `
-                    <div onclick="openClubDashboard('${club.id}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${club.name}</h3>
-                            <div style="font-size: 12px; color: var(--text-secondary);">${memberCount} members</div>
-                        </div>
-                        <div style="font-size: 13px; color: var(--text-secondary);">
-                            ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
-                        </div>
-                        <div style="font-size: 13px; color: var(--electric-blue); margin-top: 4px;">
-                            ${daysLeft > 0 ? `${daysLeft} days left` : 'Challenge ended'}
-                        </div>
-                    </div>
-                `;
-            }));
-
-            container.innerHTML = clubsHTML.join('');
         }
 
         async function openClubDashboard(clubId) {
