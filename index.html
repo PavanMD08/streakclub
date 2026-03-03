@@ -1641,8 +1641,193 @@
         }
 
         async function openClubDashboard(clubId) {
-            showToast('Club dashboard coming next!');
-            // TODO: Show full club dashboard with progress bars
+            showLoading();
+
+            try {
+                // Get club info
+                const { data: club } = await sb
+                    .from('clubs')
+                    .select('*')
+                    .eq('id', clubId)
+                    .single();
+
+                if (!club) {
+                    showToast('Club not found');
+                    return;
+                }
+
+                const daysLeft = Math.ceil((new Date(club.end_date) - new Date(club.start_date)) / (1000 * 60 * 60 * 24));
+                const daysPassed = Math.ceil((new Date() - new Date(club.start_date)) / (1000 * 60 * 60 * 24));
+
+                // Get all members with their goals
+                const { data: members } = await sb
+                    .from('club_members')
+                    .select(`
+                        user_id,
+                        profiles:user_id (name)
+                    `)
+                    .eq('club_id', clubId);
+
+                // Get progress for each member
+                const memberProgress = await Promise.all(members.map(async member => {
+                    const userId = member.user_id;
+                    const name = member.profiles?.name || 'Unknown';
+
+                    // Get their club goals
+                    const { data: clubGoals } = await sb
+                        .from('club_goals')
+                        .select(`
+                            id,
+                            club_target_value,
+                            personal_goal_id,
+                            goals:personal_goal_id (
+                                category,
+                                name,
+                                start_value,
+                                current_value,
+                                target_value
+                            )
+                        `)
+                        .eq('club_id', clubId)
+                        .eq('user_id', userId);
+
+                    let weightProgress = null;
+                    let totalActions = 0;
+                    let completedActions = 0;
+
+                    for (const clubGoal of clubGoals || []) {
+                        // Calculate weight progress if Get Fitter with club target
+                        if (clubGoal.goals?.category === 'get_fitter' && clubGoal.club_target_value) {
+                            const startValue = clubGoal.goals.start_value;
+                            const currentValue = clubGoal.goals.current_value;
+                            const targetValue = clubGoal.club_target_value;
+                            
+                            const totalNeeded = Math.abs(startValue - targetValue);
+                            const achieved = Math.abs(startValue - currentValue);
+                            const percent = totalNeeded > 0 ? Math.round((achieved / totalNeeded) * 100) : 0;
+                            
+                            weightProgress = {
+                                percent: Math.min(percent, 100),
+                                achieved: achieved.toFixed(1),
+                                total: totalNeeded.toFixed(1)
+                            };
+                        }
+
+                        // Get habits for this club goal
+                        const { data: clubHabits } = await sb
+                            .from('club_goal_habits')
+                            .select('habit_id, club_frequency')
+                            .eq('club_goal_id', clubGoal.id);
+
+                        // Calculate total actions needed
+                        const weeksElapsed = Math.ceil(daysPassed / 7);
+                        for (const clubHabit of clubHabits || []) {
+                            const neededPerWeek = clubHabit.club_frequency;
+                            totalActions += neededPerWeek * weeksElapsed;
+
+                            // Count actual check-ins
+                            const { data: checkins } = await sb
+                                .from('checkins')
+                                .select('id')
+                                .eq('habit_id', clubHabit.habit_id)
+                                .eq('user_id', userId)
+                                .gte('checked_in_at', club.start_date)
+                                .lte('checked_in_at', new Date().toISOString());
+
+                            completedActions += checkins?.length || 0;
+                        }
+                    }
+
+                    const actionsPercent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+
+                    return {
+                        name,
+                        weightProgress,
+                        actionsPercent,
+                        completedActions,
+                        totalActions
+                    };
+                }));
+
+                // Build dashboard HTML
+                const membersHTML = memberProgress.map(member => {
+                    let html = `
+                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 12px;">
+                            <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px;">${member.name}</div>
+                    `;
+
+                    // Weight progress bar (if exists)
+                    if (member.weightProgress) {
+                        html += `
+                            <div style="margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
+                                    <span>Target</span>
+                                    <span>${member.weightProgress.percent}% (${member.weightProgress.achieved}/${member.weightProgress.total} kg)</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${member.weightProgress.percent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Actions progress bar
+                    html += `
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
+                                <span>Actions</span>
+                                <span>${member.actionsPercent}% (${member.completedActions}/${member.totalActions})</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div style="width: ${member.actionsPercent}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    html += `</div>`;
+                    return html;
+                }).join('');
+
+                // Show dashboard in modal
+                const dashboardHTML = `
+                    <div class="modal active" id="clubDashboardModal">
+                        <div class="modal-content" style="max-width: 480px; max-height: 85vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <button class="btn-close" onclick="closeClubDashboard()">←</button>
+                                <h3>${club.name}</h3>
+                            </div>
+                            
+                            <div style="padding: 12px 16px; background: rgba(0,217,255,0.1); border-radius: 8px; margin-bottom: 20px;">
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
+                                </div>
+                                <div style="font-size: 14px; color: var(--electric-blue); font-weight: 600; margin-top: 4px;">
+                                    ${daysLeft - daysPassed} days left
+                                </div>
+                            </div>
+
+                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">
+                                ${members.length} MEMBERS
+                            </div>
+
+                            ${membersHTML}
+                        </div>
+                    </div>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', dashboardHTML);
+
+            } catch (error) {
+                console.error('Error loading club dashboard:', error);
+                showToast('Failed to load dashboard');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeClubDashboard() {
+            const modal = document.getElementById('clubDashboardModal');
+            if (modal) modal.remove();
         }
 
         function renderClubsOLD() {
