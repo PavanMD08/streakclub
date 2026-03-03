@@ -1053,12 +1053,12 @@
 
     <!-- Club Dashboard Modal -->
     <div id="clubDashboard" class="modal">
-        <div class="modal-content" style="max-width: 600px; max-height: 85vh;">
+        <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
             <div class="modal-header">
+                <button class="btn-close" onclick="closeClubDashboard()">←</button>
                 <h3 id="dashboardTitle"></h3>
-                <button class="btn-close" onclick="closeCircleDashboard()">×</button>
             </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--glass-border);">
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <button class="dashboard-tab active" id="leaderboardTabBtn" onclick="switchDashboardTab('leaderboard')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">LEADERBOARD</button>
                 <button class="dashboard-tab" id="feedTabBtn" onclick="switchDashboardTab('feed')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">FEED</button>
             </div>
@@ -1575,7 +1575,6 @@
         let currentDashboardClub = null;
 
         async function openClubDashboard(clubId) {
-            console.log('openClubDashboard called with:', clubId);
             showLoading();
 
             try {
@@ -1585,8 +1584,6 @@
                     .eq('id', clubId)
                     .single();
 
-                console.log('Club loaded:', club);
-
                 if (!club) {
                     showToast('Club not found');
                     hideLoading();
@@ -1594,34 +1591,13 @@
                 }
 
                 currentDashboardClub = club;
-                console.log('Set currentDashboardClub:', currentDashboardClub);
-
-                const dashboardHTML = `
-                    <div class="modal active" id="clubDashboardModal" style="z-index: 1000;">
-                        <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
-                            <div class="modal-header">
-                                <button class="btn-close" onclick="closeClubDashboard()">←</button>
-                                <h3>${club.name}</h3>
-                            </div>
-                            
-                            <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <button class="dashboard-tab active" id="leaderboardTabBtn" onclick="switchClubDashboardTab('leaderboard')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--electric-blue); color: var(--text-primary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">LEADERBOARD</button>
-                                <button class="dashboard-tab" id="feedTabBtn" onclick="switchClubDashboardTab('feed')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">FEED</button>
-                            </div>
-                            
-                            <div id="dashboardLeaderboardTab" class="dashboard-content"></div>
-                            <div id="dashboardFeedTab" class="dashboard-content hidden"></div>
-                        </div>
-                    </div>
-                `;
-
-                document.body.insertAdjacentHTML('beforeend', dashboardHTML);
-                console.log('Modal HTML inserted');
+                
+                // Use existing modal
+                document.getElementById('dashboardTitle').textContent = club.name;
+                document.getElementById('clubDashboard').classList.add('active');
                 
                 hideLoading();
-                
-                console.log('About to call switchClubDashboardTab...');
-                switchClubDashboardTab('leaderboard');
+                switchDashboardTab('leaderboard');
 
             } catch (error) {
                 console.error('Error loading club dashboard:', error);
@@ -1631,8 +1607,7 @@
         }
 
         function closeClubDashboard() {
-            const modal = document.getElementById('clubDashboardModal');
-            if (modal) modal.remove();
+            document.getElementById('clubDashboard').classList.remove('active');
             currentDashboardClub = null;
         }
 
