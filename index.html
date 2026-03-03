@@ -2261,7 +2261,7 @@
             document.getElementById('createChallengeModal').classList.remove('active');
             document.getElementById('challengeName').value = '';
             document.getElementById('challengeDescription').value = '';
-            currentChallengeData = {};
+            // Don't reset currentChallengeData here - we need it for the flow!
         }
 
         function proceedToLinkGoals() {
@@ -2577,10 +2577,16 @@
                 }
 
                 showToast('Challenge created! 🎉', 'success');
+                
+                // Save name before resetting
+                const challengeName = currentChallengeData.name;
                 currentChallengeData = {};
                 
+                // Reload clubs
+                renderClubs();
+                
                 // Show invite modal
-                showInviteCode(inviteCode, currentChallengeData.name);
+                showInviteCode(inviteCode, challengeName);
 
             } catch (error) {
                 console.error('Error creating challenge:', error);
