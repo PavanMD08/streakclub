@@ -2511,11 +2511,21 @@
         }
 
         async function createChallengeNow() {
+            console.log('Creating challenge with data:', currentChallengeData);
             showLoading();
 
             try {
                 // Generate invite code
                 const inviteCode = Math.random().toString(36).substring(2, 10);
+
+                console.log('Inserting club:', {
+                    name: currentChallengeData.name,
+                    description: currentChallengeData.description,
+                    creator_id: currentUser.id,
+                    start_date: currentChallengeData.startDate,
+                    end_date: currentChallengeData.endDate,
+                    invite_code: inviteCode
+                });
 
                 // Create club in database
                 const { data: club, error: clubError } = await sb
