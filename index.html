@@ -1528,33 +1528,165 @@
 
                 if (clubsError) throw clubsError;
 
-                // Render each club
-                const clubsHTML = await Promise.all(clubs.map(async club => {
+                // Render each club with inline member progress
+                const clubsHTML = [];
+                
+                for (const club of clubs) {
                     const daysLeft = Math.ceil((new Date(club.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    const daysPassed = Math.ceil((new Date() - new Date(club.start_date)) / (1000 * 60 * 60 * 24));
                     
-                    // Get member count
-                    const { data: members } = await sb
+                    // Get all members
+                    const { data: memberRecords } = await sb
                         .from('club_members')
-                        .select('user_id', { count: 'exact' })
+                        .select('user_id')
                         .eq('club_id', club.id);
 
-                    const memberCount = members?.length || 0;
+                    const memberIds = memberRecords?.map(m => m.user_id) || [];
+                    const memberCount = memberIds.length;
 
-                    return `
-                        <div onclick="openClubDashboard('${club.id}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    // Get profiles
+                    const { data: profiles } = await sb
+                        .from('profiles')
+                        .select('id, name')
+                        .in('id', memberIds);
+
+                    const profileMap = {};
+                    profiles?.forEach(p => {
+                        profileMap[p.id] = p.name;
+                    });
+
+                    // Calculate progress for all members
+                    const allProgress = [];
+                    for (const userId of memberIds) {
+                        const name = profileMap[userId] || 'Unknown';
+
+                        const { data: clubGoals } = await sb
+                            .from('club_goals')
+                            .select('*')
+                            .eq('club_id', club.id)
+                            .eq('user_id', userId);
+
+                        let weightProgress = null;
+                        let totalActions = 0;
+                        let completedActions = 0;
+
+                        for (const clubGoal of clubGoals || []) {
+                            const { data: goalData } = await sb
+                                .from('goals')
+                                .select('*')
+                                .eq('id', clubGoal.personal_goal_id)
+                                .single();
+
+                            if (goalData?.category === 'get_fitter' && clubGoal.club_target_value) {
+                                const startValue = goalData.start_value;
+                                const currentValue = goalData.current_value;
+                                const targetValue = clubGoal.club_target_value;
+                                const totalNeeded = Math.abs(startValue - targetValue);
+                                const achieved = Math.abs(startValue - currentValue);
+                                const percent = totalNeeded > 0 ? Math.round((achieved / totalNeeded) * 100) : 0;
+                                weightProgress = {
+                                    percent: Math.min(percent, 100),
+                                    achieved: achieved.toFixed(1),
+                                    total: totalNeeded.toFixed(1)
+                                };
+                            }
+
+                            const { data: clubHabits } = await sb
+                                .from('club_goal_habits')
+                                .select('habit_id, club_frequency')
+                                .eq('club_goal_id', clubGoal.id);
+
+                            const weeksElapsed = Math.max(1, Math.ceil(daysPassed / 7));
+                            for (const clubHabit of clubHabits || []) {
+                                totalActions += clubHabit.club_frequency * weeksElapsed;
+                                const { data: checkins } = await sb
+                                    .from('checkins')
+                                    .select('id')
+                                    .eq('habit_id', clubHabit.habit_id)
+                                    .eq('user_id', userId)
+                                    .gte('checked_in_at', club.start_date)
+                                    .lte('checked_in_at', new Date().toISOString());
+                                completedActions += checkins?.length || 0;
+                            }
+                        }
+
+                        const habitsPercent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+                        allProgress.push({
+                            userId,
+                            name,
+                            weightProgress,
+                            habitsPercent,
+                            completedActions,
+                            totalActions
+                        });
+                    }
+
+                    // Sort by habits percent
+                    allProgress.sort((a, b) => b.habitsPercent - a.habitsPercent);
+
+                    // Top 5 members
+                    const top5 = allProgress.slice(0, 5);
+                    const remaining = allProgress.length - 5;
+
+                    // Build members HTML
+                    const membersHTML = top5.map(member => {
+                        const isCurrentUser = member.userId === currentUser.id;
+                        let html = `
+                            <div style="padding: 14px; background: ${isCurrentUser ? 'rgba(0,217,255,0.1)' : 'rgba(255,255,255,0.03)'}; border-radius: 10px; margin-bottom: 10px;">
+                                <div style="font-weight: 600; font-size: 14px; margin-bottom: 10px;">${member.name}${isCurrentUser ? ' (You)' : ''}</div>
+                        `;
+
+                        if (member.weightProgress) {
+                            html += `
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 3px;">
+                                        <span>Target</span>
+                                        <span>${member.weightProgress.percent}% (${member.weightProgress.achieved}/${member.weightProgress.total} kg)</span>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${member.weightProgress.percent}%; height: 100%; background: var(--electric-blue);"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        html += `
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 3px;">
+                                    <span>Habits</span>
+                                    <span>${member.habitsPercent}% (${member.completedActions}/${member.totalActions})</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${member.habitsPercent}%; height: 100%; background: #4CAF50;"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                        return html;
+                    }).join('');
+
+                    const viewMoreBtn = remaining > 0 ? `
+                        <button onclick="openClubDashboard('${club.id}')" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); cursor: pointer; font-weight: 600; font-size: 13px; margin-top: 8px;">
+                            View More (${remaining} others)
+                        </button>
+                    ` : '';
+
+                    clubsHTML.push(`
+                        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${club.name}</h3>
                                 <div style="font-size: 12px; color: var(--text-secondary);">${memberCount} members</div>
                             </div>
-                            <div style="font-size: 13px; color: var(--text-secondary);">
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 2px;">
                                 ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
                             </div>
-                            <div style="font-size: 13px; color: var(--electric-blue); margin-top: 4px;">
+                            <div style="font-size: 13px; color: var(--electric-blue); font-weight: 600; margin-bottom: 16px;">
                                 ${daysLeft > 0 ? `${daysLeft} days left` : 'Challenge ended'}
                             </div>
+                            ${membersHTML}
+                            ${viewMoreBtn}
                         </div>
-                    `;
-                }));
+                    `);
+                }
 
                 container.innerHTML = clubsHTML.join('');
 
