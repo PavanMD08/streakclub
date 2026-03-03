@@ -1570,7 +1570,82 @@
         // CLUB RENDERING & DASHBOARD (WITH ORIGINAL CLEAN DESIGN)
         // ============================================================
         
-        function renderClubs() {
+        async function renderClubs() {
+            const container = document.getElementById('clubsList');
+
+            // Load user's clubs
+            const { data: memberClubs, error } = await sb
+                .from('club_members')
+                .select(`
+                    club_id,
+                    clubs:club_id (
+                        id,
+                        name,
+                        description,
+                        start_date,
+                        end_date
+                    )
+                `)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                console.error('Error loading clubs:', error);
+                return;
+            }
+
+            const clubs = memberClubs?.map(m => m.clubs).filter(Boolean) || [];
+
+            if (clubs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No challenges yet</h3>
+                        <p>Create your first challenge</p>
+                        <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render each club
+            const clubsHTML = await Promise.all(clubs.map(async club => {
+                const daysLeft = Math.ceil((new Date(club.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+                
+                // Get all members
+                const { data: members } = await sb
+                    .from('club_members')
+                    .select(`
+                        user_id,
+                        profiles:user_id (name)
+                    `)
+                    .eq('club_id', club.id);
+
+                const memberCount = members?.length || 0;
+
+                return `
+                    <div onclick="openClubDashboard('${club.id}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${club.name}</h3>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${memberCount} members</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
+                        </div>
+                        <div style="font-size: 13px; color: var(--electric-blue); margin-top: 4px;">
+                            ${daysLeft > 0 ? `${daysLeft} days left` : 'Challenge ended'}
+                        </div>
+                    </div>
+                `;
+            }));
+
+            container.innerHTML = clubsHTML.join('');
+        }
+
+        async function openClubDashboard(clubId) {
+            showToast('Club dashboard coming next!');
+            // TODO: Show full club dashboard with progress bars
+        }
+
+        function renderClubsOLD() {
             const container = document.getElementById('clubsList');
 
             if (cachedCircles.length === 0) {
