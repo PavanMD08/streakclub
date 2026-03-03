@@ -506,6 +506,14 @@
         .modal-header h3 {
             font-size: 20px;
             font-weight: 700;
+            flex: 1;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .modal-header h3 {
+                text-align: center;
+            }
         }
 
         .btn-close {
@@ -2319,8 +2327,16 @@
             `).join('');
 
             habitsList.innerHTML = habitsHTML;
-            document.getElementById('selectHabitsModal').querySelector('h3').textContent = `Select habits for ${goalName}`;
-            document.getElementById('selectHabitsModal').classList.add('active');
+            
+            // Update modal header
+            const modal = document.getElementById('selectHabitsModal');
+            const header = modal.querySelector('.modal-header h3');
+            header.innerHTML = `
+                ${goalName}
+                <div style="font-size: 14px; font-weight: 400; color: var(--text-secondary); margin-top: 4px;">Select habits that you would like to track</div>
+            `;
+            
+            modal.classList.add('active');
             
             // Update create button
             const createBtn = document.querySelector('#selectHabitsModal .btn-primary');
