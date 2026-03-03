@@ -1876,40 +1876,38 @@
                     </button>
                 ` : '';
 
-                // Show dashboard in modal
+                currentDashboardClub = club;
+
+                // Show dashboard in modal with tabs
                 const dashboardHTML = `
-                    <div class="modal active" id="clubDashboardModal">
-                        <div class="modal-content" style="max-width: 480px; max-height: 85vh; overflow-y: auto;">
+                    <div class="modal active" id="clubDashboardModal" style="z-index: 1000;">
+                        <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
                             <div class="modal-header">
                                 <button class="btn-close" onclick="closeClubDashboard()">←</button>
                                 <h3>${club.name}</h3>
                             </div>
                             
-                            <div style="padding: 12px 16px; background: rgba(0,217,255,0.1); border-radius: 8px; margin-bottom: 20px;">
-                                <div style="font-size: 13px; color: var(--text-secondary);">
-                                    ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
-                                </div>
-                                <div style="font-size: 14px; color: var(--electric-blue); font-weight: 600; margin-top: 4px;">
-                                    ${daysLeft - daysPassed} days left
-                                </div>
+                            <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <button class="dashboard-tab active" id="leaderboardTabBtn" onclick="switchClubDashboardTab('leaderboard')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid var(--electric-blue); color: var(--text-primary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">LEADERBOARD</button>
+                                <button class="dashboard-tab" id="feedTabBtn" onclick="switchClubDashboardTab('feed')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">FEED</button>
                             </div>
-
-                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">
-                                ${memberRecords.length} MEMBERS
-                            </div>
-
-                            ${membersHTML}
-                            ${viewMoreBtn}
+                            
+                            <div id="dashboardLeaderboardTab" class="dashboard-content"></div>
+                            <div id="dashboardFeedTab" class="dashboard-content hidden"></div>
                         </div>
                     </div>
                 `;
 
                 document.body.insertAdjacentHTML('beforeend', dashboardHTML);
+                
+                hideLoading();
+                
+                // Load leaderboard by default
+                switchClubDashboardTab('leaderboard');
 
             } catch (error) {
                 console.error('Error loading club dashboard:', error);
                 showToast('Failed to load dashboard');
-            } finally {
                 hideLoading();
             }
         }
@@ -1917,6 +1915,318 @@
         function closeClubDashboard() {
             const modal = document.getElementById('clubDashboardModal');
             if (modal) modal.remove();
+            currentDashboardClub = null;
+        }
+
+        let currentDashboardClub = null;
+
+        function switchClubDashboardTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+            const tabBtn = document.getElementById(tab + 'TabBtn');
+            if (tabBtn) tabBtn.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.dashboard-content').forEach(t => t.classList.add('hidden'));
+            
+            if (tab === 'leaderboard') {
+                document.getElementById('dashboardLeaderboardTab')?.classList.remove('hidden');
+                renderClubLeaderboard();
+            } else {
+                document.getElementById('dashboardFeedTab')?.classList.remove('hidden');
+                renderClubFeed();
+            }
+        }
+
+        async function renderClubLeaderboard() {
+            const container = document.getElementById('dashboardLeaderboardTab');
+            if (!container) return;
+            
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+
+            try {
+                const club = currentDashboardClub;
+                const daysPassed = Math.ceil((new Date() - new Date(club.start_date)) / (1000 * 60 * 60 * 24));
+
+                // Get all members
+                const { data: memberRecords } = await sb
+                    .from('club_members')
+                    .select('user_id')
+                    .eq('club_id', club.id);
+
+                const memberIds = memberRecords?.map(m => m.user_id) || [];
+
+                // Get profiles
+                const { data: profiles } = await sb
+                    .from('profiles')
+                    .select('id, name')
+                    .in('id', memberIds);
+
+                const profileMap = {};
+                profiles?.forEach(p => {
+                    profileMap[p.id] = p.name;
+                });
+
+                // Calculate progress for all members
+                const allProgress = [];
+                for (const userId of memberIds) {
+                    const name = profileMap[userId] || 'Unknown';
+
+                    const { data: clubGoals } = await sb
+                        .from('club_goals')
+                        .select('*')
+                        .eq('club_id', club.id)
+                        .eq('user_id', userId);
+
+                    let totalActions = 0;
+                    let completedActions = 0;
+
+                    for (const clubGoal of clubGoals || []) {
+                        const { data: clubHabits } = await sb
+                            .from('club_goal_habits')
+                            .select('habit_id, club_frequency')
+                            .eq('club_goal_id', clubGoal.id);
+
+                        const weeksElapsed = Math.max(1, Math.ceil(daysPassed / 7));
+                        for (const clubHabit of clubHabits || []) {
+                            totalActions += clubHabit.club_frequency * weeksElapsed;
+                            const { data: checkins } = await sb
+                                .from('checkins')
+                                .select('id')
+                                .eq('habit_id', clubHabit.habit_id)
+                                .eq('user_id', userId)
+                                .gte('checked_in_at', club.start_date)
+                                .lte('checked_in_at', new Date().toISOString());
+                            completedActions += checkins?.length || 0;
+                        }
+                    }
+
+                    const habitsPercent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+                    
+                    // Check if checked in today
+                    const today = new Date().toISOString().split('T')[0];
+                    const { data: todayCheckins } = await sb
+                        .from('checkins')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .gte('checked_in_at', today);
+                    
+                    const checkedInToday = (todayCheckins?.length || 0) > 0;
+
+                    allProgress.push({
+                        userId,
+                        name,
+                        habitsPercent,
+                        completedActions,
+                        totalActions,
+                        checkedInToday
+                    });
+                }
+
+                // Sort by habits percent
+                allProgress.sort((a, b) => b.habitsPercent - a.habitsPercent);
+                const yourRank = allProgress.findIndex(r => r.userId === currentUser.id) + 1;
+                
+                // Today's status
+                const checkedInToday = allProgress.filter(p => p.checkedInToday).length;
+                const userCheckedIn = allProgress.find(p => p.userId === currentUser.id)?.checkedInToday;
+
+                const html = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 12px; background: rgba(0, 217, 255, 0.1); border-radius: 10px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--electric-blue);">
+                            ${memberIds.length} members • You're #${yourRank}
+                        </div>
+                        <div style="position: relative;">
+                            <button onclick="toggle3DotMenuClub(event)" style="background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 4px 8px;">⋮</button>
+                            <div id="clubDashboard3DotMenu" style="display: none; position: absolute; right: 0; background: rgba(20,20,40,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; min-width: 180px; z-index: 1000;">
+                                <div onclick="showClubInvite()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">📤 Invite People</div>
+                                ${club.creator_id === currentUser.id ? '<div onclick="deleteClub()" style="padding: 12px 16px; cursor: pointer; font-size: 14px; color: #EF4444;">🗑️ Delete Challenge</div>' : '<div onclick="leaveClubNew()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">🚪 Leave Challenge</div>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard -->
+                    ${allProgress.map((member, idx) => {
+                        const isYou = member.userId === currentUser.id;
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 12px; background: ${isYou ? 'rgba(0, 217, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'}; border-radius: 10px; margin-bottom: 8px;">
+                                <div style="display: flex; gap: 12px; flex: 1;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${idx < 3 ? 'linear-gradient(135deg, var(--electric-blue), var(--electric-blue-dark))' : 'rgba(255, 255, 255, 0.1)'}; color: ${idx < 3 ? 'var(--navy)' : 'var(--text-primary)'}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">${idx + 1}</div>
+                                    <div style="font-size: 15px; font-weight: 600;">${member.name}${isYou ? ' (You)' : ''}</div>
+                                </div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--electric-blue);">${member.habitsPercent}%</div>
+                            </div>
+                        `;
+                    }).join('')}
+
+                    <!-- Today's Status -->
+                    <div style="margin-top: 24px; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 12px;">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">TODAY'S STATUS</div>
+                        
+                        <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px; font-size: 13px;">
+                            ${checkedInToday === memberIds.length ? '✅' : '📊'} ${checkedInToday}/${memberIds.length} members checked in today
+                        </div>
+                        
+                        ${!userCheckedIn ? `
+                            <div style="padding: 12px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-bottom: 12px; font-size: 13px; color: #EF4444;">
+                                ⚠️ You haven't checked in today
+                            </div>
+                            <button onclick="closeClubDashboard(); switchTab('goals');" style="width: 100%; background: var(--electric-blue); color: var(--navy); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px;">
+                                CHECK IN NOW →
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error rendering leaderboard:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Failed to load</div>';
+            }
+        }
+
+        async function renderClubFeed() {
+            const container = document.getElementById('dashboardFeedTab');
+            if (!container) return;
+            
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading feed...</div>';
+
+            try {
+                const club = currentDashboardClub;
+
+                // Get all members
+                const { data: memberRecords } = await sb
+                    .from('club_members')
+                    .select('user_id')
+                    .eq('club_id', club.id);
+
+                const memberIds = memberRecords?.map(m => m.user_id) || [];
+
+                // Get profiles
+                const { data: profiles } = await sb
+                    .from('profiles')
+                    .select('id, name')
+                    .in('id', memberIds);
+
+                const profileMap = {};
+                profiles?.forEach(p => {
+                    profileMap[p.id] = p.name;
+                });
+
+                // Get recent check-ins from all members
+                const { data: recentCheckins } = await sb
+                    .from('checkins')
+                    .select('*, habits(name)')
+                    .in('user_id', memberIds)
+                    .gte('checked_in_at', club.start_date)
+                    .order('checked_in_at', { ascending: false })
+                    .limit(50);
+
+                if (!recentCheckins || recentCheckins.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No activity yet</div>';
+                    return;
+                }
+
+                const feedHTML = recentCheckins.map(checkin => {
+                    const userName = profileMap[checkin.user_id] || 'Unknown';
+                    const habitName = checkin.habits?.name || 'Unknown habit';
+                    const timeAgo = getTimeAgo(checkin.checked_in_at);
+                    const isYou = checkin.user_id === currentUser.id;
+
+                    return `
+                        <div style="padding: 14px; background: ${isYou ? 'rgba(0,217,255,0.05)' : 'rgba(255,255,255,0.03)'}; border-radius: 10px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <div style="font-weight: 600; font-size: 14px;">${userName}${isYou ? ' (You)' : ''}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">${timeAgo}</div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">✓ ${habitName}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = feedHTML;
+
+            } catch (error) {
+                console.error('Error rendering feed:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Failed to load feed</div>';
+            }
+        }
+
+        function getTimeAgo(timestamp) {
+            const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+            if (seconds < 60) return 'Just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        function toggle3DotMenuClub(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('clubDashboard3DotMenu');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function showClubInvite() {
+            const dropdown = document.getElementById('clubDashboard3DotMenu');
+            if (dropdown) dropdown.style.display = 'none';
+            
+            const club = currentDashboardClub;
+            showInviteCode({
+                name: club.name,
+                startDate: club.start_date,
+                endDate: club.end_date,
+                inviteCode: club.invite_code
+            });
+        }
+
+        async function deleteClub() {
+            const dropdown = document.getElementById('clubDashboard3DotMenu');
+            if (dropdown) dropdown.style.display = 'none';
+            
+            if (!confirm(`Delete "${currentDashboardClub.name}"?\n\nThis will remove all members and cannot be undone.`)) return;
+
+            showLoading();
+            try {
+                await sb.from('clubs').delete().eq('id', currentDashboardClub.id);
+                showToast('Challenge deleted', 'success');
+                closeClubDashboard();
+                renderClubs();
+            } catch (error) {
+                console.error('Error deleting club:', error);
+                showToast('Failed to delete challenge');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function leaveClubNew() {
+            const dropdown = document.getElementById('clubDashboard3DotMenu');
+            if (dropdown) dropdown.style.display = 'none';
+            
+            if (!confirm('Leave this challenge? You can rejoin with the invite link.')) return;
+
+            showLoading();
+            try {
+                await sb.from('club_members')
+                    .delete()
+                    .eq('club_id', currentDashboardClub.id)
+                    .eq('user_id', currentUser.id);
+                
+                showToast('Left challenge', 'success');
+                closeClubDashboard();
+                renderClubs();
+            } catch (error) {
+                console.error('Error leaving club:', error);
+                showToast('Failed to leave challenge');
+            } finally {
+                hideLoading();
+            }
         }
 
         function showAllMembers(clubId) {
@@ -2783,7 +3093,7 @@
             // Close all existing modals first
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
             
-            const inviteLink = `${window.location.origin}/invite/${challengeDetails.inviteCode}`;
+            const inviteLink = `${window.location.origin}/?invite=${challengeDetails.inviteCode}`;
             const startDate = new Date(challengeDetails.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const endDate = new Date(challengeDetails.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             
