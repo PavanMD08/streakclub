@@ -2742,15 +2742,18 @@
 
                 showToast('Challenge created! 🎉', 'success');
                 
-                // Save name before resetting
+                // Save name and code before resetting
                 const challengeName = currentChallengeData.name;
+                const savedInviteCode = inviteCode;
                 currentChallengeData = {};
                 
-                // Reload clubs
-                renderClubs();
+                console.log('About to show invite modal:', savedInviteCode, challengeName);
                 
-                // Show invite modal
-                showInviteCode(inviteCode, challengeName);
+                // Show invite modal immediately (don't wait for clubs to reload)
+                showInviteCode(savedInviteCode, challengeName);
+                
+                // Reload clubs in background
+                renderClubs();
 
             } catch (error) {
                 console.error('Error creating challenge:', error);
@@ -2761,8 +2764,49 @@
         }
 
         function showInviteCode(code, challengeName) {
-            showToast(`Challenge created! Invite code: ${code}`);
-            // TODO: Show proper invite modal
+            console.log('showInviteCode called with:', code, challengeName);
+            const inviteLink = `${window.location.origin}/invite/${code}`;
+            
+            console.log('Creating invite modal...');
+            const modalHTML = `
+                <div class="modal active" id="inviteModal">
+                    <div class="modal-content" style="max-width: 400px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+                        <h3 style="margin-bottom: 8px;">Challenge Created!</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 24px;">${challengeName}</p>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Invite Code:</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--electric-blue); font-family: monospace;">${code}</div>
+                        </div>
+
+                        <button onclick="copyInviteLink('${inviteLink}')" class="btn-primary" style="width: 100%; margin-bottom: 12px;">
+                            📋 Copy Invite Link
+                        </button>
+
+                        <button onclick="closeInviteModal()" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">
+                            Done
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            console.log('Invite modal added to DOM');
+        }
+
+        function closeInviteModal() {
+            const modal = document.getElementById('inviteModal');
+            if (modal) modal.remove();
+            renderClubs(); // Refresh clubs list
+        }
+
+        function copyInviteLink(link) {
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Invite link copied!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy link');
+            });
         }
 
         function openCreateClubModal() {
