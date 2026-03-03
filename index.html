@@ -1688,13 +1688,20 @@
                         completedActions,
                         totalActions
                     };
-                }));
+                }));\n\n                // Sort by actions percent (highest first)
+                memberProgress.sort((a, b) => b.actionsPercent - a.actionsPercent);
+
+                // Show top 5 members
+                const top5 = memberProgress.slice(0, 5);
+                const remaining = memberProgress.length - 5;
 
                 // Build dashboard HTML
-                const membersHTML = memberProgress.map(member => {
+                const membersHTML = top5.map((member, idx) => {
+                    const isCurrentUser = memberIds[memberProgress.indexOf(member)] === currentUser.id;
+                    
                     let html = `
-                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 12px;">
-                            <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px;">${member.name}</div>
+                        <div style="padding: 16px; background: ${isCurrentUser ? 'rgba(0,217,255,0.1)' : 'rgba(255,255,255,0.03)'}; border-radius: 10px; margin-bottom: 12px;">
+                            <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px;">${member.name}${isCurrentUser ? ' (You)' : ''}</div>
                     `;
 
                     // Weight progress bar (if exists)
@@ -1705,21 +1712,21 @@
                                     <span>Target</span>
                                     <span>${member.weightProgress.percent}% (${member.weightProgress.achieved}/${member.weightProgress.total} kg)</span>
                                 </div>
-                                <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
                                     <div style="width: ${member.weightProgress.percent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
                                 </div>
                             </div>
                         `;
                     }
 
-                    // Actions progress bar
+                    // Habits progress bar (always shown)
                     html += `
                         <div>
                             <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
-                                <span>Actions</span>
+                                <span>Habits</span>
                                 <span>${member.actionsPercent}% (${member.completedActions}/${member.totalActions})</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                            <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
                                 <div style="width: ${member.actionsPercent}%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
                             </div>
                         </div>
@@ -1728,6 +1735,12 @@
                     html += `</div>`;
                     return html;
                 }).join('');
+
+                const viewMoreBtn = remaining > 0 ? `
+                    <button onclick="showAllMembers('${clubId}')" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); cursor: pointer; font-weight: 600;">
+                        View More (${remaining} others)
+                    </button>
+                ` : '';
 
                 // Show dashboard in modal
                 const dashboardHTML = `
@@ -1752,6 +1765,7 @@
                             </div>
 
                             ${membersHTML}
+                            ${viewMoreBtn}
                         </div>
                     </div>
                 `;
@@ -1769,6 +1783,11 @@
         function closeClubDashboard() {
             const modal = document.getElementById('clubDashboardModal');
             if (modal) modal.remove();
+        }
+
+        function showAllMembers(clubId) {
+            showToast('View all members coming soon!');
+            // TODO: Show all members in expanded view
         }
 
         function renderClubsOLD() {
