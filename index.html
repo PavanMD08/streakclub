@@ -2752,15 +2752,19 @@
                 console.log('✅ All goals processed, showing success...');
                 showToast('Challenge created! 🎉', 'success');
                 
-                // Save name and code before resetting
-                const challengeName = currentChallengeData.name;
-                const savedInviteCode = inviteCode;
+                // Save challenge details before resetting
+                const challengeDetails = {
+                    name: currentChallengeData.name,
+                    startDate: currentChallengeData.startDate,
+                    endDate: currentChallengeData.endDate,
+                    inviteCode: inviteCode
+                };
                 currentChallengeData = {};
                 
-                console.log('About to show invite modal:', savedInviteCode, challengeName);
+                console.log('About to show invite modal:', challengeDetails);
                 
                 // Show invite modal immediately (don't wait for clubs to reload)
-                showInviteCode(savedInviteCode, challengeName);
+                showInviteCode(challengeDetails);
                 
                 // Reload clubs in background
                 renderClubs();
@@ -2773,21 +2777,38 @@
             }
         }
 
-        function showInviteCode(code, challengeName) {
-            console.log('showInviteCode called with:', code, challengeName);
-            const inviteLink = `${window.location.origin}/invite/${code}`;
+        function showInviteCode(challengeDetails) {
+            console.log('showInviteCode called with:', challengeDetails);
+            
+            // Close all existing modals first
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            
+            const inviteLink = `${window.location.origin}/invite/${challengeDetails.inviteCode}`;
+            const startDate = new Date(challengeDetails.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const endDate = new Date(challengeDetails.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             
             console.log('Creating invite modal...');
             const modalHTML = `
-                <div class="modal active" id="inviteModal">
-                    <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal active" id="inviteModal" style="z-index: 10000;">
+                    <div class="modal-content" style="max-width: 440px; text-align: center;">
                         <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
                         <h3 style="margin-bottom: 8px;">Challenge Created!</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 24px;">${challengeName}</p>
                         
-                        <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Invite Code:</div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--electric-blue); font-family: monospace;">${code}</div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
+                            <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">${challengeDetails.name}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                ${startDate} - ${endDate}
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,217,255,0.1); padding: 16px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Share this code with friends to invite them:</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--electric-blue); font-family: monospace; text-align: center; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                                ${challengeDetails.inviteCode}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; text-align: center;">
+                                They can enter this code when joining a challenge
+                            </div>
                         </div>
 
                         <button onclick="copyInviteLink('${inviteLink}')" class="btn-primary" style="width: 100%; margin-bottom: 12px;">
@@ -2803,6 +2824,17 @@
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             console.log('Invite modal added to DOM');
+            
+            // Force the modal to be visible
+            setTimeout(() => {
+                const modal = document.getElementById('inviteModal');
+                if (modal) {
+                    modal.classList.add('active');
+                    console.log('Modal activated');
+                } else {
+                    console.error('Modal not found in DOM!');
+                }
+            }, 100);
         }
 
         function closeInviteModal() {
@@ -4680,55 +4712,284 @@
         async function joinClubByInvite(inviteCode) {
             showLoading();
             try {
-                // Find circle by invite code
-                const { data: circle, error: circleError } = await sb
-                    .from('circles')
+                // Find club by invite code
+                const { data: club, error: clubError } = await sb
+                    .from('clubs')
                     .select('*')
                     .eq('invite_code', inviteCode)
                     .single();
 
-                if (circleError || !circle) {
+                if (clubError || !club) {
                     showToast('Invalid invite code');
+                    hideLoading();
                     return;
                 }
 
                 // Check if already a member
                 const { data: existing } = await sb
-                    .from('circle_members')
+                    .from('club_members')
                     .select('*')
-                    .eq('circle_id', circle.id)
+                    .eq('club_id', club.id)
                     .eq('user_id', currentUser.id)
                     .single();
 
                 if (existing) {
-                    showToast('You\'re already in this club!', 'success');
+                    showToast('You\'re already in this challenge!', 'success');
+                    hideLoading();
                     await loadData();
+                    await loadGoals();
                     switchTab('clubs');
                     return;
                 }
 
-                // Join circle
-                const { error: joinError } = await sb
-                    .from('circle_members')
-                    .insert([{
-                        circle_id: circle.id,
-                        user_id: currentUser.id
-                    }]);
+                hideLoading();
 
-                if (joinError) throw joinError;
-
-                showToast(`Joined ${circle.name}!`, 'success');
-                await loadData();
-                
-                // Switch to clubs tab
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab')[0].classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-                document.getElementById('clubsTab').classList.remove('hidden');
+                // Show join challenge modal (need to configure goals)
+                showJoinChallengeModal(club);
 
             } catch (error) {
                 console.error(error);
-                showToast('Failed to join club');
+                showToast('Failed to join challenge');
+                hideLoading();
+            }
+        }
+
+        function showJoinChallengeModal(club) {
+            const startDate = new Date(club.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const endDate = new Date(club.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const modalHTML = `
+                <div class="modal active" id="joinChallengeModal" style="z-index: 10000;">
+                    <div class="modal-content" style="max-width: 440px;">
+                        <div class="modal-header">
+                            <h3>Join Challenge</h3>
+                            <button class="btn-close" onclick="closeJoinChallengeModal()">×</button>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">${club.name}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                ${startDate} - ${endDate}
+                            </div>
+                            ${club.description ? `<div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">${club.description}</div>` : ''}
+                        </div>
+
+                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
+                            To join this challenge, you need at least one goal. Link your existing goals or create new ones.
+                        </p>
+
+                        <button class="btn-primary" onclick="startJoinFlow('${club.id}')">
+                            Continue to Link Goals →
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeJoinChallengeModal() {
+            const modal = document.getElementById('joinChallengeModal');
+            if (modal) modal.remove();
+        }
+
+        function startJoinFlow(clubId) {
+            closeJoinChallengeModal();
+            // Store club ID for join flow
+            window.joiningClubId = clubId;
+            // Show same link goals modal as create flow
+            showLinkGoalsModalForJoin();
+        }
+
+        function showLinkGoalsModalForJoin() {
+            if (cachedGoals.length === 0) {
+                showToast('You need at least one goal first. Create a goal in My Goals tab.');
+                switchTab('goals');
+                return;
+            }
+
+            const goalsList = document.getElementById('availableGoalsList');
+            const goalsHTML = cachedGoals.map(goal => {
+                const emoji = goal.category === 'get_fitter' ? '🏃' : 
+                             goal.category === 'break_habits' ? '🔥' :
+                             goal.category === 'mental_wellness' ? '🧠' :
+                             goal.category === 'grow_learn' ? '🌱' : '🎯';
+                
+                const subtitle = goal.category === 'get_fitter' ? 
+                                `${goal.start_value || goal.current_value}→${goal.target_value} kg` :
+                                'Consistency tracking';
+
+                return `
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
+                        <input type="checkbox" value="${goal.id}" onchange="toggleChallengeGoalForJoin('${goal.id}')" style="width: 20px; height: 20px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 15px;">${emoji} ${goal.name}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${subtitle}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            goalsList.innerHTML = goalsHTML;
+            
+            // Update button to call join version
+            document.querySelector('#linkGoalsModal .btn-primary').onclick = proceedToConfigureGoalsForJoin;
+            
+            document.getElementById('linkGoalsModal').classList.add('active');
+        }
+
+        function toggleChallengeGoalForJoin(goalId) {
+            if (!currentChallengeData.selectedGoals) {
+                currentChallengeData.selectedGoals = [];
+            }
+
+            const index = currentChallengeData.selectedGoals.indexOf(goalId);
+            if (index > -1) {
+                currentChallengeData.selectedGoals.splice(index, 1);
+            } else {
+                currentChallengeData.selectedGoals.push(goalId);
+            }
+        }
+
+        function proceedToConfigureGoalsForJoin() {
+            if (!currentChallengeData.selectedGoals || currentChallengeData.selectedGoals.length === 0) {
+                showToast('Please select at least one goal');
+                return;
+            }
+
+            closeLinkGoals();
+            showConfigureGoalsFlowForJoin();
+        }
+
+        function showConfigureGoalsFlowForJoin() {
+            currentConfigureIndex = 0;
+            currentChallengeData.goalConfigs = {};
+            showConfigureGoalAtIndexForJoin(0);
+        }
+
+        function showConfigureGoalAtIndexForJoin(index) {
+            // Same as create flow, but button says "Join Challenge" at the end
+            showConfigureGoalAtIndex(index);
+            
+            // Update the button for last goal
+            const isLast = index === currentChallengeData.selectedGoals.length - 1;
+            if (isLast) {
+                const nextBtn = document.getElementById('configureNextBtn');
+                nextBtn.textContent = 'Join Challenge';
+                nextBtn.onclick = () => saveCurrentGoalConfig(index, true, true); // isLast=true, isJoining=true
+            }
+        }
+
+        // Update saveCurrentGoalConfig to handle joining
+        const originalSaveCurrentGoalConfig = saveCurrentGoalConfig;
+        function saveCurrentGoalConfig(index, isLast, isJoining = false) {
+            const goalId = currentChallengeData.selectedGoals[index];
+            const goal = cachedGoals.find(g => g.id === goalId);
+
+            const config = {
+                goalId: goalId,
+                habits: []
+            };
+
+            // Save club target if Get Fitter
+            if (goal.category === 'get_fitter') {
+                const setTarget = document.getElementById('setClubTarget')?.checked;
+                if (setTarget) {
+                    const targetWeight = parseFloat(document.getElementById('clubTargetWeight').value);
+                    if (!targetWeight) {
+                        showToast('Please enter challenge target weight');
+                        return;
+                    }
+                    config.clubTargetValue = targetWeight;
+                }
+            }
+
+            // Save selected habits with frequencies
+            const habitCheckboxes = document.querySelectorAll('#configureGoalContent input[data-habit-id]');
+            habitCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const habitId = checkbox.dataset.habitId;
+                    const freqInput = document.querySelector(`input[data-freq-for="${habitId}"]`);
+                    const frequency = freqInput ? parseInt(freqInput.value) : 7;
+                    
+                    config.habits.push({
+                        habitId: habitId,
+                        clubFrequency: frequency
+                    });
+                }
+            });
+
+            if (config.habits.length === 0) {
+                showToast('Please select at least one habit');
+                return;
+            }
+
+            currentChallengeData.goalConfigs[goalId] = config;
+
+            if (isLast) {
+                closeConfigureGoals();
+                if (isJoining) {
+                    joinChallengeNow(window.joiningClubId);
+                } else {
+                    createChallengeNow();
+                }
+            } else {
+                closeConfigureGoals();
+                if (isJoining) {
+                    showConfigureGoalAtIndexForJoin(index + 1);
+                } else {
+                    showConfigureGoalAtIndex(index + 1);
+                }
+            }
+        }
+
+        async function joinChallengeNow(clubId) {
+            showLoading();
+
+            try {
+                // Add user as member
+                await sb.from('club_members').insert([{
+                    club_id: clubId,
+                    user_id: currentUser.id
+                }]);
+
+                // Add goals and habits
+                for (const goalId of currentChallengeData.selectedGoals) {
+                    const config = currentChallengeData.goalConfigs[goalId];
+                    
+                    const { data: clubGoal } = await sb
+                        .from('club_goals')
+                        .insert([{
+                            club_id: clubId,
+                            user_id: currentUser.id,
+                            personal_goal_id: goalId,
+                            club_target_value: config.clubTargetValue || null
+                        }])
+                        .select()
+                        .single();
+
+                    // Add habits
+                    for (const habitConfig of config.habits) {
+                        await sb.from('club_goal_habits').insert([{
+                            club_goal_id: clubGoal.id,
+                            habit_id: habitConfig.habitId,
+                            club_frequency: habitConfig.clubFrequency
+                        }]);
+                    }
+                }
+
+                showToast('Joined challenge! 🎉', 'success');
+                currentChallengeData = {};
+                delete window.joiningClubId;
+                
+                await loadData();
+                await loadGoals();
+                renderClubs();
+                switchTab('clubs');
+
+            } catch (error) {
+                console.error('Error joining challenge:', error);
+                showToast('Failed to join challenge');
             } finally {
                 hideLoading();
             }
