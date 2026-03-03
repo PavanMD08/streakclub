@@ -1688,7 +1688,9 @@
                         completedActions,
                         totalActions
                     };
-                }));\n\n                // Sort by actions percent (highest first)
+                }));
+
+                // Sort by actions percent (highest first)
                 memberProgress.sort((a, b) => b.actionsPercent - a.actionsPercent);
 
                 // Show top 5 members
