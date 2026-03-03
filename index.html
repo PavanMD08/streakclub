@@ -1637,6 +1637,7 @@
         }
 
         function switchClubDashboardTab(tab) {
+            console.log('switchClubDashboardTab called with:', tab);
             document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
             const tabBtn = document.getElementById(tab + 'TabBtn');
             if (tabBtn) tabBtn.classList.add('active');
@@ -1645,6 +1646,7 @@
             
             if (tab === 'leaderboard') {
                 document.getElementById('dashboardLeaderboardTab')?.classList.remove('hidden');
+                console.log('About to call renderClubLeaderboard...');
                 renderClubLeaderboard();
             } else {
                 document.getElementById('dashboardFeedTab')?.classList.remove('hidden');
@@ -1653,7 +1655,9 @@
         }
 
         async function renderClubLeaderboard() {
+            console.log('renderClubLeaderboard called');
             const container = document.getElementById('dashboardLeaderboardTab');
+            console.log('Container:', container);
             if (!container) return;
             container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
             try {
