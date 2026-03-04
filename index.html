@@ -4384,14 +4384,6 @@
                 }
                 checkInData.metric_value = value;
                 checkInData.binary_value = true;
-
-                // Update current_value for weight tracking
-                if (habit.metric_unit === 'kg' && habit.name === 'Track Weight') {
-                    const goal = cachedGoals.find(g => g.id === habit.goal_id);
-                    if (goal) {
-                        await sb.from('goals').update({ current_value: value }).eq('id', goal.id);
-                    }
-                }
             } else if (habit.metric_type === 'percentage') {
                 const value = parseInt(document.getElementById('checkInSlider').value);
                 checkInData.metric_value = value;
@@ -4431,6 +4423,17 @@
                 } else {
                     // Insert new check-in
                     await sb.from('checkins').insert([checkInData]);
+                }
+
+                // Update current_value for weight tracking AFTER saving check-in
+                if (habit.metric_type === 'number' && habit.metric_unit === 'kg' && habit.name === 'Track Weight') {
+                    const goal = cachedGoals.find(g => g.id === habit.goal_id);
+                    if (goal && checkInData.metric_value) {
+                        await sb.from('goals').update({ current_value: checkInData.metric_value }).eq('id', goal.id);
+                        // Update cache immediately
+                        goal.current_value = checkInData.metric_value;
+                        console.log('✅ Updated weight to:', checkInData.metric_value);
+                    }
                 }
                 
                 const checkInDateObj = new Date(checkInDate);
