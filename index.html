@@ -1964,10 +1964,10 @@
             
             if (tab === 'leaderboard') {
                 document.getElementById('dashboardLeaderboardTab').classList.remove('hidden');
-                renderDashboardLeaderboard();
+                renderClubLeaderboard(); // Call NEW function
             } else {
                 document.getElementById('dashboardFeedTab').classList.remove('hidden');
-                renderDashboardFeed();
+                renderClubFeed(); // Call NEW function
             }
         }
 
