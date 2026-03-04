@@ -4397,7 +4397,24 @@
             closeCheckInModal();
 
             try {
-                await sb.from('checkins').insert([checkInData]);
+                // Check if check-in already exists for this date
+                const checkInDateStr = new Date(checkInDate).toISOString().split('T')[0];
+                const { data: existing } = await sb
+                    .from('checkins')
+                    .select('id')
+                    .eq('habit_id', habitId)
+                    .eq('user_id', currentUser.id)
+                    .gte('checked_in_at', checkInDateStr)
+                    .lt('checked_in_at', new Date(new Date(checkInDateStr).getTime() + 24*60*60*1000).toISOString())
+                    .single();
+
+                if (existing) {
+                    // Update existing check-in
+                    await sb.from('checkins').update(checkInData).eq('id', existing.id);
+                } else {
+                    // Insert new check-in
+                    await sb.from('checkins').insert([checkInData]);
+                }
                 
                 const checkInDateObj = new Date(checkInDate);
                 const isToday = checkInDateObj.toDateString() === new Date().toDateString();
