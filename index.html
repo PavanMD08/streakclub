@@ -1194,12 +1194,23 @@
                 };
 
                 // Clear all existing data for fresh start
+                // First get user's club_goal IDs
+                const { data: userClubGoals } = await sb
+                    .from('club_goals')
+                    .select('id')
+                    .eq('user_id', currentUser.id);
+                
+                const clubGoalIds = userClubGoals?.map(cg => cg.id) || [];
+                
+                // Delete in correct order (child tables first)
+                if (clubGoalIds.length > 0) {
+                    await sb.from('club_goal_habits').delete().in('club_goal_id', clubGoalIds);
+                }
+                await sb.from('club_goals').delete().eq('user_id', currentUser.id);
+                await sb.from('club_members').delete().eq('user_id', currentUser.id);
                 await sb.from('checkins').delete().eq('user_id', currentUser.id);
                 await sb.from('habits').delete().eq('user_id', currentUser.id);
                 await sb.from('goals').delete().eq('user_id', currentUser.id);
-                await sb.from('club_goal_habits').delete().using('club_goals').eq('club_goals.user_id', currentUser.id);
-                await sb.from('club_goals').delete().eq('user_id', currentUser.id);
-                await sb.from('club_members').delete().eq('user_id', currentUser.id);
 
                 // Clear welcome dismissed flag so they see it again with fresh data
                 localStorage.removeItem('welcomeDismissed');
