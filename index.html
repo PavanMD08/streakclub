@@ -3286,6 +3286,8 @@
 
         function closeGetFitterModal() {
             document.getElementById('getFitterModal').classList.remove('active');
+            // Clear selected category so choosing a new one works correctly
+            selectedGoalCategory = null;
         }
 
         function continueToHabits() {
@@ -3441,6 +3443,8 @@
 
         function closeSelectHabitsModal() {
             document.getElementById('selectHabitsModal').classList.remove('active');
+            // Clear selected category so choosing a new one works correctly
+            selectedGoalCategory = null;
         }
 
         async function createGoalWithHabits() {
@@ -5589,7 +5593,7 @@
     <div id="selectHabitsModal" class="modal">
         <div class="modal-content" style="max-width: 420px;">
             <div class="modal-header">
-                <button class="btn-close" onclick="closeSelectHabitsModal(); showGetFitterModal();">←</button>
+                <button class="btn-close" onclick="closeSelectHabitsModal(); showChooseGoalModal();">←</button>
                 <h3>Select habits to track</h3>
             </div>
             
