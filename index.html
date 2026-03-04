@@ -1159,11 +1159,8 @@
                 currentUser = { id: data.user.id, name, email };
                 showToast('Account created!', 'success');
                 
-                // Show main app first
+                // Show main app (will auto-show welcome if no goals)
                 await showMainApp();
-                
-                // Always show welcome modal for new signups
-                setTimeout(() => showWelcomeModal(), 500);
 
             } catch (error) {
                 console.error(error);
@@ -1204,13 +1201,13 @@
                 await sb.from('club_goals').delete().eq('user_id', currentUser.id);
                 await sb.from('club_members').delete().eq('user_id', currentUser.id);
 
+                // Clear welcome dismissed flag so they see it again with fresh data
+                localStorage.removeItem('welcomeDismissed');
+
                 console.log('✅ All old data cleared for fresh start');
 
                 showToast('Welcome back!', 'success');
-                await showMainApp();
-                
-                // Show welcome modal for existing users too
-                setTimeout(() => showWelcomeModal(), 600);
+                await showMainApp(); // Will auto-show welcome if no goals
 
             } catch (error) {
                 console.error(error);
@@ -1249,6 +1246,11 @@
                 switchTab('clubs');
             } else {
                 switchTab('goals'); // Show goals tab by default
+            }
+            
+            // Show welcome modal if: no goals AND not dismissed before
+            if (cachedGoals.length === 0 && !localStorage.getItem('welcomeDismissed')) {
+                setTimeout(() => showWelcomeModal(), 500);
             }
         }
 
@@ -4708,6 +4710,8 @@
 
         function closeWelcomeModal() {
             document.getElementById('welcomeModal').classList.remove('active');
+            // Mark as dismissed so it doesn't show again
+            localStorage.setItem('welcomeDismissed', 'true');
         }
 
         // INVITE SYSTEM
