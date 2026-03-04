@@ -1204,6 +1204,8 @@
                 await sb.from('club_goals').delete().eq('user_id', currentUser.id);
                 await sb.from('club_members').delete().eq('user_id', currentUser.id);
 
+                console.log('✅ All old data cleared for fresh start');
+
                 showToast('Welcome back!', 'success');
                 await showMainApp();
                 
@@ -4407,18 +4409,25 @@
             try {
                 // Check if check-in already exists for this date
                 const checkInDateStr = new Date(checkInDate).toISOString().split('T')[0];
-                const { data: existing } = await sb
+                const nextDayStr = new Date(new Date(checkInDateStr).getTime() + 24*60*60*1000).toISOString();
+                
+                const { data: existingCheckins, error: searchError } = await sb
                     .from('checkins')
                     .select('id')
                     .eq('habit_id', habitId)
                     .eq('user_id', currentUser.id)
                     .gte('checked_in_at', checkInDateStr)
-                    .lt('checked_in_at', new Date(new Date(checkInDateStr).getTime() + 24*60*60*1000).toISOString())
-                    .single();
+                    .lt('checked_in_at', nextDayStr);
 
-                if (existing) {
-                    // Update existing check-in
-                    await sb.from('checkins').update(checkInData).eq('id', existing.id);
+                if (existingCheckins && existingCheckins.length > 0) {
+                    // Update the first one
+                    await sb.from('checkins').update(checkInData).eq('id', existingCheckins[0].id);
+                    
+                    // Delete any duplicates
+                    if (existingCheckins.length > 1) {
+                        const duplicateIds = existingCheckins.slice(1).map(c => c.id);
+                        await sb.from('checkins').delete().in('id', duplicateIds);
+                    }
                 } else {
                     // Insert new check-in
                     await sb.from('checkins').insert([checkInData]);
