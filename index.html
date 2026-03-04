@@ -4433,6 +4433,9 @@
         });
 
         function editGoalTarget(goalId) {
+            // Close all goal menus
+            document.querySelectorAll('[id^="goalMenu_"]').forEach(m => m.classList.remove('active'));
+            
             const goal = cachedGoals.find(g => g.id === goalId);
             if (!goal) return;
 
@@ -4489,6 +4492,9 @@
         let currentEditingGoalId = null;
 
         async function manageGoalHabits(goalId) {
+            // Close all goal menus
+            document.querySelectorAll('[id^="goalMenu_"]').forEach(m => m.classList.remove('active'));
+            
             currentEditingGoalId = goalId;
             const goal = cachedGoals.find(g => g.id === goalId);
             if (!goal) return;
@@ -4597,6 +4603,9 @@
         }
 
         async function deleteGoal(goalId) {
+            // Close all goal menus
+            document.querySelectorAll('[id^="goalMenu_"]').forEach(m => m.classList.remove('active'));
+            
             if (!confirm('Delete this goal? All check-in data will be preserved, but the goal will be removed.')) return;
 
             showLoading();
