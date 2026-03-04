@@ -4066,8 +4066,28 @@
             // Get values
             const sortedCheckins = [...checkins].sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
             const values = sortedCheckins.map(c => c.metric_value);
-            const minValue = Math.min(...values) * 0.9;
-            const maxValue = Math.max(...values) * 1.1;
+            
+            // For weight/number metrics, use tight range to show fluctuations
+            let minValue, maxValue;
+            if (habit.metric_type === 'number' && habit.metric_unit === 'kg') {
+                // Weight tracking - use ±2kg range from data
+                const dataMin = Math.min(...values);
+                const dataMax = Math.max(...values);
+                minValue = dataMin - 2;
+                maxValue = dataMax + 2;
+            } else if (habit.metric_type === 'percentage') {
+                // Percentage - keep 0-100 range
+                minValue = 0;
+                maxValue = 100;
+            } else {
+                // Other numbers - tight range with 20% padding
+                const dataMin = Math.min(...values);
+                const dataMax = Math.max(...values);
+                const padding = (dataMax - dataMin) * 0.2 || 5;
+                minValue = dataMin - padding;
+                maxValue = dataMax + padding;
+            }
+            
             const range = maxValue - minValue || 1;
 
             // Create points
@@ -4085,15 +4105,15 @@
                 <div style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 24px;">
                     <div style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">📊 Progress</div>
                     <svg width="100%" viewBox="0 0 ${graphWidth} ${graphHeight}">
-                        <!-- Grid lines -->
-                        ${[0, 0.5, 1].map(ratio => {
+                        <!-- Grid lines (5 lines for finer granularity) -->
+                        ${[0, 0.25, 0.5, 0.75, 1].map(ratio => {
                             const y = padding.top + plotHeight * (1 - ratio);
-                            const value = (minValue + range * ratio).toFixed(habit.metric_type === 'percentage' ? 0 : 1);
+                            const value = (minValue + range * ratio).toFixed(habit.metric_unit === 'kg' ? 1 : habit.metric_type === 'percentage' ? 0 : 1);
                             return `
                                 <line x1="${padding.left}" y1="${y}" x2="${graphWidth - padding.right}" y2="${y}" 
                                     stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
                                 <text x="${padding.left - 5}" y="${y + 4}" 
-                                    text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${value}${habit.metric_type === 'percentage' ? '%' : ''}</text>
+                                    text-anchor="end" fill="rgba(255,255,255,0.4)" font-size="11">${value}${habit.metric_unit === 'kg' ? 'kg' : habit.metric_type === 'percentage' ? '%' : ''}</text>
                             `;
                         }).join('')}
                         
