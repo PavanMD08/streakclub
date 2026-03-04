@@ -1054,9 +1054,16 @@
     <!-- Club Dashboard Modal -->
     <div id="clubDashboard" class="modal">
         <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
-            <div class="modal-header">
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between;">
                 <button class="btn-close" onclick="closeClubDashboard()">←</button>
-                <h3 id="dashboardTitle"></h3>
+                <h3 id="dashboardTitle" style="flex: 1; text-align: center;"></h3>
+                <div style="position: relative;">
+                    <button onclick="toggle3DotMenuClub(event)" style="background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 4px 8px;">⋮</button>
+                    <div id="clubDashboard3DotMenu" style="display: none; position: absolute; right: 0; top: 100%; background: rgba(20,20,40,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; min-width: 180px; z-index: 1000; margin-top: 4px;">
+                        <div onclick="showClubInvite()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">📤 Invite People</div>
+                        <div id="clubDashboard3DotDelete"></div>
+                    </div>
+                </div>
             </div>
             <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <button class="dashboard-tab active" id="leaderboardTabBtn" onclick="switchDashboardTab('leaderboard')" style="flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;">LEADERBOARD</button>
@@ -1528,21 +1535,16 @@
 
                 if (clubsError) throw clubsError;
 
-                // Render each club - simple version without heavy calculations
+                // Render each club with top 4 members
                 const clubsHTML = await Promise.all(clubs.map(async club => {
                     const daysLeft = Math.ceil((new Date(club.end_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    const daysPassed = Math.ceil((new Date() - new Date(club.start_date)) / (1000 * 60 * 60 * 24));
                     
-                    // Get member count only
-                    const { count } = await sb
-                        .from('club_members')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('club_id', club.id);
-
-                    return `
+                    // Show skeleton first
+                    let cardHTML = `
                         <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 <h3 style="font-size: 18px; font-weight: 700; margin: 0;">${club.name}</h3>
-                                <div style="font-size: 12px; color: var(--text-secondary);">${count || 0} members</div>
                             </div>
                             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 2px;">
                                 ${new Date(club.start_date).toLocaleDateString()} - ${new Date(club.end_date).toLocaleDateString()}
@@ -1550,12 +1552,98 @@
                             <div style="font-size: 13px; color: var(--electric-blue); font-weight: 600; margin-bottom: 16px;">
                                 ${daysLeft > 0 ? `${daysLeft} days left` : 'Challenge ended'}
                             </div>
+                    `;
+
+                    // Get top 4 members
+                    const { data: memberRecords } = await sb
+                        .from('club_members')
+                        .select('user_id')
+                        .eq('club_id', club.id)
+                        .limit(4);
+
+                    const memberIds = memberRecords?.map(m => m.user_id) || [];
+                    
+                    if (memberIds.length > 0) {
+                        const { data: profiles } = await sb
+                            .from('profiles')
+                            .select('id, name')
+                            .in('id', memberIds);
+
+                        const profileMap = {};
+                        profiles?.forEach(p => { profileMap[p.id] = p.name; });
+
+                        // Calculate progress for each member
+                        for (const userId of memberIds) {
+                            const name = profileMap[userId] || 'Unknown';
+                            const { data: clubGoals } = await sb.from('club_goals').select('*').eq('club_id', club.id).eq('user_id', userId);
                             
-                            <button onclick="openClubDashboard('${club.id}')" class="btn-primary" style="width: 100%;">
+                            let weightProgress = null;
+                            let totalActions = 0, completedActions = 0;
+                            
+                            for (const clubGoal of clubGoals || []) {
+                                const { data: goalData } = await sb.from('goals').select('*').eq('id', clubGoal.personal_goal_id).single();
+                                
+                                if (goalData?.category === 'get_fitter' && clubGoal.club_target_value) {
+                                    const startValue = goalData.start_value;
+                                    const currentValue = goalData.current_value;
+                                    const targetValue = clubGoal.club_target_value;
+                                    const totalNeeded = Math.abs(startValue - targetValue);
+                                    const achieved = Math.abs(startValue - currentValue);
+                                    const percent = totalNeeded > 0 ? Math.round((achieved / totalNeeded) * 100) : 0;
+                                    weightProgress = {
+                                        percent: Math.min(percent, 100),
+                                        achieved: achieved.toFixed(1),
+                                        total: totalNeeded.toFixed(1)
+                                    };
+                                }
+                                
+                                const { data: clubHabits } = await sb.from('club_goal_habits').select('habit_id, club_frequency').eq('club_goal_id', clubGoal.id);
+                                const weeksElapsed = Math.max(1, Math.ceil(daysPassed / 7));
+                                for (const clubHabit of clubHabits || []) {
+                                    totalActions += clubHabit.club_frequency * weeksElapsed;
+                                    const { data: checkins } = await sb.from('checkins').select('id').eq('habit_id', clubHabit.habit_id).eq('user_id', userId).gte('checked_in_at', club.start_date).lte('checked_in_at', new Date().toISOString());
+                                    completedActions += checkins?.length || 0;
+                                }
+                            }
+                            
+                            const habitsPercent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+                            const isYou = userId === currentUser.id;
+                            
+                            cardHTML += `<div style="padding: 12px; background: ${isYou ? 'rgba(0,217,255,0.1)' : 'rgba(255,255,255,0.03)'}; border-radius: 10px; margin-bottom: 8px;">
+                                <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">${name}${isYou ? ' (You)' : ''}</div>`;
+                            
+                            if (weightProgress) {
+                                cardHTML += `<div style="margin-bottom: 6px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 3px;">
+                                        <span>Target</span>
+                                        <span>${weightProgress.percent}% (${weightProgress.achieved}/${weightProgress.total} kg)</span>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${weightProgress.percent}%; height: 100%; background: var(--electric-blue);"></div>
+                                    </div>
+                                </div>`;
+                            }
+                            
+                            cardHTML += `<div>
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 3px;">
+                                    <span>Habits</span>
+                                    <span>${habitsPercent}% (${completedActions}/${totalActions})</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${habitsPercent}%; height: 100%; background: #4CAF50;"></div>
+                                </div>
+                            </div></div>`;
+                        }
+                    }
+
+                    cardHTML += `
+                            <button onclick="openClubDashboard('${club.id}')" class="btn-primary" style="width: 100%; margin-top: 8px;">
                                 View Dashboard →
                             </button>
                         </div>
                     `;
+
+                    return cardHTML;
                 }));
 
                 container.innerHTML = clubsHTML.join('');
@@ -1566,6 +1654,11 @@
                     <div class="empty-state">
                         <h3>No challenges yet</h3>
                         <p>Create your first challenge</p>
+                        <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
+                    </div>
+                `;
+            }
+        }
                         <button class="btn-primary" onclick="openCreateChallenge()">Create Challenge</button>
                     </div>
                 `;
@@ -1594,6 +1687,13 @@
                 
                 // Use existing modal
                 document.getElementById('dashboardTitle').textContent = club.name;
+                
+                // Set delete/leave button based on creator
+                const deleteBtn = club.creator_id === currentUser.id 
+                    ? '<div onclick="deleteClub()" style="padding: 12px 16px; cursor: pointer; font-size: 14px; color: #EF4444;">🗑️ Delete Challenge</div>'
+                    : '<div onclick="leaveClubNew()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">🚪 Leave Challenge</div>';
+                document.getElementById('clubDashboard3DotDelete').innerHTML = deleteBtn;
+                
                 document.getElementById('clubDashboard').classList.add('active');
                 
                 hideLoading();
@@ -1720,17 +1820,6 @@
                 }).join('');
                 
                 container.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(0, 217, 255, 0.1); border-radius: 10px; margin-bottom: 16px;">
-                        <div style="font-size: 13px; font-weight: 600; color: var(--electric-blue);">${memberIds.length} members • You're #${yourRank}</div>
-                        <div style="position: relative;">
-                            <button onclick="toggle3DotMenuClub(event)" style="background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 4px 8px;">⋮</button>
-                            <div id="clubDashboard3DotMenu" style="display: none; position: absolute; right: 0; background: rgba(20,20,40,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; min-width: 180px; z-index: 1000;">
-                                <div onclick="showClubInvite()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">📤 Invite People</div>
-                                ${club.creator_id === currentUser.id ? '<div onclick="deleteClub()" style="padding: 12px 16px; cursor: pointer; font-size: 14px; color: #EF4444;">🗑️ Delete Challenge</div>' : '<div onclick="leaveClubNew()" style="padding: 12px 16px; cursor: pointer; font-size: 14px;">🚪 Leave Challenge</div>'}
-                            </div>
-                        </div>
-                    </div>
-                    
                     ${membersHTML}
                     
                     <div style="margin-top: 24px; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 12px;">
