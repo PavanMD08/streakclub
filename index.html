@@ -2695,6 +2695,22 @@
 
         async function createChallengeNow() {
             console.log('Creating challenge with data:', currentChallengeData);
+            
+            // Validate required fields
+            if (!currentChallengeData || !currentChallengeData.name || !currentChallengeData.name.trim()) {
+                console.error('Invalid challenge data - name is missing!');
+                showToast('Challenge name is required. Please start over.');
+                hideLoading();
+                return;
+            }
+            
+            if (!currentChallengeData.startDate || !currentChallengeData.endDate) {
+                console.error('Invalid challenge data - dates are missing!');
+                showToast('Start and end dates are required. Please start over.');
+                hideLoading();
+                return;
+            }
+            
             showLoading();
 
             try {
