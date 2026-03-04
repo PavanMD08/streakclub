@@ -3583,15 +3583,33 @@
             // Load habits for this goal
             const goalHabits = cachedHabits.filter(h => h.goal_id === goalId);
 
-            let progressPercent = 0;
-            let progressText = '0% - Start tracking!';
+            let progressSection = '';
             
+            // Only show detailed progress for Get Fitter goals
             if (goal.category === 'get_fitter' && goal.start_value && goal.target_value) {
                 const total = Math.abs(goal.start_value - goal.target_value);
                 const current = Math.abs(goal.start_value - goal.current_value);
-                progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
+                const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
                 const remaining = Math.abs(goal.target_value - goal.current_value);
-                progressText = progressPercent === 0 ? '0% - Start tracking!' : `${progressPercent}% (${remaining.toFixed(1)} kg to go)`;
+                const progressText = progressPercent === 0 ? '0% - Start tracking!' : `${progressPercent}% (${remaining.toFixed(1)} kg to go)`;
+                
+                const daysLeft = goal.target_date ? 
+                    Math.ceil((new Date(goal.target_date) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                
+                progressSection = `
+                    <div style="padding: 20px; background: rgba(0, 217, 255, 0.1); border-radius: 12px; margin-bottom: 24px;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                            ${goal.current_value} kg → ${goal.target_value} kg
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 12px;">
+                            <div style="width: ${progressPercent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: var(--electric-blue); font-weight: 600;">${progressText}</span>
+                            ${daysLeft !== null ? `<span style="color: var(--text-secondary);">${daysLeft} days left</span>` : ''}
+                        </div>
+                    </div>
+                `;
             }
 
             const daysLeft = goal.target_date ? 
@@ -3645,20 +3663,7 @@
                         <button onclick="event.stopPropagation(); toggleGoalMenu(event, '${goal.id}')" style="background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer;">⋮</button>
                     </div>
 
-                    <div style="padding: 20px; background: rgba(0, 217, 255, 0.1); border-radius: 12px; margin-bottom: 24px;">
-                        ${goal.category === 'get_fitter' ? `
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
-                                ${goal.current_value} kg → ${goal.target_value} kg
-                            </div>
-                        ` : ''}
-                        <div style="background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 12px;">
-                            <div style="width: ${progressPercent}%; height: 100%; background: var(--electric-blue); transition: width 0.3s;"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: var(--electric-blue); font-weight: 600;">${progressText}</span>
-                            ${daysLeft !== null ? `<span style="color: var(--text-secondary);">${daysLeft} days left</span>` : ''}
-                        </div>
-                    </div>
+                    ${progressSection}
 
                     <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;">Your Habits (tap to see details)</div>
                     ${habitsHTML}
