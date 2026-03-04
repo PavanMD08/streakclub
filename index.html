@@ -4945,16 +4945,22 @@
         }
 
         function showConfigureGoalAtIndexForJoin(index) {
-            // Same as create flow, but button says "Join Challenge" at the end
+            const goalId = currentChallengeData.selectedGoals[index];
+            const goal = cachedGoals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            const isLast = index === currentChallengeData.selectedGoals.length - 1;
+            
+            // Show the modal (reuse the same function but override the button)
             showConfigureGoalAtIndex(index);
             
-            // Update the button for last goal
-            const isLast = index === currentChallengeData.selectedGoals.length - 1;
+            // Update the button for ALL goals in join flow, not just the last
+            const nextBtn = document.getElementById('configureNextBtn');
             if (isLast) {
-                const nextBtn = document.getElementById('configureNextBtn');
                 nextBtn.textContent = 'Join Challenge';
-                nextBtn.onclick = () => saveCurrentGoalConfig(index, true, true); // isLast=true, isJoining=true
             }
+            // Override onclick for ALL buttons in join flow to pass isJoining=true
+            nextBtn.onclick = () => saveCurrentGoalConfig(index, isLast, true); // Always pass isJoining=true for join flow
         }
 
         // Update saveCurrentGoalConfig to handle joining
