@@ -2711,20 +2711,29 @@
                 });
 
                 // Create club in database
+                const clubData = {
+                    name: currentChallengeData.name,
+                    creator_id: currentUser.id,
+                    start_date: currentChallengeData.startDate,
+                    end_date: currentChallengeData.endDate,
+                    invite_code: inviteCode
+                };
+                
+                // Only add description if it's not empty
+                if (currentChallengeData.description) {
+                    clubData.description = currentChallengeData.description;
+                }
+
                 const { data: club, error: clubError } = await sb
                     .from('clubs')
-                    .insert([{
-                        name: currentChallengeData.name,
-                        description: currentChallengeData.description,
-                        creator_id: currentUser.id,
-                        start_date: currentChallengeData.startDate,
-                        end_date: currentChallengeData.endDate,
-                        invite_code: inviteCode
-                    }])
+                    .insert([clubData])
                     .select()
                     .single();
 
-                if (clubError) throw clubError;
+                if (clubError) {
+                    console.error('Club creation error details:', clubError);
+                    throw clubError;
+                }
                 console.log('✅ Club created:', club.id);
 
                 // Add creator as member
@@ -4757,6 +4766,10 @@
         async function joinClubByInvite(inviteCode) {
             showLoading();
             try {
+                // Force reload data to ensure we have latest goals
+                await loadData();
+                await loadGoals();
+                
                 // Find club by invite code
                 const { data: club, error: clubError } = await sb
                     .from('clubs')
@@ -4771,12 +4784,12 @@
                 }
 
                 // Check if already a member
-                const { data: existing } = await sb
+                const { data: existing, error: memberCheckError } = await sb
                     .from('club_members')
                     .select('*')
                     .eq('club_id', club.id)
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle(); // Returns null if not found instead of throwing 406
 
                 if (existing) {
                     showToast('You\'re already in this challenge!', 'success');
@@ -4847,6 +4860,9 @@
         }
 
         function showLinkGoalsModalForJoin() {
+            console.log('showLinkGoalsModalForJoin - cachedGoals:', cachedGoals);
+            console.log('Number of goals:', cachedGoals.length);
+            
             if (cachedGoals.length === 0) {
                 showToast('You need at least one goal first. Create a goal in My Goals tab.');
                 switchTab('goals');
