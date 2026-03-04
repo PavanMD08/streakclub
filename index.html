@@ -3026,7 +3026,7 @@
                         metric_type: habitData.metric_type,
                         metric_unit: habitData.metric_unit,
                         metric_options: habitData.metric_options,
-                        track_values: habitData.trackValues !== false
+                        track_values: true  // Always allow value tracking
                     }])
                     .select()
                     .single();
@@ -3116,31 +3116,27 @@
                     { name: 'No Sugar', frequency: 7, metric_type: 'binary', description: 'Stay sugar-free', checked: true },
                     { name: 'No Alcohol', frequency: 7, metric_type: 'binary', description: 'Avoid alcohol', checked: true },
                     { name: 'No Smoking', frequency: 7, metric_type: 'binary', description: 'Stay smoke-free', checked: false },
-                    { name: 'Limit Social Media', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Track screen time', checked: true, canToggleTracking: true, trackValues: true },
-                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary', description: 'Device-free time', checked: false },
-                    { name: 'No Fap', frequency: 7, metric_type: 'binary', description: 'Maintain streak', checked: false }
+                    { name: 'Limit Social Media', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Track screen time', checked: true },
+                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary', description: 'Device-free time', checked: false }
                 ];
             } else if (category === 'mental_wellness') {
                 goalName = 'Mental Wellness';
                 habitTemplates = [
-                    { name: 'Meditation', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: true, canToggleTracking: true, trackValues: true },
-                    { name: 'Breathwork', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Breathing exercises', checked: false, canToggleTracking: true, trackValues: true },
+                    { name: 'Meditation', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: true },
+                    { name: 'Breathwork', frequency: 7, metric_type: 'number', metric_unit: 'minutes', description: 'Breathing exercises', checked: false },
                     { name: 'Journaling', frequency: 7, metric_type: 'binary', description: 'Write daily', checked: true }
                 ];
             } else if (category === 'grow_learn') {
                 goalName = 'Grow & Learn';
                 habitTemplates = [
-                    { name: 'Reading', frequency: 7, metric_type: 'number', metric_unit: 'pages', description: 'Track pages read', checked: true, canToggleTracking: true, trackValues: true },
-                    { name: 'Learn New Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Practice time', checked: true, canToggleTracking: true, trackValues: true },
-                    { name: 'Complete Course', frequency: 5, metric_type: 'percentage', metric_unit: '%', description: 'Track progress', checked: false, canToggleTracking: true, trackValues: true },
-                    { name: 'Practice Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: false, canToggleTracking: true, trackValues: true }
+                    { name: 'Reading', frequency: 7, metric_type: 'number', metric_unit: 'pages', description: 'Track pages read', checked: true },
+                    { name: 'Learn New Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Practice time', checked: true },
+                    { name: 'Complete Course', frequency: 5, metric_type: 'percentage', metric_unit: '%', description: 'Track progress', checked: false },
+                    { name: 'Practice Skill', frequency: 5, metric_type: 'number', metric_unit: 'minutes', description: 'Daily practice', checked: false }
                 ];
             }
 
-            selectedHabits = habitTemplates.filter(h => h.checked).map(h => ({
-                ...h,
-                trackValues: h.trackValues !== false
-            }));
+            selectedHabits = habitTemplates.filter(h => h.checked).map(h => ({ ...h }));
 
             const habitsList = document.getElementById('habitsList');
             const habitsHTML = habitTemplates.map((habit, idx) => `
@@ -3148,7 +3144,7 @@
                     <input type="checkbox" ${habit.checked ? 'checked' : ''} onchange="toggleHabitForCategory(${idx}, '${category}')" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
                     
                     <div style="flex: 1; min-width: 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="font-weight: 600; font-size: 15px;">${habit.name}</div>
                             <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                                 <input type="number" 
@@ -3162,17 +3158,6 @@
                                 <span style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">x/week</span>
                             </div>
                         </div>
-                        
-                        ${habit.canToggleTracking ? `
-                            <label onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; margin-top: 4px;">
-                                <input type="checkbox" 
-                                    id="track_cat_${idx}" 
-                                    ${habit.trackValues ? 'checked' : ''}
-                                    onchange="toggleValueTrackingCategory(${idx}, this.checked, '${category}')"
-                                    style="width: 14px; height: 14px;">
-                                <span style="color: var(--text-secondary);">Track ${habit.metric_unit === 'minutes' ? 'minutes' : habit.metric_unit === 'pages' ? 'pages' : habit.metric_unit === '%' ? 'percentage' : 'details'}</span>
-                            </label>
-                        ` : ''}
                     </div>
                 </label>
             `).join('');
@@ -3209,14 +3194,6 @@
             }
         }
 
-        function toggleValueTrackingCategory(idx, trackValues, category) {
-            const habitTemplate = getCategoryHabits(category)[idx];
-            const habitInSelected = selectedHabits.find(h => h.name === habitTemplate.name);
-            if (habitInSelected) {
-                habitInSelected.trackValues = trackValues;
-            }
-        }
-
         function updateHabitFrequencyCategory(idx, newFreq, category) {
             const freq = parseInt(newFreq);
             if (freq < 1 || freq > 7) return;
@@ -3235,8 +3212,7 @@
                     { name: 'No Alcohol', frequency: 7, metric_type: 'binary' },
                     { name: 'No Smoking', frequency: 7, metric_type: 'binary' },
                     { name: 'Limit Social Media', frequency: 7, metric_type: 'number', metric_unit: 'minutes' },
-                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary' },
-                    { name: 'No Fap', frequency: 7, metric_type: 'binary' }
+                    { name: 'Digital Detox', frequency: 7, metric_type: 'binary' }
                 ];
             } else if (category === 'mental_wellness') {
                 return [
