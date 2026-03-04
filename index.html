@@ -1162,11 +1162,8 @@
                 // Show main app first
                 await showMainApp();
                 
-                // Then show welcome modal on first signup
-                if (!localStorage.getItem('hasSeenWelcome')) {
-                    localStorage.setItem('hasSeenWelcome', 'true');
-                    setTimeout(() => showWelcomeModal(), 500);
-                }
+                // Always show welcome modal for new signups
+                setTimeout(() => showWelcomeModal(), 500);
 
             } catch (error) {
                 console.error(error);
@@ -1199,8 +1196,19 @@
                     email: data.user.email
                 };
 
+                // Clear all existing data for fresh start
+                await sb.from('checkins').delete().eq('user_id', currentUser.id);
+                await sb.from('habits').delete().eq('user_id', currentUser.id);
+                await sb.from('goals').delete().eq('user_id', currentUser.id);
+                await sb.from('club_goal_habits').delete().using('club_goals').eq('club_goals.user_id', currentUser.id);
+                await sb.from('club_goals').delete().eq('user_id', currentUser.id);
+                await sb.from('club_members').delete().eq('user_id', currentUser.id);
+
                 showToast('Welcome back!', 'success');
-                setTimeout(() => showMainApp(), 600);
+                await showMainApp();
+                
+                // Show welcome modal for existing users too
+                setTimeout(() => showWelcomeModal(), 600);
 
             } catch (error) {
                 console.error(error);
@@ -5438,29 +5446,41 @@
 
     <!-- Welcome Modal (First Time Users) -->
     <div id="welcomeModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 480px;">
             <div class="modal-header">
-                <h3>Welcome to StreakClub</h3>
+                <h3>Welcome to StreakClub! 🎯</h3>
             </div>
-            <p style="color: var(--text-secondary); margin-bottom: 20px; text-align: center;">Set Goals, Build Habits and Stay Consistent with Friends.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; text-align: center; font-size: 15px;">Build better habits and achieve your goals with accountability.</p>
             
-            <div class="welcome-steps">
-                <div style="font-weight: 700; margin-bottom: 12px; font-size: 14px;">How it works:</div>
-                <div class="welcome-step">
-                    <div class="step-number">1</div>
-                    <div class="step-text">Choose your goal direction</div>
+            <div class="welcome-steps" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-weight: 700; margin-bottom: 16px; font-size: 16px; color: var(--electric-blue);">How it works:</div>
+                
+                <div class="welcome-step" style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <div class="step-number" style="width: 32px; height: 32px; background: var(--electric-blue); color: var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">1</div>
+                    <div class="step-text" style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">Create Your Goals</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">Choose what you want to achieve - lose weight, break bad habits, learn new skills, or improve mental wellness.</div>
+                    </div>
                 </div>
-                <div class="welcome-step">
-                    <div class="step-number">2</div>
-                    <div class="step-text">Track daily actions</div>
+                
+                <div class="welcome-step" style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <div class="step-number" style="width: 32px; height: 32px; background: var(--electric-blue); color: var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">2</div>
+                    <div class="step-text" style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">Track Daily Habits</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">Check in each day to log your progress. Track workouts, weight, meditation minutes, or any habit you're building.</div>
+                    </div>
                 </div>
-                <div class="welcome-step">
-                    <div class="step-number">3</div>
-                    <div class="step-text">See progress & compete</div>
+                
+                <div class="welcome-step" style="display: flex; gap: 12px;">
+                    <div class="step-number" style="width: 32px; height: 32px; background: var(--electric-blue); color: var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">3</div>
+                    <div class="step-text" style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">Join Challenges with Friends</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">Create challenges, invite friends, and see everyone's progress. Stay accountable together!</div>
+                    </div>
                 </div>
             </div>
             
-            <button class="btn-primary" onclick="closeWelcomeModal(); showChooseGoalModal();">Get Started</button>
+            <button class="btn-primary" onclick="closeWelcomeModal(); showChooseGoalModal();" style="width: 100%;">Create My First Goal →</button>
         </div>
     </div>
 
