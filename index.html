@@ -3149,8 +3149,7 @@
             } else if (category === 'break_habits' || category === 'mental_wellness' || category === 'grow_learn') {
                 showSelectHabitsForCategory(category);
             } else if (category === 'custom') {
-                showToast('Custom goals coming soon!');
-                showChooseGoalModal();
+                showCustomGoalModal();
             }
         }
 
@@ -3532,6 +3531,108 @@
         function closeGoalCreatedModal() {
             document.getElementById('goalCreatedModal').classList.remove('active');
             switchTab('goals');
+        }
+
+        // ============================================
+        // CUSTOM GOAL CREATION
+        // ============================================
+
+        let customHabits = [];
+
+        function showCustomGoalModal() {
+            document.getElementById('customGoalModal').classList.add('active');
+            document.getElementById('customGoalName').value = '';
+            customHabits = [];
+            renderCustomHabits();
+        }
+
+        function closeCustomGoalModal() {
+            document.getElementById('customGoalModal').classList.remove('active');
+            selectedGoalCategory = null;
+        }
+
+        function addCustomHabit() {
+            const habitName = document.getElementById('customHabitName').value.trim();
+            const habitFrequency = parseInt(document.getElementById('customHabitFreq').value) || 7;
+
+            if (!habitName) {
+                showToast('Enter habit name');
+                return;
+            }
+
+            customHabits.push({
+                name: habitName,
+                frequency: habitFrequency,
+                metric_type: 'binary'
+            });
+
+            document.getElementById('customHabitName').value = '';
+            document.getElementById('customHabitFreq').value = '7';
+            renderCustomHabits();
+        }
+
+        function removeCustomHabit(index) {
+            customHabits.splice(index, 1);
+            renderCustomHabits();
+        }
+
+        function renderCustomHabits() {
+            const container = document.getElementById('customHabitsList');
+            
+            if (customHabits.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No habits added yet</p>';
+                return;
+            }
+
+            container.innerHTML = customHabits.map((habit, index) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${habit.name}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">${habit.frequency}x/week</div>
+                    </div>
+                    <button onclick="removeCustomHabit(${index})" style="background: rgba(239,68,68,0.2); color: #EF4444; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        async function createCustomGoal() {
+            const goalName = document.getElementById('customGoalName').value.trim();
+
+            if (!goalName) {
+                showToast('Enter goal name');
+                return;
+            }
+
+            if (customHabits.length === 0) {
+                showToast('Add at least one habit');
+                return;
+            }
+
+            showLoading();
+            closeCustomGoalModal();
+
+            try {
+                // Create goal
+                const goal = await createGoal({
+                    category: 'custom',
+                    name: goalName
+                });
+
+                // Create habits
+                for (const habitData of customHabits) {
+                    await createGoalHabit(goal.id, habitData);
+                }
+
+                showToast('Goal created! 🎉', 'success');
+                await loadData();
+                await loadGoals();
+
+            } catch (error) {
+                console.error('Error creating custom goal:', error);
+                showToast('Failed to create goal');
+            } finally {
+                hideLoading();
+            }
         }
 
         // ============================================
@@ -5672,6 +5773,48 @@
             <h3 style="margin-bottom: 12px;">Goal Created!</h3>
             <p style="color: var(--text-secondary); margin-bottom: 24px;" id="goalCreatedMessage"></p>
             <button class="btn-primary" onclick="closeGoalCreatedModal()">View Goal</button>
+        </div>
+    </div>
+
+    <!-- Custom Goal Creation Modal -->
+    <div id="customGoalModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeCustomGoalModal(); showChooseGoalModal();">←</button>
+                <h3>Build Your Own Goal</h3>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">Create a custom goal with your own habits.</p>
+
+            <!-- Goal Name -->
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Goal Name</label>
+                <input type="text" id="customGoalName" placeholder="e.g., Stay Productive, Build Confidence..." 
+                    style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 15px;">
+            </div>
+
+            <!-- Add Habit Section -->
+            <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px;">
+                <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">Add Habits</div>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <input type="text" id="customHabitName" placeholder="Habit name..." 
+                        style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 14px;">
+                    <input type="number" id="customHabitFreq" value="7" min="1" max="7" 
+                        style="width: 60px; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-align: center; font-size: 14px;">
+                    <span style="display: flex; align-items: center; font-size: 13px; color: var(--text-secondary);">x/week</span>
+                </div>
+                
+                <button onclick="addCustomHabit()" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px;">+ Add Habit</button>
+            </div>
+
+            <!-- Habits List -->
+            <div style="margin-bottom: 24px;">
+                <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">Your Habits</div>
+                <div id="customHabitsList"></div>
+            </div>
+
+            <button onclick="createCustomGoal()" class="btn-primary" style="width: 100%;">Create Goal</button>
         </div>
     </div>
 
