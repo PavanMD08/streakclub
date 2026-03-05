@@ -3534,6 +3534,189 @@
         }
 
         // ============================================
+        // QUICK CHECK-IN (ALL HABITS AT ONCE)
+        // ============================================
+
+        let currentLogHabit = null;
+
+        function openQuickCheckin() {
+            document.getElementById('quickCheckinModal').classList.add('active');
+            renderQuickCheckinHabits();
+        }
+
+        function closeQuickCheckin() {
+            document.getElementById('quickCheckinModal').classList.remove('active');
+        }
+
+        function renderQuickCheckinHabits() {
+            const container = document.getElementById('quickCheckinHabitsList');
+
+            if (cachedHabits.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No habits yet. Create a goal first!</p>';
+                return;
+            }
+
+            // Simple flat list of all habits
+            const html = cachedHabits.map(habit => {
+                // Check if logged today
+                const today = new Date().toDateString();
+                const loggedToday = cachedCheckins.some(c => 
+                    c.habit_id === habit.id && 
+                    new Date(c.checked_in_at).toDateString() === today
+                );
+
+                return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 15px;">${habit.name}</div>
+                            ${loggedToday ? '<div style="font-size: 12px; color: #4CAF50; margin-top: 4px;">✓ Logged today</div>' : ''}
+                        </div>
+                        <button onclick="openHabitLogModal('${habit.id}')" style="
+                            padding: 8px 16px; 
+                            background: ${loggedToday ? 'rgba(76,175,80,0.2)' : 'var(--electric-blue)'}; 
+                            color: ${loggedToday ? '#4CAF50' : 'var(--navy)'}; 
+                            border: none; 
+                            border-radius: 8px; 
+                            font-weight: 600; 
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">
+                            Log
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function openHabitLogModal(habitId) {
+            currentLogHabit = cachedHabits.find(h => h.id === habitId);
+            if (!currentLogHabit) return;
+
+            // Default to today
+            document.getElementById('habitLogDate').valueAsDate = new Date();
+            
+            // Update modal title
+            document.getElementById('habitLogModalTitle').textContent = `Log: ${currentLogHabit.name}`;
+            
+            // Show/hide value input based on habit type
+            const valueSection = document.getElementById('habitLogValueSection');
+            const valueInput = document.getElementById('habitLogValue');
+            
+            if (currentLogHabit.metric_type === 'number' || currentLogHabit.metric_type === 'percentage') {
+                valueSection.style.display = 'block';
+                valueInput.placeholder = currentLogHabit.metric_unit === 'kg' ? 'Enter weight (kg)' :
+                                         currentLogHabit.metric_unit === 'minutes' ? 'Enter minutes' :
+                                         currentLogHabit.metric_unit === 'pages' ? 'Enter pages' : 'Enter value';
+                valueInput.step = currentLogHabit.metric_unit === 'kg' ? '0.1' : '1';
+                valueInput.value = '';
+            } else {
+                valueSection.style.display = 'none';
+            }
+
+            document.getElementById('habitLogModal').classList.add('active');
+        }
+
+        function closeHabitLogModal() {
+            document.getElementById('habitLogModal').classList.remove('active');
+            currentLogHabit = null;
+        }
+
+        async function saveHabitLog() {
+            const logDate = document.getElementById('habitLogDate').value;
+            
+            if (!logDate) {
+                showToast('Please select a date');
+                return;
+            }
+
+            const selectedDate = new Date(logDate);
+            const today = new Date();
+            const fourteenDaysAgo = new Date();
+            fourteenDaysAgo.setDate(today.getDate() - 14);
+
+            if (selectedDate > today) {
+                showToast('Cannot log for future dates');
+                return;
+            }
+
+            if (selectedDate < fourteenDaysAgo) {
+                showToast('Cannot log more than 14 days ago');
+                return;
+            }
+
+            showLoading();
+            closeHabitLogModal();
+
+            try {
+                let checkInData = {
+                    user_id: currentUser.id,
+                    habit_id: currentLogHabit.id,
+                    checked_in_at: new Date(logDate).toISOString()
+                };
+
+                // Get value if habit tracks numbers
+                if (currentLogHabit.metric_type === 'number' || currentLogHabit.metric_type === 'percentage') {
+                    const value = parseFloat(document.getElementById('habitLogValue').value);
+                    
+                    if (value) {
+                        checkInData.metric_value = value;
+                        checkInData.binary_value = true;
+
+                        // Update weight goal if applicable
+                        if (currentLogHabit.metric_unit === 'kg' && currentLogHabit.name === 'Track Weight') {
+                            const goal = cachedGoals.find(g => g.id === currentLogHabit.goal_id);
+                            if (goal) {
+                                await sb.from('goals').update({ current_value: value }).eq('id', goal.id);
+                                goal.current_value = value;
+                            }
+                        }
+                    } else {
+                        checkInData.binary_value = true;
+                    }
+                } else {
+                    checkInData.binary_value = true;
+                }
+
+                // Check for existing check-in and update or insert
+                const checkInDateStr = new Date(logDate).toISOString().split('T')[0];
+                const nextDayStr = new Date(new Date(checkInDateStr).getTime() + 24*60*60*1000).toISOString();
+                
+                const { data: existingCheckins } = await sb
+                    .from('checkins')
+                    .select('id')
+                    .eq('habit_id', currentLogHabit.id)
+                    .eq('user_id', currentUser.id)
+                    .gte('checked_in_at', checkInDateStr)
+                    .lt('checked_in_at', nextDayStr);
+
+                if (existingCheckins && existingCheckins.length > 0) {
+                    await sb.from('checkins').update(checkInData).eq('id', existingCheckins[0].id);
+                    if (existingCheckins.length > 1) {
+                        const duplicateIds = existingCheckins.slice(1).map(c => c.id);
+                        await sb.from('checkins').delete().in('id', duplicateIds);
+                    }
+                } else {
+                    await sb.from('checkins').insert([checkInData]);
+                }
+
+                const isToday = new Date(logDate).toDateString() === new Date().toDateString();
+                showToast(isToday ? '✓ Logged!' : '✓ Logged for past date!', 'success');
+                
+                await loadData();
+                await loadGoals();
+                renderQuickCheckinHabits(); // Refresh the list
+
+            } catch (error) {
+                console.error('Error saving log:', error);
+                showToast('Failed to save log');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================
         // CUSTOM GOAL CREATION
         // ============================================
 
@@ -3712,6 +3895,26 @@
                     <button class="btn-primary" onclick="showChooseGoalModal()" style="max-width: 120px; font-size: 13px; padding: 8px 16px;">+ New Goal</button>
                 </div>
                 ${goalsHTML}
+                
+                <!-- Floating Quick Check-in Button -->
+                <div style="position: fixed; bottom: 80px; right: 20px; z-index: 100;">
+                    <button onclick="openQuickCheckin()" style="
+                        background: var(--electric-blue); 
+                        color: var(--navy); 
+                        border: none; 
+                        padding: 16px 24px; 
+                        border-radius: 50px; 
+                        font-weight: 700; 
+                        font-size: 15px;
+                        box-shadow: 0 4px 20px rgba(0, 217, 255, 0.4);
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    ">
+                        ✓ Quick Check-in
+                    </button>
+                </div>
             `;
         }
 
@@ -5773,6 +5976,48 @@
             <h3 style="margin-bottom: 12px;">Goal Created!</h3>
             <p style="color: var(--text-secondary); margin-bottom: 24px;" id="goalCreatedMessage"></p>
             <button class="btn-primary" onclick="closeGoalCreatedModal()">View Goal</button>
+        </div>
+    </div>
+
+    <!-- Quick Check-in Modal (List View) -->
+    <div id="quickCheckinModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeQuickCheckin()">×</button>
+                <h3>Quick Check-in</h3>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">Click "Log" next to any habit to record it.</p>
+
+            <!-- Habits List -->
+            <div id="quickCheckinHabitsList"></div>
+        </div>
+    </div>
+
+    <!-- Individual Habit Log Modal -->
+    <div id="habitLogModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <button class="btn-close" onclick="closeHabitLogModal()">×</button>
+                <h3 id="habitLogModalTitle">Log Habit</h3>
+            </div>
+
+            <!-- Date Picker -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Date</label>
+                <input type="date" id="habitLogDate" 
+                    style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 15px;">
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">Can log up to 14 days ago</div>
+            </div>
+
+            <!-- Value Input (conditional) -->
+            <div id="habitLogValueSection" style="margin-bottom: 20px; display: none;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Value (optional)</label>
+                <input type="number" id="habitLogValue" 
+                    style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 15px;">
+            </div>
+
+            <button onclick="saveHabitLog()" class="btn-primary" style="width: 100%;">Save Log</button>
         </div>
     </div>
 
