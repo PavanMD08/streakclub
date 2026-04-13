@@ -3762,7 +3762,7 @@
                                 ${daysLeft !== null ? `<span style="color: var(--text-secondary);">Due: ${daysLeft} days</span>` : ''}
                             </div>
                         </div>
-                        <div class="menu-3dot" style="position: absolute; top: 16px; right: 16px;">
+                        <div class="menu-3dot" style="position: absolute; top: 16px; right: 16px; z-index: 10;">
                             <button class="menu-3dot-btn" onclick="event.stopPropagation(); toggleGoalMenu(event, '${goal.id}')" style="padding: 4px 8px;">⋮</button>
                             <div class="menu-3dot-dropdown" id="goalMenu_${goal.id}">
                                 <div class="menu-3dot-item" onclick="editGoalTarget('${goal.id}')">⚖️ Edit Target</div>
